@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-8">My Profile</h1>
+    
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Personal Information -->
+            <div>
+                <h2 class="text-xl font-semibold text-gray-800 dark:text-white mb-4">Personal Information</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 dark:text-gray-400">Name</label>
+                        <p class="mt-1 text-gray-800 dark:text-white">{{ current_user.name }}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 dark:text-gray-400">Student ID</label>
+                        <p class="mt-1 text-gray-800 dark:text-white">{{ current_user.id }}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 dark:text-gray-400">Email</label>
+                        <p class="mt-1 text-gray-800 dark:text-white">{{ current_user.email }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Academic Information -->
+            <div>
+                <h2 class="text-xl font-semibold text-gray-800 dark:text-white mb-4">Academic Information</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 dark:text-gray-400">Department</label>
+                        <p class="mt-1 text-gray-800 dark:text-white">{{ current_user.department.name if current_user.department else 'Not Assigned' }}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 dark:text-gray-400">Total Courses</label>
+                        <p class="mt-1 text-gray-800 dark:text-white">{{ current_user.courses|length if current_user.courses else 0 }}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 dark:text-gray-400">Registration Date</label>
+                        <p class="mt-1 text-gray-800 dark:text-white">{{ current_user.created_at.strftime('%Y-%m-%d') }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

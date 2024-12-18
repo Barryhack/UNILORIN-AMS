@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- University Building -->
+    <path d="M16 2L2 8L16 14L30 8L16 2Z" fill="#E4A853"/>
+    <path d="M7 10V20C7 23.3137 11.0294 26 16 26C20.9706 26 25 23.3137 25 20V10" stroke="#1B3964" stroke-width="2"/>
+    <!-- Columns -->
+    <rect x="10" y="14" width="2" height="10" fill="#1B3964"/>
+    <rect x="15" y="14" width="2" height="10" fill="#1B3964"/>
+    <rect x="20" y="14" width="2" height="10" fill="#1B3964"/>
+    <!-- Steps -->
+    <rect x="6" y="24" width="20" height="2" fill="#1B3964"/>
+    <rect x="8" y="26" width="16" height="2" fill="#1B3964"/>
+    <rect x="10" y="28" width="12" height="2" fill="#1B3964"/>
+</svg>

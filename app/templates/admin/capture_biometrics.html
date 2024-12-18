@@ -1,0 +1,137 @@
+{% extends "admin/admin_base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Biometric Registration for {{ user.name }}</h2>
+
+        <div class="space-y-6">
+            <!-- RFID Section -->
+            <div class="bg-gray-50 p-6 rounded-lg">
+                <h3 class="text-lg font-semibold mb-4 text-gray-700">RFID Registration</h3>
+                <div id="rfid-status" class="mb-4">
+                    {% if user.rfid_tag %}
+                        <div class="text-green-600">✓ RFID Tag Registered</div>
+                    {% else %}
+                        <div class="text-gray-600">Waiting for RFID tag...</div>
+                    {% endif %}
+                </div>
+                {% if not user.rfid_tag %}
+                    <button id="capture-rfid" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                        Scan RFID Tag
+                    </button>
+                {% endif %}
+            </div>
+
+            <!-- Fingerprint Section -->
+            <div class="bg-gray-50 p-6 rounded-lg">
+                <h3 class="text-lg font-semibold mb-4 text-gray-700">Fingerprint Registration</h3>
+                <div id="fingerprint-status" class="mb-4">
+                    {% if user.fingerprint_template %}
+                        <div class="text-green-600">✓ Fingerprint Registered</div>
+                    {% else %}
+                        <div class="text-gray-600">Waiting for fingerprint...</div>
+                    {% endif %}
+                </div>
+                {% if not user.fingerprint_template %}
+                    <button id="capture-fingerprint" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                        Scan Fingerprint
+                    </button>
+                {% endif %}
+            </div>
+
+            <!-- Navigation -->
+            <div class="flex justify-between mt-8">
+                <a href="{{ url_for('admin.register_user') }}" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors">
+                    Back to Registration
+                </a>
+                {% if user.rfid_tag and user.fingerprint_template %}
+                    <a href="{{ url_for('admin.manage_users') }}" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors">
+                        Complete Registration
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const rfidBtn = document.getElementById('capture-rfid');
+    const fingerprintBtn = document.getElementById('capture-fingerprint');
+    const rfidStatus = document.getElementById('rfid-status');
+    const fingerprintStatus = document.getElementById('fingerprint-status');
+
+    if (rfidBtn) {
+        rfidBtn.addEventListener('click', async function() {
+            try {
+                rfidStatus.innerHTML = '<div class="text-blue-600">Scanning RFID tag... Please place your tag near the reader.</div>';
+                rfidBtn.disabled = true;
+                
+                const response = await fetch('{{ url_for("admin.capture_biometrics", user_id=user.id) }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'action=capture_rfid'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    rfidStatus.innerHTML = '<div class="text-green-600">✓ ' + data.message + '</div>';
+                    rfidBtn.style.display = 'none';
+                    checkCompletion();
+                } else {
+                    rfidStatus.innerHTML = '<div class="text-red-600">✗ ' + data.message + '</div>';
+                    rfidBtn.disabled = false;
+                }
+            } catch (error) {
+                rfidStatus.innerHTML = '<div class="text-red-600">✗ Error communicating with server</div>';
+                rfidBtn.disabled = false;
+            }
+        });
+    }
+
+    if (fingerprintBtn) {
+        fingerprintBtn.addEventListener('click', async function() {
+            try {
+                fingerprintStatus.innerHTML = '<div class="text-blue-600">Scanning fingerprint... Please place your finger on the sensor.</div>';
+                fingerprintBtn.disabled = true;
+                
+                const response = await fetch('{{ url_for("admin.capture_biometrics", user_id=user.id) }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'action=capture_fingerprint'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    fingerprintStatus.innerHTML = '<div class="text-green-600">✓ ' + data.message + '</div>';
+                    fingerprintBtn.style.display = 'none';
+                    checkCompletion();
+                } else {
+                    fingerprintStatus.innerHTML = '<div class="text-red-600">✗ ' + data.message + '</div>';
+                    fingerprintBtn.disabled = false;
+                }
+            } catch (error) {
+                fingerprintStatus.innerHTML = '<div class="text-red-600">✗ Error communicating with server</div>';
+                fingerprintBtn.disabled = false;
+            }
+        });
+    }
+
+    function checkCompletion() {
+        if (!document.getElementById('capture-rfid') && !document.getElementById('capture-fingerprint')) {
+            location.reload();
+        }
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-8">My Courses</h1>
+    
+    {% if courses %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for course in courses %}
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold text-gray-800 dark:text-white">{{ course.code }}</h2>
+                <span class="px-3 py-1 text-sm text-white bg-blue-500 rounded-full">{{ course.department.name }}</span>
+            </div>
+            <h3 class="text-lg text-gray-800 dark:text-white mb-2">{{ course.title }}</h3>
+            <p class="text-gray-600 dark:text-gray-400 mb-4">{{ course.description }}</p>
+            <div class="border-t pt-4 mt-4">
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                    <span class="font-semibold">Lecturer:</span>
+                    {{ course.lecturer_ref.name if course.lecturer_ref else 'Not Assigned' }}
+                </p>
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                    <span class="font-semibold">Total Lectures:</span>
+                    {{ course.lectures.count() }}
+                </p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 text-center">
+        <p class="text-gray-600 dark:text-gray-400">You are not enrolled in any courses yet.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

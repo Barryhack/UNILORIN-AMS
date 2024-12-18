@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header Section -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Welcome back, {{ current_user.first_name }}!</h1>
+        <p class="text-gray-600 dark:text-gray-300">{{ current_user.department.name if current_user.department else 'No Department' }} Department</p>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Total Courses -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-blue-100 dark:bg-blue-900/50 mr-4">
+                    <i class="fas fa-book text-blue-600 dark:text-blue-400"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600 dark:text-gray-300">Total Courses</p>
+                    <p class="text-2xl font-semibold text-gray-900 dark:text-white">{{ courses|length }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Students -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-green-100 dark:bg-green-900/50 mr-4">
+                    <i class="fas fa-users text-green-600 dark:text-green-400"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600 dark:text-gray-300">Active Students</p>
+                    <p class="text-2xl font-semibold text-gray-900 dark:text-white">{{ total_students if total_students else 0 }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Today's Classes -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-purple-100 dark:bg-purple-900/50 mr-4">
+                    <i class="fas fa-calendar-day text-purple-600 dark:text-purple-400"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600 dark:text-gray-300">Today's Classes</p>
+                    <p class="text-2xl font-semibold text-gray-900 dark:text-white">{{ today_classes if today_classes else 0 }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attendance Rate -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-yellow-100 dark:bg-yellow-900/50 mr-4">
+                    <i class="fas fa-chart-line text-yellow-600 dark:text-yellow-400"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600 dark:text-gray-300">Avg. Attendance</p>
+                    <p class="text-2xl font-semibold text-gray-900 dark:text-white">{{ "%.1f"|format(attendance_rate) if attendance_rate else 0 }}%</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <!-- Take Attendance -->
+        <div class="bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 rounded-lg shadow-lg p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-xl font-semibold mb-2">Take Attendance</h3>
+                    <p class="text-blue-100 mb-4">Quickly record attendance for your ongoing classes</p>
+                    <a href="#" class="inline-flex items-center px-4 py-2 bg-white text-blue-600 dark:bg-blue-900 dark:text-white rounded-lg font-medium hover:bg-blue-50 dark:hover:bg-blue-800 transition-colors">
+                        Start Now
+                        <i class="fas fa-arrow-right ml-2"></i>
+                    </a>
+                </div>
+                <div class="text-5xl opacity-20">
+                    <i class="fas fa-qrcode"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- View Reports -->
+        <div class="bg-gradient-to-br from-purple-500 to-purple-600 dark:from-purple-600 dark:to-purple-700 rounded-lg shadow-lg p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-xl font-semibold mb-2">View Reports</h3>
+                    <p class="text-purple-100 mb-4">Access detailed attendance analytics and reports</p>
+                    <a href="#" class="inline-flex items-center px-4 py-2 bg-white text-purple-600 dark:bg-purple-900 dark:text-white rounded-lg font-medium hover:bg-purple-50 dark:hover:bg-purple-800 transition-colors">
+                        View Reports
+                        <i class="fas fa-chart-bar ml-2"></i>
+                    </a>
+                </div>
+                <div class="text-5xl opacity-20">
+                    <i class="fas fa-chart-pie"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Classes -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Today's Schedule</h2>
+        {% if today_lectures %}
+        <div class="space-y-4">
+            {% for lecture in today_lectures %}
+            <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="font-semibold text-gray-900 dark:text-white">{{ lecture.course_ref.code }} - {{ lecture.course_ref.title }}</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">{{ lecture.start_time.strftime('%I:%M %p') }} - {{ lecture.end_time.strftime('%I:%M %p') }}</p>
+                    </div>
+                    <a href="#" class="inline-flex items-center px-3 py-1.5 bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 rounded-lg text-sm font-medium hover:bg-blue-200 dark:hover:bg-blue-900 transition-colors">
+                        Take Attendance
+                        <i class="fas fa-arrow-right ml-2"></i>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-gray-600 dark:text-gray-300">No classes scheduled for today.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

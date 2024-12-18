@@ -1,0 +1,169 @@
+{% extends "admin/admin_base.html" %}
+
+{% block admin_content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Welcome Section -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 mb-8 border border-gray-200 dark:border-gray-700 transition-colors duration-200">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-4xl font-bold text-gray-800 dark:text-white mb-2 transition-colors duration-200">Welcome back, {{ current_user.name }}</h1>
+                <p class="text-gray-600 dark:text-gray-300 text-lg transition-colors duration-200">{{ current_time.strftime('%A, %B %d, %Y') }}</p>
+            </div>
+            <div class="text-right">
+                <p class="text-3xl font-bold text-gray-800 dark:text-white transition-colors duration-200">{{ current_time.strftime('%I:%M %p') }}</p>
+                <p class="text-gray-600 dark:text-gray-300 transition-colors duration-200">Local Time</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Students -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 transform hover:scale-105 transition-all duration-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/70">
+            <div class="flex items-center">
+                <div class="p-3 bg-blue-100 dark:bg-blue-900/50 rounded-lg transition-colors duration-200">
+                    <svg class="h-8 w-8 text-blue-600 dark:text-blue-400 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-gray-600 dark:text-gray-300 text-sm font-medium transition-colors duration-200">Total Students</p>
+                    <h3 class="text-3xl font-bold text-gray-800 dark:text-white mt-1 transition-colors duration-200">{{ total_students }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lecturers -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 transform hover:scale-105 transition-all duration-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/70">
+            <div class="flex items-center">
+                <div class="p-3 bg-emerald-100 dark:bg-emerald-900/50 rounded-lg transition-colors duration-200">
+                    <svg class="h-8 w-8 text-emerald-600 dark:text-emerald-400 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-gray-600 dark:text-gray-300 text-sm font-medium transition-colors duration-200">Total Lecturers</p>
+                    <h3 class="text-3xl font-bold text-gray-800 dark:text-white mt-1 transition-colors duration-200">{{ total_lecturers }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Departments -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 transform hover:scale-105 transition-all duration-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/70">
+            <div class="flex items-center">
+                <div class="p-3 bg-purple-100 dark:bg-purple-900/50 rounded-lg transition-colors duration-200">
+                    <svg class="h-8 w-8 text-purple-600 dark:text-purple-400 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-gray-600 dark:text-gray-300 text-sm font-medium transition-colors duration-200">Total Departments</p>
+                    <h3 class="text-3xl font-bold text-gray-800 dark:text-white mt-1 transition-colors duration-200">{{ total_departments }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Courses -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 transform hover:scale-105 transition-all duration-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/70">
+            <div class="flex items-center">
+                <div class="p-3 bg-red-100 dark:bg-red-900/50 rounded-lg transition-colors duration-200">
+                    <svg class="h-8 w-8 text-red-600 dark:text-red-400 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-gray-600 dark:text-gray-300 text-sm font-medium transition-colors duration-200">Total Courses</p>
+                    <h3 class="text-3xl font-bold text-gray-800 dark:text-white mt-1 transition-colors duration-200">{{ total_courses }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 transition-colors duration-200">
+        <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-6 transition-colors duration-200">Quick Actions</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Register User -->
+            <a href="{{ url_for('admin.register_user') }}" 
+               class="group flex items-center p-4 bg-white dark:bg-gray-800 
+                      hover:bg-blue-50 dark:hover:bg-blue-900/20
+                      rounded-xl border border-gray-200 dark:border-gray-700 
+                      hover:border-blue-300 dark:hover:border-blue-600
+                      transition-all duration-300">
+                <div class="p-3 bg-blue-100 dark:bg-blue-900/50 rounded-lg 
+                          group-hover:bg-blue-200 dark:group-hover:bg-blue-800/50 
+                          transition-colors duration-200">
+                    <svg class="h-6 w-6 text-blue-600 dark:text-blue-400 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <h3 class="font-semibold text-gray-800 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200">Register User</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-300 transition-colors duration-200">Add new users to the system</p>
+                </div>
+            </a>
+
+            <!-- Manage Departments -->
+            <a href="{{ url_for('admin.manage_departments') }}"
+               class="group flex items-center p-4 bg-white dark:bg-gray-800 
+                      hover:bg-purple-50 dark:hover:bg-purple-900/20
+                      rounded-xl border border-gray-200 dark:border-gray-700 
+                      hover:border-purple-300 dark:hover:border-purple-600
+                      transition-all duration-300">
+                <div class="p-3 bg-purple-100 dark:bg-purple-900/50 rounded-lg 
+                          group-hover:bg-purple-200 dark:group-hover:bg-purple-800/50 
+                          transition-colors duration-200">
+                    <svg class="h-6 w-6 text-purple-600 dark:text-purple-400 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <h3 class="font-semibold text-gray-800 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors duration-200">Manage Departments</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 group-hover:text-purple-500 dark:group-hover:text-purple-300 transition-colors duration-200">View and edit departments</p>
+                </div>
+            </a>
+
+            <!-- Manage Courses -->
+            <a href="{{ url_for('admin.manage_courses') }}"
+               class="group flex items-center p-4 bg-white dark:bg-gray-800 
+                      hover:bg-emerald-50 dark:hover:bg-emerald-900/20
+                      rounded-xl border border-gray-200 dark:border-gray-700 
+                      hover:border-emerald-300 dark:hover:border-emerald-600
+                      transition-all duration-300">
+                <div class="p-3 bg-emerald-100 dark:bg-emerald-900/50 rounded-lg 
+                          group-hover:bg-emerald-200 dark:group-hover:bg-emerald-800/50 
+                          transition-colors duration-200">
+                    <svg class="h-6 w-6 text-emerald-600 dark:text-emerald-400 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <h3 class="font-semibold text-gray-800 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-200">Manage Courses</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 group-hover:text-emerald-500 dark:group-hover:text-emerald-300 transition-colors duration-200">View and edit courses</p>
+                </div>
+            </a>
+
+            <!-- Settings -->
+            <a href="{{ url_for('admin.settings') }}"
+               class="group flex items-center p-4 bg-white dark:bg-gray-800 
+                      hover:bg-amber-50 dark:hover:bg-amber-900/20
+                      rounded-xl border border-gray-200 dark:border-gray-700 
+                      hover:border-amber-300 dark:hover:border-amber-600
+                      transition-all duration-300">
+                <div class="p-3 bg-amber-100 dark:bg-amber-900/50 rounded-lg 
+                          group-hover:bg-amber-200 dark:group-hover:bg-amber-800/50 
+                          transition-colors duration-200">
+                    <svg class="h-6 w-6 text-amber-600 dark:text-amber-400 transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <h3 class="font-semibold text-gray-800 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors duration-200">Settings</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 group-hover:text-amber-500 dark:group-hover:text-amber-300 transition-colors duration-200">Configure system settings</p>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
