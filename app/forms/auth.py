@@ -2,8 +2,9 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField
 from wtforms.validators import DataRequired, ValidationError, Length, EqualTo
 from app.models.user import User
+from app.forms import BaseForm
 
-class LoginForm(FlaskForm):
+class LoginForm(BaseForm):
     """Form for user login"""
     login = StringField('ID Number', validators=[
         DataRequired(message='Please enter your ID number'),
@@ -18,7 +19,7 @@ class LoginForm(FlaskForm):
     class Meta:
         csrf = True
 
-class ChangePasswordForm(FlaskForm):
+class ChangePasswordForm(BaseForm):
     """Form for changing password"""
     current_password = PasswordField('Current Password', validators=[DataRequired()])
     new_password = PasswordField('New Password', validators=[

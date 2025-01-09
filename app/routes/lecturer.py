@@ -6,7 +6,7 @@ from app.models.lecture import Lecture
 from app.models.attendance import Attendance
 from app.models.user import User
 from app.models.notification import Notification
-from app.extensions import db
+from app.extensions import db, csrf
 from datetime import datetime, timedelta
 from sqlalchemy import func, and_
 import re
@@ -81,20 +81,30 @@ def take_attendance(lecture_id):
     lecture = Lecture.query.get_or_404(lecture_id)
     
     if request.method == 'POST':
+        if not request.is_json:
+            return jsonify({'status': 'error', 'message': 'Invalid content type'}), 400
+            
         attendance_data = request.get_json()
-        for user_id, status in attendance_data.items():
-            attendance = Attendance(
-                lecture_id=lecture_id,
-                user_id=user_id,
-                status=status,
-                marked_by_id=current_user.id,
-                verification_method='manual'
-            )
-            db.session.add(attendance)
-        
-        db.session.commit()
-        flash('Attendance has been recorded successfully.', 'success')
-        return jsonify({'status': 'success'})
+        if not attendance_data:
+            return jsonify({'status': 'error', 'message': 'No data provided'}), 400
+            
+        try:
+            for user_id, status in attendance_data.items():
+                attendance = Attendance(
+                    lecture_id=lecture_id,
+                    user_id=user_id,
+                    status=status,
+                    marked_by_id=current_user.id,
+                    verification_method='manual'
+                )
+                db.session.add(attendance)
+            
+            db.session.commit()
+            return jsonify({'status': 'success', 'message': 'Attendance recorded successfully'})
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f'Error recording attendance: {str(e)}')
+            return jsonify({'status': 'error', 'message': 'Failed to record attendance'}), 500
 
     students = User.query.filter_by(role='student').join(
         Course.enrolled_students

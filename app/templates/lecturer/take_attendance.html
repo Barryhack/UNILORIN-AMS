@@ -178,6 +178,7 @@
 {{ super() }}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
     const studentSearch = document.getElementById('studentSearch');
     const studentRows = document.querySelectorAll('.student-row');
     const markAllPresentBtn = document.getElementById('markAllPresent');
@@ -244,7 +245,36 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
         }
-        attendanceForm.submit();
+
+        const attendanceData = {};
+        studentRows.forEach(row => {
+            const studentId = row.dataset.studentId;
+            const status = row.querySelector('input[type="radio"]:checked').value;
+            attendanceData[studentId] = status;
+        });
+
+        $.ajax({
+            url: "{{ url_for('lecturer.save_attendance', lecture_id=lecture.id) }}",
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(attendanceData),
+            headers: {
+                'X-CSRFToken': csrfToken
+            },
+            success: function(response) {
+                if (response.status === 'success') {
+                    alert('Attendance has been saved successfully');
+                    setTimeout(function() {
+                        window.location.href = "{{ url_for('lecturer.view_lecture', lecture_id=lecture.id) }}";
+                    }, 2000);
+                } else {
+                    alert('Failed to save attendance');
+                }
+            },
+            error: function() {
+                alert('An error occurred while saving attendance');
+            }
+        });
     });
 
     // Update present count when radio buttons change

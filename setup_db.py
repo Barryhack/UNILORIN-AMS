@@ -28,11 +28,10 @@ def setup_database():
             
             # Create default admin user
             admin = User(
-                id='AD001',
                 name='Administrator',
                 email='admin@unilorin.edu.ng',
                 role='admin',
-                is_active=True
+                id_number='AD001'
             )
             admin.set_password('Admin123!')
             db.session.add(admin)
@@ -75,12 +74,11 @@ def setup_database():
             lecturers = {}
             for name, email, dept_code, lecturer_id in lecturers_data:
                 lecturer = User(
-                    id=lecturer_id,
                     name=name,
                     email=email,
                     role='lecturer',
-                    department=departments[dept_code],
-                    is_active=True
+                    department_id=departments[dept_code].id,
+                    id_number=lecturer_id
                 )
                 lecturer.set_password('Lecturer123!')
                 lecturers[lecturer_id] = lecturer
@@ -96,12 +94,11 @@ def setup_database():
             students = {}
             for name, email, dept_code, student_id in students_data:
                 student = User(
-                    id=student_id,
                     name=name,
                     email=email,
                     role='student',
-                    department=departments[dept_code],
-                    is_active=True
+                    department_id=departments[dept_code].id,
+                    id_number=student_id
                 )
                 student.set_password('Student123!')
                 students[student_id] = student

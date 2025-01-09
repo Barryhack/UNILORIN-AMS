@@ -12,9 +12,15 @@ class Config:
     
     # Session config
     PERMANENT_SESSION_LIFETIME = timedelta(minutes=60)
-    SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_SECURE = False  # Changed to False for development
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
+    
+    # CSRF Protection
+    WTF_CSRF_ENABLED = True
+    WTF_CSRF_SECRET_KEY = os.environ.get('WTF_CSRF_SECRET_KEY') or 'csrf-key-change-in-production'
+    WTF_CSRF_TIME_LIMIT = 3600  # 1 hour
+    WTF_CSRF_SSL_STRICT = False  # Changed to False for development
     
     # Security headers
     SECURITY_HEADERS = {
@@ -48,24 +54,20 @@ class Config:
 class DevelopmentConfig(Config):
     DEBUG = True
     SQLALCHEMY_ECHO = True
-    SESSION_COOKIE_SECURE = False  # Set to False for development
+    SESSION_COOKIE_SECURE = False
+    WTF_CSRF_SSL_STRICT = False
     SECURITY_HEADERS = {}
 
 class ProductionConfig(Config):
     DEBUG = False
     SQLALCHEMY_ECHO = False
-    
-    # Enhanced security for production
     SESSION_COOKIE_SECURE = True
+    WTF_CSRF_SSL_STRICT = True
     PERMANENT_SESSION_LIFETIME = timedelta(hours=1)
-    
-    # Stricter CSP in production
     SECURITY_HEADERS = {
         **Config.SECURITY_HEADERS,
         'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com;"
     }
-    
-    # Production logging
     LOG_LEVEL = 'ERROR'
 
 class TestingConfig(Config):

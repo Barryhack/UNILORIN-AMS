@@ -1,13 +1,14 @@
 """Application entry point."""
 import os
 from app import create_app, db
+from config import DevelopmentConfig
 import logging
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = create_app()
+app = create_app(DevelopmentConfig)  # Explicitly use DevelopmentConfig
 
 def init_database():
     """Initialize the database with default data."""
