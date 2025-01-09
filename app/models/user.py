@@ -34,7 +34,7 @@ class User(UserMixin, db.Model):
         lazy=True
     )
     student_courses = db.relationship('CourseStudent', back_populates='student')
-    attendances = db.relationship('Attendance', back_populates='student', foreign_keys='Attendance.student_id')
+    attendances = db.relationship('Attendance', back_populates='user', foreign_keys='Attendance.user_id')
     marked_attendances = db.relationship('Attendance', back_populates='marked_by', foreign_keys='Attendance.marked_by_id')
     login_logs = db.relationship('LoginLog', back_populates='user')
     activity_logs = db.relationship('ActivityLog', back_populates='user')

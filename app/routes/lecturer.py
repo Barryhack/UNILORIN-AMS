@@ -82,10 +82,10 @@ def take_attendance(lecture_id):
     
     if request.method == 'POST':
         attendance_data = request.get_json()
-        for student_id, status in attendance_data.items():
+        for user_id, status in attendance_data.items():
             attendance = Attendance(
                 lecture_id=lecture_id,
-                student_id=student_id,
+                user_id=user_id,
                 status=status,
                 marked_by_id=current_user.id,
                 verification_method='manual'
@@ -110,7 +110,7 @@ def take_attendance(lecture_id):
 def attendance_records():
     course_id = request.args.get('course_id', type=int)
     lecture_id = request.args.get('lecture_id', type=int)
-    student_id = request.args.get('student_id', type=int)
+    user_id = request.args.get('user_id', type=int)
     date_from = request.args.get('date_from')
     date_to = request.args.get('date_to')
 
@@ -120,8 +120,8 @@ def attendance_records():
         query = query.filter(Lecture.course_id == course_id)
     if lecture_id:
         query = query.filter(Attendance.lecture_id == lecture_id)
-    if student_id:
-        query = query.filter(Attendance.student_id == student_id)
+    if user_id:
+        query = query.filter(Attendance.user_id == user_id)
     if date_from:
         query = query.filter(Lecture.date >= datetime.strptime(date_from, '%Y-%m-%d').date())
     if date_to:
@@ -159,7 +159,7 @@ def reports():
         for student in students:
             query = Attendance.query.join(Lecture).filter(
                 Lecture.course_id == course_id,
-                Attendance.student_id == student.id
+                Attendance.user_id == student.id
             )
             
             if date_from:

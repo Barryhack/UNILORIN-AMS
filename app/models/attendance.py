@@ -53,12 +53,7 @@ class Attendance(db.Model):
                     'code': self.lecture.course.code,
                     'title': self.lecture.course.title
                 }
-            } if self.lecture else None,
-            'marked_by': {
-                'id': self.marked_by.id,
-                'name': self.marked_by.name,
-                'email': self.marked_by.email
-            } if self.marked_by else None
+            } if self.lecture else None
         }
 
     @classmethod
