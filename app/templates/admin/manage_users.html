@@ -1,206 +1,543 @@
-{% extends "admin/admin_base.html" %}
+{% extends "admin/admin_base_new.html" %}
 
-{% block admin_content %}
-<div class="container mx-auto px-4 py-6">
+{% block content %}
+<div class="p-6">
     <!-- Header Section -->
-    <div class="bg-gray-100 dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8">
-        <div class="flex justify-between items-center">
-            <h1 class="text-3xl font-bold text-gray-800 dark:text-white">Manage Users</h1>
-            <a href="{{ url_for('admin.register_user') }}" 
-               class="inline-flex items-center px-4 py-2 bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-800 text-white font-medium rounded-lg transition-colors duration-200">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                </svg>
-                Add New User
-            </a>
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <h1 class="text-2xl font-semibold text-gray-800">User Management</h1>
+            <div class="flex space-x-4">
+                <button onclick="openRegistrationModal()" 
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center">
+                    <i class="fas fa-user-plus mr-2"></i>
+                    Register New User
+                </button>
+                <button id="toggleBiometricMode"
+                        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center">
+                    <i class="fas fa-fingerprint mr-2"></i>
+                    Enable Registration Mode
+                </button>
+            </div>
         </div>
     </div>
 
     <!-- Filters Section -->
-    <div class="bg-gray-100 dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8">
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Role Filter</label>
-                <select id="role-filter" class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-blue-500 dark:focus:border-blue-600">
+                <label for="roleFilter" class="block text-sm font-medium text-gray-700 mb-2">Role</label>
+                <select id="roleFilter" class="w-full rounded-lg border-gray-300">
                     <option value="">All Roles</option>
-                    <option value="admin">Admin</option>
-                    <option value="lecturer">Lecturer</option>
                     <option value="student">Student</option>
+                    <option value="lecturer">Lecturer</option>
+                    <option value="admin">Admin</option>
                 </select>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Department Filter</label>
-                <select id="department-filter" class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-blue-500 dark:focus:border-blue-600">
+                <label for="departmentFilter" class="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                <select id="departmentFilter" class="w-full rounded-lg border-gray-300">
                     <option value="">All Departments</option>
                     {% for dept in departments %}
-                    <option value="{{ dept.id if dept.id else '' }}">{{ dept.name }}</option>
+                    <option value="{{ dept.id }}">{{ dept.name }}</option>
                     {% endfor %}
                 </select>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Search</label>
-                <input type="text" id="search" placeholder="Search users..." 
-                       class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-blue-500 dark:focus:border-blue-600">
+                <label for="searchInput" class="block text-sm font-medium text-gray-700 mb-2">Search</label>
+                <input type="text" id="searchInput" placeholder="Search by name or matric number" 
+                       class="w-full rounded-lg border-gray-300">
             </div>
         </div>
     </div>
 
     <!-- Users Table -->
-    <div class="bg-gray-100 dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead>
-                    <tr class="bg-gray-50 dark:bg-gray-700">
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">User</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Role</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Department</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Matric/ID</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="bg-gray-100 dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody class="bg-white divide-y divide-gray-200">
                     {% for user in users %}
-                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                    <tr class="hover:bg-gray-50">
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
-                                <div class="flex-shrink-0 h-10 w-10">
-                                    <div class="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-violet-500 dark:from-blue-600 dark:to-violet-600 flex items-center justify-center text-white font-bold">
-                                        {{ user.name[0] }}
-                                    </div>
+                                <div class="h-10 w-10 flex-shrink-0">
+                                    <span class="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
+                                        <i class="fas fa-user text-gray-500"></i>
+                                    </span>
                                 </div>
                                 <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-900 dark:text-white">{{ user.name }}</div>
-                                    <div class="text-sm text-gray-500 dark:text-gray-300">{{ user.email }}</div>
+                                    <div class="text-sm font-medium text-gray-900">{{ user.name }}</div>
+                                    <div class="text-sm text-gray-500">{{ user.email }}</div>
                                 </div>
                             </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ user.matric_number }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ user.department.name if user.department else 'N/A' }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                {% if user.role == 'admin' %}
-                                    bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200
-                                {% elif user.role == 'lecturer' %}
-                                    bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200
-                                {% else %}
-                                    bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200
-                                {% endif %}">
+                                       {% if user.role == 'admin' %}bg-purple-100 text-purple-800
+                                       {% elif user.role == 'lecturer' %}bg-blue-100 text-blue-800
+                                       {% else %}bg-green-100 text-green-800{% endif %}">
                                 {{ user.role|title }}
                             </span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-900 dark:text-white">
-                                {%- if user.department_id and user.department -%}
-                                    {{ user.department.name }}
-                                {%- else -%}
-                                    N/A
-                                {%- endif -%}
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
-                                Active
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                       {% if user.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                {{ 'Active' if user.is_active else 'Inactive' }}
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div class="flex space-x-3">
-                                <a href="{{ url_for('admin.edit_user', user_id=user.id) }}" 
-                                   class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">
-                                    Edit
-                                </a>
-                            </div>
+                            <button onclick="openEditUserModal('{{ user.id }}')"
+                                    class="text-blue-600 hover:text-blue-900 mr-3">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="toggleUserStatus('{{ user.id }}', {{ 'true' if user.is_active else 'false' }})"
+                                    class="text-{{ 'red' if user.is_active else 'green' }}-600 
+                                           hover:text-{{ 'red' if user.is_active else 'green' }}-900 mr-3">
+                                <i class="fas fa-{{ 'ban' if user.is_active else 'check-circle' }}"></i>
+                            </button>
+                            {% if current_user.id != user.id %}
+                            <button onclick="confirmDeleteUser('{{ user.id }}')"
+                                    class="text-red-600 hover:text-red-900">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
-    </div>
-
-    <!-- Pagination -->
-    {% if pagination.pages > 1 %}
-    <div class="bg-gray-100 dark:bg-gray-800 rounded-xl shadow-lg p-4 mt-8">
-        <div class="flex justify-center space-x-2">
-            {% for page in pagination.iter_pages() %}
-                {% if page %}
-                    {% if page != pagination.page %}
-                        <a href="{{ url_for('admin.manage_users', page=page) }}"
-                           class="px-3 py-1 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700">
-                            {{ page }}
-                        </a>
-                    {% else %}
-                        <span class="px-3 py-1 rounded-md bg-blue-600 text-white">
-                            {{ page }}
-                        </span>
+        
+        <!-- Pagination -->
+        {% if pagination.pages > 1 %}
+        <div class="px-6 py-4 bg-white border-t border-gray-200">
+            <div class="flex items-center justify-between">
+                <div class="flex-1 flex justify-between sm:hidden">
+                    {% if pagination.has_prev %}
+                    <a href="{{ url_for('admin.manage_users', page=pagination.prev_num) }}" 
+                       class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Previous
+                    </a>
                     {% endif %}
-                {% else %}
-                    <span class="px-3 py-1 text-gray-600 dark:text-gray-400">...</span>
-                {% endif %}
-            {% endfor %}
+                    {% if pagination.has_next %}
+                    <a href="{{ url_for('admin.manage_users', page=pagination.next_num) }}" 
+                       class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Next
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-sm text-gray-700">
+                            Showing
+                            <span class="font-medium">{{ (pagination.page - 1) * pagination.per_page + 1 }}</span>
+                            to
+                            <span class="font-medium">{{ min(pagination.page * pagination.per_page, pagination.total) }}</span>
+                            of
+                            <span class="font-medium">{{ pagination.total }}</span>
+                            results
+                        </p>
+                    </div>
+                    <div>
+                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                            {% if pagination.has_prev %}
+                            <a href="{{ url_for('admin.manage_users', page=pagination.prev_num) }}"
+                               class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <span class="sr-only">Previous</span>
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                            {% endif %}
+                            
+                            {%- for page in pagination.iter_pages() %}
+                                {% if page %}
+                                    {% if page != pagination.page %}
+                                    <a href="{{ url_for('admin.manage_users', page=page) }}"
+                                       class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                        {{ page }}
+                                    </a>
+                                    {% else %}
+                                    <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-blue-50 text-sm font-medium text-blue-600">
+                                        {{ page }}
+                                    </span>
+                                    {% endif %}
+                                {% else %}
+                                <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                                    ...
+                                </span>
+                                {% endif %}
+                            {%- endfor %}
+                            
+                            {% if pagination.has_next %}
+                            <a href="{{ url_for('admin.manage_users', page=pagination.next_num) }}"
+                               class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <span class="sr-only">Next</span>
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                            {% endif %}
+                        </nav>
+                    </div>
+                </div>
+            </div>
         </div>
+        {% endif %}
     </div>
-    {% endif %}
 </div>
 
-<!-- JavaScript for filters -->
+<!-- Registration Modal -->
+<div id="registrationModal" class="fixed inset-0 bg-black bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-lg bg-white">
+        <div class="mt-3">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Register New User</h3>
+            <form id="registrationForm" method="POST" action="{{ url_for('admin.register_user') }}">
+                <input type="hidden" id="rfidTag" name="rfid_tag" required>
+                <input type="hidden" id="fingerprintTemplate" name="fingerprint_template" required>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2" for="name">
+                            Full Name
+                        </label>
+                        <input type="text" name="name" id="name" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2" for="matric">
+                            Matric Number
+                        </label>
+                        <input type="text" name="matric_number" id="matric" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2" for="department">
+                            Department
+                        </label>
+                        <select name="department" id="department" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm">
+                            <option value="">Select Department</option>
+                            {% for dept in departments %}
+                            <option value="{{ dept.id }}">{{ dept.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2" for="role">
+                            Role
+                        </label>
+                        <select name="role" id="role" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm">
+                            <option value="student">Student</option>
+                            <option value="lecturer">Lecturer</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" onclick="closeRegistrationModal()"
+                            class="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg">
+                        Register User
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit User Modal -->
+<div id="editUserModal" class="fixed inset-0 bg-black bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-lg bg-white">
+        <div class="mt-3">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Edit User</h3>
+            <form id="editUserForm" method="POST">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2" for="edit_name">
+                            Full Name
+                        </label>
+                        <input type="text" name="name" id="edit_name" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2" for="edit_matric">
+                            Matric Number
+                        </label>
+                        <input type="text" name="matric_number" id="edit_matric" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2" for="edit_department">
+                            Department
+                        </label>
+                        <select name="department" id="edit_department" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm">
+                            <option value="">Select Department</option>
+                            {% for dept in departments %}
+                            <option value="{{ dept.id }}">{{ dept.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2" for="edit_role">
+                            Role
+                        </label>
+                        <select name="role" id="edit_role" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm">
+                            <option value="student">Student</option>
+                            <option value="lecturer">Lecturer</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" onclick="closeEditUserModal()"
+                            class="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg">
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const roleFilter = document.getElementById('role-filter');
-    const departmentFilter = document.getElementById('department-filter');
-    const searchInput = document.getElementById('search');
+    // Registration Modal
+    function openRegistrationModal() {
+        document.getElementById('registrationModal').classList.remove('hidden');
+    }
 
-    // Set initial values from URL params
-    const urlParams = new URLSearchParams(window.location.search);
-    roleFilter.value = urlParams.get('role') || '';
-    const deptValue = urlParams.get('department');
-    departmentFilter.value = deptValue && deptValue !== 'null' ? deptValue : '';
-    searchInput.value = urlParams.get('search') || '';
+    function closeRegistrationModal() {
+        document.getElementById('registrationModal').classList.add('hidden');
+        document.getElementById('registrationForm').reset();
+        document.getElementById('rfidTag').value = '';
+        document.getElementById('fingerprintTemplate').value = '';
+    }
 
+    // Edit User Modal
+    function openEditUserModal(userId) {
+        fetch(`/admin/user/${userId}/edit`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('edit_name').value = data.name;
+                document.getElementById('edit_matric').value = data.matric_number;
+                document.getElementById('edit_department').value = data.department_id;
+                document.getElementById('edit_role').value = data.role;
+                
+                document.getElementById('editUserForm').action = `/admin/user/${userId}/edit`;
+                document.getElementById('editUserModal').classList.remove('hidden');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Failed to load user data', 'error');
+            });
+    }
+
+    function closeEditUserModal() {
+        document.getElementById('editUserModal').classList.add('hidden');
+    }
+
+    // Toggle User Status
+    function toggleUserStatus(userId, currentStatus) {
+        const action = currentStatus ? 'deactivate' : 'activate';
+        const message = `Are you sure you want to ${action} this user?`;
+        
+        Swal.fire({
+            title: 'Confirm Status Change',
+            text: message,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: currentStatus ? '#EF4444' : '#10B981',
+            cancelButtonColor: '#6B7280',
+            confirmButtonText: 'Yes, proceed'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = `/admin/user/${userId}/toggle_status`;
+            }
+        });
+    }
+
+    // Delete User
+    function confirmDeleteUser(userId) {
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "This action cannot be undone!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#EF4444',
+            cancelButtonColor: '#6B7280',
+            confirmButtonText: 'Yes, delete user'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = `/admin/user/${userId}/delete`;
+            }
+        });
+    }
+
+    // Biometric Registration Mode
+    let registrationModeEnabled = false;
+    const toggleButton = document.getElementById('toggleBiometricMode');
+    
+    toggleButton.addEventListener('click', async () => {
+        try {
+            const endpoint = registrationModeEnabled ? 'disable_registration' : 'enable_registration';
+            const response = await fetch(`/admin/api/${endpoint}`, {
+                method: 'POST'
+            });
+            
+            if (response.ok) {
+                registrationModeEnabled = !registrationModeEnabled;
+                toggleButton.textContent = registrationModeEnabled ? 'Disable Registration Mode' : 'Enable Registration Mode';
+                toggleButton.classList.toggle('bg-red-600');
+                toggleButton.classList.toggle('bg-green-600');
+                
+                showNotification(
+                    `Registration mode ${registrationModeEnabled ? 'enabled' : 'disabled'}`,
+                    'success'
+                );
+            } else {
+                throw new Error('Failed to toggle registration mode');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showNotification('Failed to toggle registration mode', 'error');
+        }
+    });
+
+    // Handle Registration Data Event
+    document.addEventListener('registrationData', (event) => {
+        const { rfidTag, fingerprintTemplate } = event.detail;
+        document.getElementById('rfidTag').value = rfidTag;
+        document.getElementById('fingerprintTemplate').value = fingerprintTemplate;
+        showNotification('Biometric data received successfully!', 'success');
+    });
+
+    // Form Submissions
+    document.getElementById('registrationForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        if (!document.getElementById('rfidTag').value || !document.getElementById('fingerprintTemplate').value) {
+            showNotification('Please scan RFID and fingerprint before submitting', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch(e.target.action, {
+                method: 'POST',
+                body: new FormData(e.target)
+            });
+
+            if (response.ok) {
+                showNotification('User registered successfully!', 'success');
+                closeRegistrationModal();
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                throw new Error('Registration failed');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showNotification('Failed to register user', 'error');
+        }
+    });
+
+    document.getElementById('editUserForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        try {
+            const response = await fetch(e.target.action, {
+                method: 'POST',
+                body: new FormData(e.target)
+            });
+
+            if (response.ok) {
+                showNotification('User updated successfully!', 'success');
+                closeEditUserModal();
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                throw new Error('Update failed');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showNotification('Failed to update user', 'error');
+        }
+    });
+
+    // Filters
+    const roleFilter = document.getElementById('roleFilter');
+    const departmentFilter = document.getElementById('departmentFilter');
+    const searchInput = document.getElementById('searchInput');
+    
     function applyFilters() {
         const role = roleFilter.value;
         const department = departmentFilter.value;
-        const search = searchInput.value;
-
-        // Build query params, only include non-empty values
-        const params = new URLSearchParams();
-        if (role && role !== 'null') params.append('role', role);
-        if (department && department !== 'null') params.append('department', department);
-        if (search && search !== 'null') params.append('search', search);
-
-        // Redirect with query params
-        window.location.href = "{{ url_for('admin.manage_users') }}" + 
-            (params.toString() ? '?' + params.toString() : '');
+        const search = searchInput.value.toLowerCase();
+        
+        const rows = document.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+            const roleMatch = !role || row.querySelector('td:nth-child(4)').textContent.toLowerCase().includes(role);
+            const departmentMatch = !department || row.querySelector('td:nth-child(3)').textContent.includes(department);
+            const searchMatch = !search || 
+                              row.querySelector('td:nth-child(1)').textContent.toLowerCase().includes(search) ||
+                              row.querySelector('td:nth-child(2)').textContent.toLowerCase().includes(search);
+            
+            row.style.display = roleMatch && departmentMatch && searchMatch ? '' : 'none';
+        });
     }
 
     roleFilter.addEventListener('change', applyFilters);
     departmentFilter.addEventListener('change', applyFilters);
-    
-    let timeout = null;
-    searchInput.addEventListener('input', function() {
-        clearTimeout(timeout);
-        timeout = setTimeout(applyFilters, 500);
-    });
-});
+    searchInput.addEventListener('input', applyFilters);
 
-function toggleUserStatus(userId) {
-    if (confirm('Are you sure you want to change this user\'s status?')) {
-        fetch("{{ url_for('admin.toggle_user_status', user_id='') }}" + userId, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': "{{ csrf_token() }}"
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                window.location.reload();
-            } else {
-                alert('Error: ' + data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while updating the user status.');
+    // Show Notification
+    function showNotification(message, type = 'success') {
+        Swal.fire({
+            text: message,
+            icon: type,
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
         });
     }
-}
+
+    // Close modals when clicking outside
+    window.onclick = function(event) {
+        if (event.target.id === 'registrationModal') {
+            closeRegistrationModal();
+        } else if (event.target.id === 'editUserModal') {
+            closeEditUserModal();
+        }
+    }
 </script>
 {% endblock %}

@@ -1,0 +1,53 @@
+<!-- Dashboard -->
+<li>
+    <a href="{{ url_for('student.dashboard') }}"
+       class="nav-link flex items-center space-x-3 {% if request.endpoint == 'student.dashboard' %}active{% endif %}">
+        <i class="fas fa-chart-line w-5"></i>
+        <span>Dashboard</span>
+    </a>
+</li>
+
+<!-- My Courses -->
+<li>
+    <a href="{{ url_for('student.courses') }}"
+       class="nav-link flex items-center space-x-3 {% if request.endpoint == 'student.courses' %}active{% endif %}">
+        <i class="fas fa-book w-5"></i>
+        <span>My Courses</span>
+    </a>
+</li>
+
+<!-- My Attendance -->
+<li>
+    <a href="{{ url_for('student.attendance') }}"
+       class="nav-link flex items-center space-x-3 {% if request.endpoint == 'student.attendance' %}active{% endif %}">
+        <i class="fas fa-clipboard-list w-5"></i>
+        <span>My Attendance</span>
+    </a>
+</li>
+
+<!-- Mark Attendance -->
+<li>
+    <a href="{{ url_for('student.mark_attendance') }}"
+       class="nav-link flex items-center space-x-3 {% if request.endpoint == 'student.mark_attendance' %}active{% endif %}">
+        <i class="fas fa-qrcode w-5"></i>
+        <span>Mark Attendance</span>
+    </a>
+</li>
+
+<!-- Timetable -->
+<li>
+    <a href="{{ url_for('student.timetable') }}"
+       class="nav-link flex items-center space-x-3 {% if request.endpoint == 'student.timetable' %}active{% endif %}">
+        <i class="fas fa-calendar-alt w-5"></i>
+        <span>Timetable</span>
+    </a>
+</li>
+
+<!-- Profile -->
+<li>
+    <a href="{{ url_for('student.profile') }}"
+       class="nav-link flex items-center space-x-3 {% if request.endpoint == 'student.profile' %}active{% endif %}">
+        <i class="fas fa-user w-5"></i>
+        <span>Profile</span>
+    </a>
+</li>

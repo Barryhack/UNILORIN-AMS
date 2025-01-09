@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .sidebar {
+        transition: all 0.3s ease-in-out;
+    }
+    
+    @media (max-width: 768px) {
+        .sidebar {
+            transform: translateX(-100%);
+        }
+        .sidebar.show {
+            transform: translateX(0);
+        }
+    }
+
+    .notification-dot {
+        position: absolute;
+        top: -1px;
+        right: -1px;
+        height: 8px;
+        width: 8px;
+        background-color: #EF4444;
+        border-radius: 50%;
+    }
+</style>
+{% endblock %}
+
+{% block navbar %}
+<!-- Sidebar -->
+<div class="sidebar fixed inset-y-0 left-0 w-64 bg-gray-800 overflow-y-auto z-40 md:translate-x-0">
+    <div class="flex items-center justify-center h-16 bg-gray-900">
+        <span class="text-white text-xl font-semibold">Student Dashboard</span>
+    </div>
+    
+    <nav class="mt-5">
+        <div class="px-3 space-y-1">
+            <!-- Dashboard -->
+            <a href="{{ url_for('student.dashboard') }}" 
+               class="flex items-center px-4 py-2 text-sm font-medium text-white rounded-md hover:bg-gray-700 group {% if request.endpoint == 'student.dashboard' %}bg-gray-900{% endif %}">
+                <i class="fas fa-home mr-3"></i>
+                Dashboard
+            </a>
+
+            <!-- View Courses -->
+            <a href="{{ url_for('student.courses') }}" 
+               class="flex items-center px-4 py-2 text-sm font-medium text-gray-300 rounded-md hover:bg-gray-700 hover:text-white group {% if request.endpoint == 'student.courses' %}bg-gray-900{% endif %}">
+                <i class="fas fa-book mr-3"></i>
+                My Courses
+            </a>
+
+            <!-- View Attendance -->
+            <a href="{{ url_for('student.attendance') }}" 
+               class="flex items-center px-4 py-2 text-sm font-medium text-gray-300 rounded-md hover:bg-gray-700 hover:text-white group {% if request.endpoint == 'student.attendance' %}bg-gray-900{% endif %}">
+                <i class="fas fa-calendar-check mr-3"></i>
+                My Attendance
+            </a>
+
+            <!-- Reports -->
+            <a href="{{ url_for('student.reports') }}" 
+               class="flex items-center px-4 py-2 text-sm font-medium text-gray-300 rounded-md hover:bg-gray-700 hover:text-white group {% if request.endpoint == 'student.reports' %}bg-gray-900{% endif %}">
+                <i class="fas fa-chart-bar mr-3"></i>
+                Reports
+            </a>
+
+            <!-- Profile -->
+            <a href="{{ url_for('student.profile') }}" 
+               class="flex items-center px-4 py-2 text-sm font-medium text-gray-300 rounded-md hover:bg-gray-700 hover:text-white group {% if request.endpoint == 'student.profile' %}bg-gray-900{% endif %}">
+                <i class="fas fa-user mr-3"></i>
+                Profile
+            </a>
+
+            <!-- Settings -->
+            <a href="{{ url_for('student.settings') }}" 
+               class="flex items-center px-4 py-2 text-sm font-medium text-gray-300 rounded-md hover:bg-gray-700 hover:text-white group {% if request.endpoint == 'student.settings' %}bg-gray-900{% endif %}">
+                <i class="fas fa-cog mr-3"></i>
+                Settings
+            </a>
+
+            <!-- Logout -->
+            <a href="{{ url_for('auth.logout') }}" 
+               class="flex items-center px-4 py-2 text-sm font-medium text-gray-300 rounded-md hover:bg-gray-700 hover:text-white group">
+                <i class="fas fa-sign-out-alt mr-3"></i>
+                Logout
+            </a>
+        </div>
+    </nav>
+</div>
+
+<!-- Mobile menu button -->
+<div class="fixed top-0 left-0 z-50 p-4 md:hidden">
+    <button type="button" class="text-gray-500 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500" onclick="toggleSidebar()">
+        <span class="sr-only">Open sidebar</span>
+        <i class="fas fa-bars text-xl"></i>
+    </button>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+function toggleSidebar() {
+    const sidebar = document.querySelector('.sidebar');
+    sidebar.classList.toggle('show');
+}
+
+document.addEventListener('click', function(event) {
+    const sidebar = document.querySelector('.sidebar');
+    const menuButton = document.querySelector('button[onclick="toggleSidebar()"]');
+    
+    if (window.innerWidth < 768 && sidebar.classList.contains('show')) {
+        if (!sidebar.contains(event.target) && !menuButton.contains(event.target)) {
+            sidebar.classList.remove('show');
+        }
+    }
+});
+
+// Close sidebar when window is resized to desktop view
+window.addEventListener('resize', function() {
+    const sidebar = document.querySelector('.sidebar');
+    if (window.innerWidth >= 768) {
+        sidebar.classList.remove('show');
+    }
+});
+</script>
+{% endblock %}

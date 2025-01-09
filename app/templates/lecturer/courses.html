@@ -1,45 +1,145 @@
-{% extends "base.html" %}
+{% extends "lecturer/base_lecturer.html" %}
+
+{% block title %}My Courses{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold text-gray-800 dark:text-white">My Courses</h1>
+<div class="container mx-auto px-4">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">My Courses</h1>
+                <p class="text-gray-600 mt-2">Manage and view your assigned courses</p>
+            </div>
+            <div class="flex space-x-4">
+                <div class="relative">
+                    <input type="text" id="courseSearch" placeholder="Search courses..." 
+                           class="w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <div class="absolute left-3 top-2.5">
+                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </div>
+                </div>
+                <select id="semesterFilter" class="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">All Semesters</option>
+                    <option value="1">Semester 1</option>
+                    <option value="2">Semester 2</option>
+                    <option value="3">Semester 3</option>
+                </select>
+            </div>
+        </div>
     </div>
 
-    {% if courses %}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <!-- Course Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="courseGrid">
+        {% if courses %}
         {% for course in courses %}
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden course-card hover:shadow-xl transition-shadow duration-300"
+             data-course-code="{{ course.code }}" data-semester="{{ course.semester }}">
             <div class="p-6">
-                <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-2">{{ course.code }}</h3>
-                <h4 class="text-lg text-gray-700 dark:text-gray-300 mb-4">{{ course.title }}</h4>
-                
-                <div class="text-sm text-gray-600 dark:text-gray-400 space-y-2">
-                    <p><span class="font-medium">Department:</span> {{ course.department.name }}</p>
-                    <p><span class="font-medium">Level:</span> {{ course.level }}00 Level</p>
-                    <p><span class="font-medium">Units:</span> {{ course.units }}</p>
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center">
+                        <span class="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+                            <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                            </svg>
+                        </span>
+                        <div class="ml-4">
+                            <h2 class="text-xl font-semibold text-gray-800">{{ course.code }}</h2>
+                            <p class="text-gray-600">{{ course.title }}</p>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="mt-6 flex space-x-4">
-                    <a href="{{ url_for('lecturer.view_course', course_id=course.id) }}" 
-                       class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        <i class="fas fa-eye mr-2"></i>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Level</span>
+                        <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">{{ course.level }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Students</span>
+                        <div class="flex items-center">
+                            <svg class="h-5 w-5 text-gray-400 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
+                            <span class="font-medium text-gray-800">{{ course.total_students }}</span>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Attendance Rate</span>
+                        <div class="flex items-center space-x-2">
+                            <div class="w-24 bg-gray-200 rounded-full h-2">
+                                <div class="bg-blue-600 h-2 rounded-full" style="width: {{ course.attendance_percentage|default(0) }}%"></div>
+                            </div>
+                            <span class="font-medium text-gray-800">{{ "%.1f"|format(course.attendance_percentage|default(0)) }}%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 grid grid-cols-2 gap-4">
+                    <a href="{{ url_for('lecturer.view_course', course_id=course.id) }}"
+                       class="flex items-center justify-center bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors">
+                        <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                        </svg>
                         View Details
                     </a>
-                    <a href="{{ url_for('lecturer.course_attendance', course_id=course.id) }}"
-                       class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                        <i class="fas fa-clipboard-list mr-2"></i>
-                        Attendance
+                    <a href="{{ url_for('lecturer.course_attendance_report', course_id=course.id) }}"
+                       class="flex items-center justify-center bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition-colors">
+                        <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                        Report
                     </a>
                 </div>
             </div>
         </div>
         {% endfor %}
+        {% else %}
+        <div class="col-span-full">
+            <div class="text-center py-12 bg-white rounded-lg shadow">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">No courses found</h3>
+                <p class="mt-1 text-sm text-gray-500">You haven't been assigned to any courses yet.</p>
+            </div>
+        </div>
+        {% endif %}
     </div>
-    {% else %}
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-        <p class="text-gray-600 dark:text-gray-400 text-center">You are not assigned to any courses yet.</p>
-    </div>
-    {% endif %}
 </div>
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const courseSearch = document.getElementById('courseSearch');
+    const semesterFilter = document.getElementById('semesterFilter');
+    const courseCards = document.querySelectorAll('.course-card');
+
+    function filterCourses() {
+        const searchTerm = courseSearch.value.toLowerCase();
+        const selectedSemester = semesterFilter.value;
+
+        courseCards.forEach(card => {
+            const courseCode = card.dataset.courseCode.toLowerCase();
+            const semester = card.dataset.semester;
+            const matchesSearch = courseCode.includes(searchTerm);
+            const matchesSemester = !selectedSemester || semester === selectedSemester;
+            
+            if (matchesSearch && matchesSemester) {
+                card.style.display = '';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+
+    courseSearch.addEventListener('input', filterCourses);
+    semesterFilter.addEventListener('change', filterCourses);
+});
+</script>
+{% endblock %}
 {% endblock %}

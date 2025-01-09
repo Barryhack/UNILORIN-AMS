@@ -1,0 +1,260 @@
+{% extends "lecturer/base_lecturer.html" %}
+
+{% block title %}Take Attendance - {{ lecture.course.code }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4">
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
+            <div>
+                <div class="flex items-center">
+                    <span class="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+                        <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                        </svg>
+                    </span>
+                    <div class="ml-4">
+                        <h1 class="text-3xl font-bold text-gray-800">Take Attendance</h1>
+                        <p class="text-gray-600 mt-1">{{ lecture.course.code }} - {{ lecture.course.title }}</p>
+                    </div>
+                </div>
+                <div class="mt-4 flex flex-wrap gap-4">
+                    <div class="flex items-center">
+                        <svg class="h-5 w-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        <span class="text-gray-600">{{ lecture.date.strftime('%d %B, %Y') }}</span>
+                    </div>
+                    <div class="flex items-center">
+                        <svg class="h-5 w-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span class="text-gray-600">{{ lecture.start_time.strftime('%H:%M') }} - {{ lecture.end_time.strftime('%H:%M') }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-6 md:mt-0">
+                <button type="button" id="saveAttendance"
+                        class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    Save Attendance
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+        <div class="flex flex-wrap gap-4">
+            <button type="button" id="markAllPresent"
+                    class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Mark All Present
+            </button>
+            <button type="button" id="markAllAbsent"
+                    class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Mark All Absent
+            </button>
+            <button type="button" id="resetAll"
+                    class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <svg class="h-5 w-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+                Reset All
+            </button>
+        </div>
+    </div>
+
+    <!-- Student List -->
+    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center">
+                    <h3 class="text-lg font-medium text-gray-900">Student List</h3>
+                    <span id="attendanceStats" class="ml-4 px-3 py-1 text-sm rounded-full bg-gray-100 text-gray-600">
+                        Present: <span id="presentCount">0</span> / {{ students|length }}
+                    </span>
+                </div>
+                <div class="relative">
+                    <input type="text" id="studentSearch" placeholder="Search students..." 
+                           class="w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <div class="absolute left-3 top-2.5">
+                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <form id="attendanceForm" method="POST" action="{{ url_for('lecturer.save_attendance', lecture_id=lecture.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Student ID
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Name
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Department
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Overall Attendance
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Status
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200" id="studentTableBody">
+                        {% for student in students %}
+                        <tr class="hover:bg-gray-50 student-row" data-student-id="{{ student.id }}" data-student-name="{{ student.name }}">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                {{ student.student_id }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
+                                        <span class="text-sm font-medium text-gray-600">
+                                            {{ student.name[:2].upper() }}
+                                        </span>
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900">{{ student.name }}</div>
+                                        <div class="text-sm text-gray-500">{{ student.email }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                    {{ student.department }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="w-24 bg-gray-200 rounded-full h-2 mr-2">
+                                        <div class="bg-blue-600 h-2 rounded-full" style="width: {{ student.attendance_rate }}%"></div>
+                                    </div>
+                                    <span class="text-sm text-gray-900">{{ "%.1f"|format(student.attendance_rate) }}%</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center space-x-4">
+                                    <label class="inline-flex items-center">
+                                        <input type="radio" name="attendance_{{ student.id }}" value="present" 
+                                               class="attendance-radio form-radio h-4 w-4 text-green-600 focus:ring-green-500"
+                                               {% if attendance_data.get(student.id) == 'present' %}checked{% endif %}>
+                                        <span class="ml-2 text-sm text-gray-700">Present</span>
+                                    </label>
+                                    <label class="inline-flex items-center">
+                                        <input type="radio" name="attendance_{{ student.id }}" value="absent"
+                                               class="attendance-radio form-radio h-4 w-4 text-red-600 focus:ring-red-500"
+                                               {% if attendance_data.get(student.id) == 'absent' %}checked{% endif %}>
+                                        <span class="ml-2 text-sm text-gray-700">Absent</span>
+                                    </label>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const studentSearch = document.getElementById('studentSearch');
+    const studentRows = document.querySelectorAll('.student-row');
+    const markAllPresentBtn = document.getElementById('markAllPresent');
+    const markAllAbsentBtn = document.getElementById('markAllAbsent');
+    const resetAllBtn = document.getElementById('resetAll');
+    const saveAttendanceBtn = document.getElementById('saveAttendance');
+    const attendanceForm = document.getElementById('attendanceForm');
+    const presentCountElement = document.getElementById('presentCount');
+    const attendanceRadios = document.querySelectorAll('.attendance-radio');
+
+    function updatePresentCount() {
+        const presentCount = document.querySelectorAll('input[value="present"]:checked').length;
+        presentCountElement.textContent = presentCount;
+    }
+
+    // Search functionality
+    studentSearch.addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        
+        studentRows.forEach(row => {
+            const studentId = row.dataset.studentId.toLowerCase();
+            const studentName = row.dataset.studentName.toLowerCase();
+            
+            if (studentId.includes(searchTerm) || studentName.includes(searchTerm)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+
+    // Mark all present
+    markAllPresentBtn.addEventListener('click', function() {
+        document.querySelectorAll('input[value="present"]').forEach(radio => {
+            radio.checked = true;
+        });
+        updatePresentCount();
+    });
+
+    // Mark all absent
+    markAllAbsentBtn.addEventListener('click', function() {
+        document.querySelectorAll('input[value="absent"]').forEach(radio => {
+            radio.checked = true;
+        });
+        updatePresentCount();
+    });
+
+    // Reset all
+    resetAllBtn.addEventListener('click', function() {
+        document.querySelectorAll('.attendance-radio').forEach(radio => {
+            radio.checked = false;
+        });
+        updatePresentCount();
+    });
+
+    // Save attendance
+    saveAttendanceBtn.addEventListener('click', function() {
+        // Check if all students have attendance marked
+        const totalStudents = studentRows.length;
+        const markedStudents = document.querySelectorAll('.attendance-radio:checked').length / 2; // Divide by 2 because we have 2 radios per student
+
+        if (markedStudents < totalStudents) {
+            if (!confirm('Some students do not have attendance marked. Do you want to proceed?')) {
+                return;
+            }
+        }
+        attendanceForm.submit();
+    });
+
+    // Update present count when radio buttons change
+    attendanceRadios.forEach(radio => {
+        radio.addEventListener('change', updatePresentCount);
+    });
+
+    // Initial present count
+    updatePresentCount();
+});
+</script>
+{% endblock %}
+{% endblock %}

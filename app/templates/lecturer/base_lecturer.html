@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    .sidebar {
+        transition: all 0.3s ease-in-out;
+    }
+    
+    @media (max-width: 768px) {
+        .sidebar {
+            transform: translateX(-100%);
+        }
+        .sidebar.show {
+            transform: translateX(0);
+        }
+    }
+
+    .notification-dot {
+        position: absolute;
+        top: -1px;
+        right: -1px;
+        height: 8px;
+        width: 8px;
+        background-color: #EF4444;
+        border-radius: 50%;
+    }
+</style>
+{% endblock %}
+
+{% block navbar %}
+<!-- Mobile Menu Button -->
+<button id="mobile-menu-button" class="md:hidden fixed top-4 left-4 z-50 p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none">
+    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+    </svg>
+</button>
+
+<!-- Sidebar -->
+<div class="sidebar fixed inset-y-0 left-0 w-64 bg-gray-800 overflow-y-auto z-40 md:translate-x-0">
+    <div class="flex items-center justify-center h-16 bg-gray-900">
+        <span class="text-white text-xl font-semibold">Lecturer Dashboard</span>
+    </div>
+    
+    <nav class="mt-4">
+        <div class="px-4 py-2">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <img class="h-10 w-10 rounded-full" src="{{ url_for('static', filename='images/default-avatar.png') }}" alt="Profile">
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-white">{{ current_user.name }}</p>
+                    <p class="text-xs text-gray-400">{{ current_user.email }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="px-2 mt-4 space-y-1">
+            <a href="{{ url_for('lecturer.dashboard') }}" 
+               class="group flex items-center px-2 py-2 text-base font-medium rounded-md {% if request.endpoint == 'lecturer.dashboard' %}bg-gray-900 text-white{% else %}text-gray-300 hover:bg-gray-700 hover:text-white{% endif %}">
+                <svg class="mr-4 h-6 w-6 {% if request.endpoint == 'lecturer.dashboard' %}text-white{% else %}text-gray-400 group-hover:text-gray-300{% endif %}" 
+                     fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                          d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                Dashboard
+            </a>
+
+            <a href="{{ url_for('lecturer.view_courses') }}" 
+               class="group flex items-center px-2 py-2 text-base font-medium rounded-md {% if request.endpoint == 'lecturer.view_courses' %}bg-gray-900 text-white{% else %}text-gray-300 hover:bg-gray-700 hover:text-white{% endif %}">
+                <svg class="mr-4 h-6 w-6 {% if request.endpoint == 'lecturer.view_courses' %}text-white{% else %}text-gray-400 group-hover:text-gray-300{% endif %}"
+                     fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+                My Courses
+            </a>
+
+            <div id="notification-button" class="relative">
+                <button class="w-full group flex items-center px-2 py-2 text-base font-medium rounded-md text-gray-300 hover:bg-gray-700 hover:text-white">
+                    <svg class="mr-4 h-6 w-6 text-gray-400 group-hover:text-gray-300" 
+                         fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    Notifications
+                    <span id="notification-dot" class="notification-dot hidden"></span>
+                </button>
+            </div>
+
+            <a href="{{ url_for('auth.logout') }}" 
+               class="group flex items-center px-2 py-2 text-base font-medium rounded-md text-gray-300 hover:bg-gray-700 hover:text-white">
+                <svg class="mr-4 h-6 w-6 text-gray-400 group-hover:text-gray-300" 
+                     fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Logout
+            </a>
+        </div>
+    </nav>
+</div>
+
+<!-- Notification Modal -->
+<div id="notification-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50">
+    <div class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-xl w-11/12 max-w-lg">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium">Upcoming Lectures</h3>
+                <button id="close-notification" class="text-gray-400 hover:text-gray-500">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div id="notification-content" class="space-y-4">
+                <!-- Notifications will be dynamically inserted here -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content_wrapper %}
+<div class="md:pl-64 flex flex-col flex-1">
+    <main class="flex-1">
+        <div class="py-6">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const mobileMenuButton = document.getElementById('mobile-menu-button');
+    const sidebar = document.querySelector('.sidebar');
+    const notificationButton = document.getElementById('notification-button');
+    const notificationModal = document.getElementById('notification-modal');
+    const closeNotification = document.getElementById('close-notification');
+    const notificationContent = document.getElementById('notification-content');
+    const notificationDot = document.getElementById('notification-dot');
+
+    // Mobile menu toggle
+    mobileMenuButton.addEventListener('click', () => {
+        sidebar.classList.toggle('show');
+    });
+
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', (e) => {
+        if (window.innerWidth < 768 && 
+            !sidebar.contains(e.target) && 
+            !mobileMenuButton.contains(e.target)) {
+            sidebar.classList.remove('show');
+        }
+    });
+
+    // Notification modal
+    notificationButton.addEventListener('click', () => {
+        notificationModal.classList.remove('hidden');
+        checkUpcomingLectures();
+    });
+
+    closeNotification.addEventListener('click', () => {
+        notificationModal.classList.add('hidden');
+    });
+
+    // Close modal when clicking outside
+    notificationModal.addEventListener('click', (e) => {
+        if (e.target === notificationModal) {
+            notificationModal.classList.add('hidden');
+        }
+    });
+
+    // Check for upcoming lectures
+    function checkUpcomingLectures() {
+        fetch("{{ url_for('lecturer.check_upcoming_lectures') }}")
+            .then(response => response.json())
+            .then(data => {
+                notificationContent.innerHTML = '';
+                
+                if (data.upcoming_lectures.length === 0) {
+                    notificationContent.innerHTML = `
+                        <div class="text-center py-4 text-gray-500">
+                            No upcoming lectures in the next hour
+                        </div>
+                    `;
+                    notificationDot.classList.add('hidden');
+                } else {
+                    data.upcoming_lectures.forEach(lecture => {
+                        const div = document.createElement('div');
+                        div.className = 'p-4 bg-gray-50 rounded-lg';
+                        div.innerHTML = `
+                            <div class="font-medium text-gray-900">${lecture.course_code}</div>
+                            <div class="text-sm text-gray-500">${lecture.course_title}</div>
+                            <div class="mt-2 text-sm">
+                                <span class="text-blue-600">Starting in ${lecture.minutes_until} minutes</span>
+                                <span class="text-gray-500">(${lecture.start_time})</span>
+                            </div>
+                        `;
+                        notificationContent.appendChild(div);
+                    });
+                    notificationDot.classList.remove('hidden');
+                }
+            })
+            .catch(error => {
+                console.error('Error checking upcoming lectures:', error);
+                notificationContent.innerHTML = `
+                    <div class="text-center py-4 text-red-500">
+                        Error loading notifications
+                    </div>
+                `;
+            });
+    }
+
+    // Check for upcoming lectures every minute
+    setInterval(checkUpcomingLectures, 60000);
+    checkUpcomingLectures(); // Initial check
+});
+</script>
+{% endblock %}

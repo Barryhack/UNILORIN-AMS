@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="p-4 bg-white rounded-lg shadow-xs dark:bg-gray-800">
+    <h2 class="my-6 text-2xl font-semibold text-gray-700 dark:text-gray-200">
+        Reports
+    </h2>
+    
+    <!-- Reports Content -->
+    <div class="grid gap-6 mb-8 md:grid-cols-2">
+        <!-- Attendance Report -->
+        <div class="min-w-0 p-4 bg-white rounded-lg shadow-xs dark:bg-gray-800">
+            <h4 class="mb-4 font-semibold text-gray-600 dark:text-gray-300">
+                Attendance Overview
+            </h4>
+            <!-- Add attendance report content here -->
+        </div>
+
+        <!-- User Activity Report -->
+        <div class="min-w-0 p-4 bg-white rounded-lg shadow-xs dark:bg-gray-800">
+            <h4 class="mb-4 font-semibold text-gray-600 dark:text-gray-300">
+                User Activity
+            </h4>
+            <!-- Add user activity report content here -->
+        </div>
+    </div>
+</div>
+{% endblock %}

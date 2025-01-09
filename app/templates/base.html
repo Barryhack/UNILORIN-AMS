@@ -1,228 +1,286 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full">
+<html lang="en" class="h-full {% if theme == 'dark' %}dark{% endif %}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Attendance Management System{% endblock %}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Styles -->
+    <link href="{{ url_for('static', filename='css/tailwind.css') }}" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    },
-                    colors: {
-                        primary: {
-                            50: '#f0f9ff',
-                            100: '#e0f2fe',
-                            200: '#bae6fd',
-                            300: '#7dd3fc',
-                            400: '#38bdf8',
-                            500: '#0ea5e9',
-                            600: '#0284c7',
-                            700: '#0369a1',
-                            800: '#075985',
-                            900: '#0c4a6e',
-                        },
-                    },
-                    animation: {
-                        'fade-in': 'fadeIn 0.5s ease-out',
-                        'slide-in': 'slideIn 0.5s ease-out',
-                    },
-                    keyframes: {
-                        fadeIn: {
-                            '0%': { opacity: '0' },
-                            '100%': { opacity: '1' },
-                        },
-                        slideIn: {
-                            '0%': { transform: 'translateY(-10px)', opacity: '0' },
-                            '100%': { transform: 'translateY(0)', opacity: '1' },
-                        },
-                    },
-                },
-            },
-        }
-    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
     <style>
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
-        }
-        .dark ::-webkit-scrollbar-thumb {
-            background: #475569;
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
         }
         
-        /* Smooth Transitions */
-        * {
-            transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, color 0.2s ease-in-out;
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background-color: #f9fafb;
         }
-        
-        /* Card Hover Effects */
-        .hover-card {
+
+        .scroll-container {
+            overflow-y: auto;
+            overflow-x: hidden;
+            height: 100%;
+            width: 100%;
+        }
+
+        .scroll-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .scroll-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .scroll-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
+        }
+
+        .scroll-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        .nav-link {
+            position: relative;
             transition: all 0.3s ease;
         }
-        .hover-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.1);
+
+        .nav-link::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background-color: #002147;
+            transform: scaleY(0);
+            transition: transform 0.2s;
         }
-        .dark .hover-card:hover {
-            box-shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.3);
+
+        .nav-link:hover::before,
+        .nav-link.active::before {
+            transform: scaleY(1);
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            background-color: rgba(0, 33, 71, 0.05);
+            color: #002147;
+        }
+
+        .nav-link:hover i,
+        .nav-link.active i {
+            color: #002147;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            background-color: #ef4444;
+            color: white;
+            font-size: 0.75rem;
+            line-height: 1;
+        }
+
+        .dropdown-menu {
+            transform-origin: top right;
+            transition: all 0.1s ease-out;
+        }
+
+        .dropdown-menu.hidden {
+            transform: scale(0.95);
+            opacity: 0;
         }
     </style>
+    
+    {% block styles %}{% endblock %}
 </head>
-<body class="h-full bg-gray-50 dark:bg-gray-900 font-sans antialiased">
-    <!-- Navigation -->
-    <nav class="fixed top-0 z-50 w-full bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
+<body class="h-full font-sans antialiased">
+    <!-- Top Navigation -->
+    <nav class="fixed top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
         <div class="px-3 py-3 lg:px-5 lg:pl-3">
             <div class="flex items-center justify-between">
                 <div class="flex items-center justify-start">
-                    <button id="toggleSidebar" aria-expanded="true" aria-controls="sidebar" class="p-2 text-gray-600 rounded-lg lg:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600">
-                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                            <path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"></path>
-                        </svg>
+                    <button id="sidebar-toggle" class="inline-flex items-center p-2 text-sm text-gray-500 rounded-lg lg:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600">
+                        <i class="fas fa-bars w-6 h-6"></i>
                     </button>
                     <a href="/" class="flex ml-2 md:mr-24">
-                        <span class="self-center text-xl font-semibold sm:text-2xl whitespace-nowrap text-gray-800 dark:text-white">AMS</span>
+                        <span class="self-center text-xl font-semibold sm:text-2xl whitespace-nowrap text-[#002147]">AMS</span>
                     </a>
                 </div>
                 <div class="flex items-center">
-                    <div class="flex items-center ml-3">
-                        <button id="theme-toggle" type="button" class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5">
-                            <svg id="theme-toggle-dark-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
-                            </svg>
-                            <svg id="theme-toggle-light-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"></path>
-                            </svg>
+                    <!-- Theme Toggle -->
+                    <button id="theme-toggle" class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5 mr-2">
+                        <i class="fas fa-sun w-5 h-5" id="theme-toggle-light-icon"></i>
+                        <i class="fas fa-moon w-5 h-5 hidden" id="theme-toggle-dark-icon"></i>
+                    </button>
+
+                    <!-- Notifications -->
+                    <div class="relative">
+                        <button id="notifications-button" class="relative p-2 text-gray-500 rounded-lg hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700">
+                            <i class="fas fa-bell w-5 h-5"></i>
+                            <span class="notification-badge">3</span>
                         </button>
-                        {% if current_user.is_authenticated %}
-                        <div class="relative ml-3">
-                            <button type="button" class="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600" id="user-menu-button" aria-expanded="false">
-                                <span class="sr-only">Open user menu</span>
-                                <div class="relative w-8 h-8 overflow-hidden bg-gray-100 rounded-full dark:bg-gray-600">
-                                    <svg class="absolute w-10 h-10 text-gray-400 -left-1" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
-                                    </svg>
-                                </div>
-                            </button>
-                            <div class="hidden absolute right-0 z-50 my-4 text-base list-none bg-white divide-y divide-gray-100 rounded shadow dark:bg-gray-700 dark:divide-gray-600" id="user-dropdown">
-                                <div class="px-4 py-3">
-                                    <span class="block text-sm text-gray-900 dark:text-white">{{ current_user.name }}</span>
-                                    <span class="block text-sm font-medium text-gray-500 truncate dark:text-gray-400">{{ current_user.email }}</span>
-                                </div>
-                                <ul class="py-1" aria-labelledby="user-menu-button">
-                                    <li>
-                                        <a href="{{ url_for('auth.logout') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Sign out</a>
-                                    </li>
-                                </ul>
+                        <!-- Notifications dropdown -->
+                        <div id="notifications-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg dark:bg-gray-700 border border-gray-200 dark:border-gray-600">
+                            <div class="p-4 border-b border-gray-200 dark:border-gray-600">
+                                <h6 class="text-sm font-medium text-gray-900 dark:text-white">Notifications</h6>
                             </div>
+                            <div class="divide-y divide-gray-200 dark:divide-gray-600">
+                                <a href="#" class="flex px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-600">
+                                    <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center mr-3">
+                                        <i class="fas fa-user-plus text-blue-500 dark:text-blue-300"></i>
+                                    </div>
+                                    <div class="w-full">
+                                        <p class="text-sm text-gray-900 dark:text-white">New user registration</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">2 minutes ago</p>
+                                    </div>
+                                </a>
+                                <!-- Add more notification items here -->
+                            </div>
+                            <a href="#" class="block py-2 text-sm font-medium text-center text-gray-900 bg-gray-50 hover:bg-gray-100 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 rounded-b-lg">
+                                View all notifications
+                            </a>
                         </div>
-                        {% endif %}
+                    </div>
+
+                    <!-- Profile -->
+                    <div class="relative ml-3">
+                        <button id="profile-button" class="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600">
+                            <span class="sr-only">Open user menu</span>
+                            <div class="w-8 h-8 rounded-full bg-[#002147] flex items-center justify-center">
+                                <i class="fas fa-user text-[#FFD700]"></i>
+                            </div>
+                        </button>
+                        <!-- Profile dropdown -->
+                        <div id="profile-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg dark:bg-gray-700 border border-gray-200 dark:border-gray-600">
+                            <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-600">
+                                <p class="text-sm text-gray-900 dark:text-white">{{ current_user.name }}</p>
+                                <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ current_user.email }}</p>
+                            </div>
+                            <ul>
+                                <li>
+                                    <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white">
+                                        <i class="fas fa-user-circle mr-2"></i> Profile
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white">
+                                        <i class="fas fa-cog mr-2"></i> Settings
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{{ url_for('auth.logout') }}" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-600">
+                                        <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </nav>
 
+    <!-- Error Container -->
+    <div id="error-container" class="fixed top-16 left-1/2 transform -translate-x-1/2 z-50 hidden w-96">
+        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md" role="alert">
+            <div class="flex items-center">
+                <div class="py-1">
+                    <i class="fas fa-exclamation-circle"></i>
+                </div>
+                <div class="ml-3">
+                    <p id="error-message" class="text-sm"></p>
+                </div>
+                <div class="ml-auto pl-3">
+                    <button type="button" class="text-red-500 hover:text-red-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Sidebar -->
-    <aside id="sidebar" class="fixed top-0 left-0 z-40 w-64 h-screen pt-20 transition-transform -translate-x-full bg-white border-r border-gray-200 lg:translate-x-0 dark:bg-gray-800 dark:border-gray-700" aria-label="Sidebar">
+    <aside id="sidebar" class="fixed top-0 left-0 z-40 w-64 h-screen pt-20 transition-transform -translate-x-full bg-white border-r border-gray-200 lg:translate-x-0 dark:bg-gray-800 dark:border-gray-700">
         {% if current_user.is_authenticated %}
         <div class="flex flex-col h-full">
-            <div class="flex items-center justify-center p-4 border-b border-gray-200 dark:border-gray-700">
-                <a href="{{ url_for('main.index') }}" class="flex items-center space-x-3">
-                    <picture>
-                        <source srcset="{{ url_for('static', filename='img/unilorin-logo.png') }}" type="image/png">
-                        <source srcset="{{ url_for('static', filename='img/logo.svg') }}" type="image/svg+xml">
-                        <img src="{{ url_for('static', filename='img/unilorin-logo.png') }}" alt="University Logo" class="w-10 h-10 object-contain">
-                    </picture>
-                    <span class="text-xl font-bold text-gray-800 dark:text-white">AMS</span>
-                </a>
+            <!-- User Profile -->
+            <div class="flex items-center justify-center p-6 border-b border-gray-200 dark:border-gray-700">
+                <div class="flex flex-col items-center">
+                    <div class="w-24 h-24 mb-4 rounded-full bg-[#002147] flex items-center justify-center shadow-lg">
+                        <i class="fas fa-user text-4xl text-[#FFD700]"></i>
+                    </div>
+                    <h5 class="mb-1 text-xl font-semibold text-gray-900 dark:text-white">{{ current_user.name }}</h5>
+                    <span class="text-sm text-gray-500 dark:text-gray-400">{{ current_user.role.title() }}</span>
+                </div>
             </div>
-            
-            <div class="mt-6">
-                <ul class="space-y-2 px-4">
+
+            <!-- Navigation -->
+            <div class="py-4 overflow-y-auto scroll-container">
+                <ul class="space-y-1 px-3">
                     {% if current_user.role == 'admin' %}
                     <li>
-                        <a href="{{ url_for('admin.dashboard') }}" class="flex items-center space-x-3 text-gray-300 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 {% if request.endpoint == 'admin.dashboard' %}bg-gray-100 text-gray-800 dark:bg-gray-700 text-white{% endif %}">
-                            <i class="fas fa-chart-line w-5 h-5"></i>
-                            <span>Dashboard</span>
+                        <a href="{{ url_for('admin.dashboard') }}" class="nav-link flex items-center p-3 text-gray-700 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                            <i class="fas fa-tachometer-alt w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"></i>
+                            <span class="ml-3 font-medium">Dashboard</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{{ url_for('admin.manage_users') }}" class="flex items-center space-x-3 text-gray-300 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 {% if request.endpoint == 'admin.manage_users' %}bg-gray-100 text-gray-800 dark:bg-gray-700 text-white{% endif %}">
-                            <i class="fas fa-users w-5 h-5"></i>
-                            <span>Users</span>
+                        <a href="{{ url_for('admin.users') }}" class="nav-link flex items-center p-3 text-gray-700 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                            <i class="fas fa-users w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"></i>
+                            <span class="ml-3 font-medium">Users</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{{ url_for('admin.manage_departments') }}" class="flex items-center space-x-3 text-gray-300 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 {% if request.endpoint == 'admin.manage_departments' %}bg-gray-100 text-gray-800 dark:bg-gray-700 text-white{% endif %}">
-                            <i class="fas fa-building w-5 h-5"></i>
-                            <span>Departments</span>
+                        <a href="{{ url_for('admin.departments') }}" class="nav-link flex items-center p-3 text-gray-700 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                            <i class="fas fa-building w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"></i>
+                            <span class="ml-3 font-medium">Departments</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{{ url_for('admin.settings') }}" class="flex items-center space-x-3 text-gray-300 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 {% if request.endpoint == 'admin.settings' %}bg-gray-100 text-gray-800 dark:bg-gray-700 text-white{% endif %}">
-                            <i class="fas fa-cogs w-5 h-5"></i>
-                            <span>Settings</span>
-                        </a>
-                    </li>
-                    {% elif current_user.role == 'lecturer' %}
-                    <li>
-                        <a href="{{ url_for('lecturer.courses') }}" class="flex items-center space-x-3 text-gray-300 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 {% if request.endpoint == 'lecturer.courses' %}bg-gray-100 text-gray-800 dark:bg-gray-700 text-white{% endif %}">
-                            <i class="fas fa-book w-5 h-5"></i>
-                            <span>My Courses</span>
+                        <a href="{{ url_for('admin.courses') }}" class="nav-link flex items-center p-3 text-gray-700 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                            <i class="fas fa-book w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"></i>
+                            <span class="ml-3 font-medium">Courses</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{{ url_for('lecturer.dashboard') }}" class="flex items-center space-x-3 text-gray-300 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 {% if request.endpoint == 'lecturer.dashboard' %}bg-gray-100 text-gray-800 dark:bg-gray-700 text-white{% endif %}">
-                            <i class="fas fa-clipboard-check w-5 h-5"></i>
-                            <span>Dashboard</span>
+                        <a href="{{ url_for('admin.activity_logs') }}" class="nav-link flex items-center p-3 text-gray-700 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                            <i class="fas fa-history w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"></i>
+                            <span class="ml-3 font-medium">Activity Logs</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{{ url_for('lecturer.attendance') }}" class="flex items-center space-x-3 text-gray-300 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 {% if request.endpoint == 'lecturer.attendance' %}bg-gray-100 text-gray-800 dark:bg-gray-700 text-white{% endif %}">
-                            <i class="fas fa-clipboard-check w-5 h-5"></i>
-                            <span>Attendance</span>
-                        </a>
-                    </li>
-                    {% else %}
-                    <li>
-                        <a href="{{ url_for('student.dashboard') }}" class="flex items-center space-x-3 text-gray-300 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 {% if request.endpoint == 'student.dashboard' %}bg-gray-100 text-gray-800 dark:bg-gray-700 text-white{% endif %}">
-                            <i class="fas fa-chart-line w-5 h-5"></i>
-                            <span>Dashboard</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ url_for('student.courses') }}" class="flex items-center space-x-3 text-gray-300 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 {% if request.endpoint == 'student.courses' %}bg-gray-100 text-gray-800 dark:bg-gray-700 text-white{% endif %}">
-                            <i class="fas fa-book w-5 h-5"></i>
-                            <span>My Courses</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ url_for('student.attendance') }}" class="flex items-center space-x-3 text-gray-300 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 {% if request.endpoint == 'student.attendance' %}bg-gray-100 text-gray-800 dark:bg-gray-700 text-white{% endif %}">
-                            <i class="fas fa-clipboard-list w-5 h-5"></i>
-                            <span>My Attendance</span>
+                        <a href="{{ url_for('admin.settings') }}" class="nav-link flex items-center p-3 text-gray-700 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                            <i class="fas fa-cog w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"></i>
+                            <span class="ml-3 font-medium">Settings</span>
                         </a>
                     </li>
                     {% endif %}
                 </ul>
             </div>
-            
-            <div class="absolute bottom-0 w-full p-4 border-t border-gray-200 dark:border-gray-700">
-                <a href="{{ url_for('auth.logout') }}" class="flex items-center space-x-3 text-gray-300 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
-                    <i class="fas fa-sign-out-alt w-5 h-5"></i>
-                    <span>Logout</span>
+
+            <!-- Logout -->
+            <div class="mt-auto p-4 border-t border-gray-200 dark:border-gray-700">
+                <a href="{{ url_for('auth.logout') }}" class="flex items-center p-3 text-red-600 hover:bg-red-50 rounded-lg dark:text-red-400 dark:hover:bg-red-900/20 group">
+                    <i class="fas fa-sign-out-alt w-5 h-5 transition duration-75"></i>
+                    <span class="ml-3 font-medium">Logout</span>
                 </a>
             </div>
         </div>
@@ -230,80 +288,100 @@
     </aside>
 
     <!-- Main Content -->
-    <div class="p-4 lg:ml-64 h-full pt-20">
-        <div class="animate-fade-in">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="p-4 mb-4 rounded-lg {% if category == 'error' %}bg-red-100 text-red-800 dark:bg-red-800/20 dark:text-red-400{% else %}bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-400{% endif %}">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-            {% block content %}{% endblock %}
-        </div>
+    <div class="p-4 lg:ml-64 pt-20">
+        {% block content %}{% endblock %}
     </div>
 
+    {% block scripts %}{% endblock %}
+
     <script>
-        // Theme Toggle
-        const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
-        const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
-
-        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            themeToggleLightIcon.classList.remove('hidden');
-            document.documentElement.classList.add('dark');
-        } else {
-            themeToggleDarkIcon.classList.remove('hidden');
-            document.documentElement.classList.remove('dark');
-        }
-
-        document.getElementById('theme-toggle').addEventListener('click', function() {
-            themeToggleDarkIcon.classList.toggle('hidden');
-            themeToggleLightIcon.classList.toggle('hidden');
-
-            if (localStorage.getItem('color-theme')) {
-                if (localStorage.getItem('color-theme') === 'light') {
-                    document.documentElement.classList.add('dark');
-                    localStorage.setItem('color-theme', 'dark');
-                } else {
-                    document.documentElement.classList.remove('dark');
-                    localStorage.setItem('color-theme', 'light');
-                }
-            } else {
-                if (document.documentElement.classList.contains('dark')) {
-                    document.documentElement.classList.remove('dark');
-                    localStorage.setItem('color-theme', 'light');
-                } else {
-                    document.documentElement.classList.add('dark');
-                    localStorage.setItem('color-theme', 'dark');
-                }
-            }
-        });
-
-        // Sidebar Toggle
-        const toggleSidebarButton = document.getElementById('toggleSidebar');
-        const sidebar = document.getElementById('sidebar');
-        
-        toggleSidebarButton.addEventListener('click', () => {
+        // Toggle sidebar on mobile
+        document.getElementById('sidebar-toggle').addEventListener('click', function() {
+            const sidebar = document.getElementById('sidebar');
             sidebar.classList.toggle('-translate-x-full');
         });
 
-        // User Dropdown
-        const userMenuButton = document.getElementById('user-menu-button');
-        const userDropdown = document.getElementById('user-dropdown');
+        // Toggle notifications dropdown
+        document.getElementById('notifications-button').addEventListener('click', function() {
+            const dropdown = document.getElementById('notifications-dropdown');
+            dropdown.classList.toggle('hidden');
+        });
 
-        if (userMenuButton && userDropdown) {
-            userMenuButton.addEventListener('click', () => {
-                userDropdown.classList.toggle('hidden');
+        // Toggle profile dropdown
+        document.getElementById('profile-button').addEventListener('click', function() {
+            const dropdown = document.getElementById('profile-dropdown');
+            dropdown.classList.toggle('hidden');
+        });
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            const notificationsButton = document.getElementById('notifications-button');
+            const notificationsDropdown = document.getElementById('notifications-dropdown');
+            const profileButton = document.getElementById('profile-button');
+            const profileDropdown = document.getElementById('profile-dropdown');
+
+            if (!notificationsButton.contains(event.target) && !notificationsDropdown.contains(event.target)) {
+                notificationsDropdown.classList.add('hidden');
+            }
+
+            if (!profileButton.contains(event.target) && !profileDropdown.contains(event.target)) {
+                profileDropdown.classList.add('hidden');
+            }
+        });
+
+        // Theme toggle
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const lightIcon = document.getElementById('theme-toggle-light-icon');
+        const darkIcon = document.getElementById('theme-toggle-dark-icon');
+
+        themeToggleBtn.addEventListener('click', function() {
+            document.documentElement.classList.toggle('dark');
+            lightIcon.classList.toggle('hidden');
+            darkIcon.classList.toggle('hidden');
+        });
+
+        function showError(message) {
+            const container = document.getElementById('error-container');
+            const messageEl = document.getElementById('error-message');
+            
+            messageEl.textContent = message;
+            container.classList.remove('hidden');
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                container.classList.add('hidden');
+            }, 5000);
+        }
+
+        // Close error message
+        document.addEventListener('DOMContentLoaded', function() {
+            const closeBtn = document.querySelector('#error-container button');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', function() {
+                    document.getElementById('error-container').classList.add('hidden');
+                });
+            }
+            
+            // Flash messages
+            const messages = document.querySelectorAll('.flash-message');
+            messages.forEach(msg => {
+                setTimeout(() => {
+                    msg.classList.add('hidden');
+                }, 5000);
             });
+        });
 
-            document.addEventListener('click', (event) => {
-                if (!userMenuButton.contains(event.target) && !userDropdown.contains(event.target)) {
-                    userDropdown.classList.add('hidden');
+        // Highlight active nav link
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentPath = window.location.pathname;
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            navLinks.forEach(link => {
+                if (link.getAttribute('href') === currentPath) {
+                    link.classList.add('active');
                 }
             });
-        }
+        });
     </script>
 </body>
 </html>

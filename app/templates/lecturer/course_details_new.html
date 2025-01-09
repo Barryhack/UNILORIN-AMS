@@ -1,0 +1,210 @@
+{% extends "lecturer/base_lecturer_new.html" %}
+
+{% block title %}{{ course.code }} - Course Details{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Course Header -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
+            <div class="flex items-center">
+                <div class="h-14 w-14 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <span class="text-blue-600 font-bold text-xl">{{ course.code[:2] }}</span>
+                </div>
+                <div class="ml-4">
+                    <h1 class="text-2xl font-bold text-gray-900">{{ course.code }}</h1>
+                    <p class="text-gray-600">{{ course.title }}</p>
+                </div>
+            </div>
+            <div class="mt-4 md:mt-0 flex space-x-3">
+                <a href="{{ url_for('lecturer.course_attendance_report', course_id=course.id) }}" 
+                   class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    View Report
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Total Students -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <h2 class="text-sm font-medium text-gray-600">Total Students</h2>
+                    <p class="text-2xl font-semibold text-gray-900">{{ students|length }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Lectures -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-green-100 text-green-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <h2 class="text-sm font-medium text-gray-600">Total Lectures</h2>
+                    <p class="text-2xl font-semibold text-gray-900">{{ lectures|length }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Average Attendance -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <h2 class="text-sm font-medium text-gray-600">Average Attendance</h2>
+                    <p class="text-2xl font-semibold text-gray-900">{{ "%.1f"|format(avg_attendance|default(0)) }}%</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upcoming Lectures -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-medium text-gray-900">Upcoming Lectures</h2>
+        </div>
+        {% if upcoming_lectures %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Topic</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Room</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for lecture in upcoming_lectures %}
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ lecture.date.strftime('%Y-%m-%d') }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ lecture.start_time.strftime('%H:%M') }} - {{ lecture.end_time.strftime('%H:%M') }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ lecture.topic or 'No topic set' }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ lecture.room or 'Not assigned' }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <a href="{{ url_for('lecturer.take_attendance', lecture_id=lecture.id) }}" 
+                               class="text-blue-600 hover:text-blue-900">Take Attendance</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-6 text-center text-gray-500">
+            No upcoming lectures scheduled
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Student List -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+            <h2 class="text-lg font-medium text-gray-900">Enrolled Students</h2>
+            <input type="text" id="studentSearch" placeholder="Search students..." 
+                   class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        {% if students %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student ID</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Attendance Rate</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200" id="studentTableBody">
+                    {% for student in students %}
+                    <tr class="student-row" data-student-name="{{ student.name }}" data-student-id="{{ student.id }}">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ student.id }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
+                                    <span class="text-sm font-medium text-gray-600">{{ student.name[:2] }}</span>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm font-medium text-gray-900">{{ student.name }}</p>
+                                    <p class="text-sm text-gray-500">{{ student.email }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ student.department.name if student.department else 'Not Assigned' }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% set stats = attendance_stats.get(student.id, {}) %}
+                            <div class="flex items-center">
+                                <div class="flex-grow">
+                                    <div class="h-2 bg-gray-200 rounded-full">
+                                        <div class="h-2 bg-blue-600 rounded-full" style="width: {{ stats.rate|default(0)|round|int }}%"></div>
+                                    </div>
+                                </div>
+                                <span class="ml-3 text-sm text-gray-900">{{ "%.1f"|format(stats.rate|default(0)) }}%</span>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">
+                                {{ stats.attended|default(0) }}/{{ stats.total|default(0) }} lectures
+                            </p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-6 text-center text-gray-500">
+            No students enrolled in this course
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% block extra_scripts %}
+<script>
+    // Student search functionality
+    const studentSearch = document.getElementById('studentSearch');
+    const studentRows = document.querySelectorAll('.student-row');
+
+    studentSearch.addEventListener('input', () => {
+        const searchTerm = studentSearch.value.toLowerCase();
+
+        studentRows.forEach(row => {
+            const name = row.dataset.studentName.toLowerCase();
+            const id = row.dataset.studentId.toLowerCase();
+            const matches = name.includes(searchTerm) || id.includes(searchTerm);
+            row.style.display = matches ? '' : 'none';
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}

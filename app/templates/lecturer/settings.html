@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-4xl mx-auto">
+        <!-- Page Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 dark:text-white">Settings</h1>
+            <p class="mt-2 text-gray-600 dark:text-gray-400">Manage your account preferences and application settings</p>
+        </div>
+
+        <!-- Settings Sections -->
+        <div class="space-y-6">
+            <!-- Profile Settings -->
+            <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                <h2 class="text-xl font-semibold text-gray-800 dark:text-white mb-4">Profile Settings</h2>
+                <form action="{{ url_for('lecturer.update_profile') }}" method="POST" class="space-y-4">
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
+                        <input type="text" name="name" id="name" value="{{ current_user.name }}"
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email Address</label>
+                        <input type="email" name="email" id="email" value="{{ current_user.email }}"
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="phone" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Phone Number</label>
+                        <input type="tel" name="phone" id="phone" value="{{ current_user.phone }}"
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm">
+                    </div>
+                    <div class="pt-4">
+                        <button type="submit"
+                                class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-gray-800">
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Password Settings -->
+            <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                <h2 class="text-xl font-semibold text-gray-800 dark:text-white mb-4">Change Password</h2>
+                <form action="{{ url_for('lecturer.change_password') }}" method="POST" class="space-y-4">
+                    <div>
+                        <label for="current_password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Current Password</label>
+                        <input type="password" name="current_password" id="current_password" required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="new_password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">New Password</label>
+                        <input type="password" name="new_password" id="new_password" required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="confirm_password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Confirm New Password</label>
+                        <input type="password" name="confirm_password" id="confirm_password" required
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm">
+                    </div>
+                    <div class="pt-4">
+                        <button type="submit"
+                                class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-gray-800">
+                            Update Password
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Notification Settings -->
+            <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                <h2 class="text-xl font-semibold text-gray-800 dark:text-white mb-4">Notification Settings</h2>
+                <form action="{{ url_for('lecturer.update_notifications') }}" method="POST" class="space-y-4">
+                    <div class="space-y-4">
+                        <div class="flex items-center">
+                            <input type="checkbox" name="email_notifications" id="email_notifications"
+                                   class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600"
+                                   {% if current_user.settings.email_notifications %}checked{% endif %}>
+                            <label for="email_notifications" class="ml-3 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Email Notifications
+                            </label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" name="browser_notifications" id="browser_notifications"
+                                   class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600"
+                                   {% if current_user.settings.browser_notifications %}checked{% endif %}>
+                            <label for="browser_notifications" class="ml-3 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Browser Notifications
+                            </label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" name="attendance_reminders" id="attendance_reminders"
+                                   class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600"
+                                   {% if current_user.settings.attendance_reminders %}checked{% endif %}>
+                            <label for="attendance_reminders" class="ml-3 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Attendance Reminders
+                            </label>
+                        </div>
+                    </div>
+                    <div class="pt-4">
+                        <button type="submit"
+                                class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-gray-800">
+                            Save Preferences
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Theme Settings -->
+            <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                <h2 class="text-xl font-semibold text-gray-800 dark:text-white mb-4">Theme Settings</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label for="theme" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Theme Mode</label>
+                        <select id="theme" name="theme"
+                                class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            <option value="light">Light</option>
+                            <option value="dark">Dark</option>
+                            <option value="system">System</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="color-scheme" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Color Scheme</label>
+                        <div class="mt-2 grid grid-cols-5 gap-3">
+                            <button type="button" class="h-8 w-8 rounded-full bg-primary-600 ring-2 ring-primary-600 ring-offset-2 dark:ring-offset-gray-800"></button>
+                            <button type="button" class="h-8 w-8 rounded-full bg-blue-600"></button>
+                            <button type="button" class="h-8 w-8 rounded-full bg-green-600"></button>
+                            <button type="button" class="h-8 w-8 rounded-full bg-purple-600"></button>
+                            <button type="button" class="h-8 w-8 rounded-full bg-red-600"></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Export -->
+            <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+                <h2 class="text-xl font-semibold text-gray-800 dark:text-white mb-4">Data Export</h2>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Download your data in various formats</p>
+                <div class="space-x-4">
+                    <button type="button"
+                            class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:bg-gray-600 dark:focus:ring-offset-gray-800">
+                        <i class="fas fa-file-csv mr-2"></i>
+                        Export as CSV
+                    </button>
+                    <button type="button"
+                            class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:bg-gray-600 dark:focus:ring-offset-gray-800">
+                        <i class="fas fa-file-excel mr-2"></i>
+                        Export as Excel
+                    </button>
+                    <button type="button"
+                            class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:bg-gray-600 dark:focus:ring-offset-gray-800">
+                        <i class="fas fa-file-pdf mr-2"></i>
+                        Export as PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Theme toggle functionality
+    const themeSelect = document.getElementById('theme');
+    const currentTheme = localStorage.getItem('color-theme');
+    
+    if (currentTheme) {
+        themeSelect.value = currentTheme;
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        themeSelect.value = 'system';
+    } else {
+        themeSelect.value = 'light';
+    }
+
+    themeSelect.addEventListener('change', function() {
+        const selectedTheme = this.value;
+        if (selectedTheme === 'dark') {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('color-theme', 'dark');
+        } else if (selectedTheme === 'light') {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('color-theme', 'light');
+        } else {
+            localStorage.removeItem('color-theme');
+            if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+    });
+
+    // Color scheme selection
+    const colorButtons = document.querySelectorAll('[data-color]');
+    colorButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            // Remove ring from all buttons
+            colorButtons.forEach(btn => btn.classList.remove('ring-2', 'ring-offset-2'));
+            // Add ring to selected button
+            this.classList.add('ring-2', 'ring-offset-2');
+            // Update color scheme
+            document.documentElement.style.setProperty('--primary-color', this.dataset.color);
+        });
+    });
+
+    // Form validation
+    const passwordForm = document.querySelector('form[action*="change_password"]');
+    if (passwordForm) {
+        passwordForm.addEventListener('submit', function(e) {
+            const newPassword = document.getElementById('new_password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+
+            if (newPassword !== confirmPassword) {
+                e.preventDefault();
+                alert('New passwords do not match!');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

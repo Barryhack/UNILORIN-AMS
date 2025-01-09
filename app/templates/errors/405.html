@@ -1,0 +1,23 @@
+{% extends "errors/error_base.html" %}
+
+{% block title %}Method Not Allowed{% endblock %}
+
+{% block error_code %}405{% endblock %}
+
+{% block error_message %}
+<h2 class="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200">Method Not Allowed</h2>
+<p class="text-gray-600 dark:text-gray-400 mb-8">
+    The method you're trying to use is not allowed for this resource.
+    Please check your request method and try again.
+</p>
+<div class="flex space-x-4">
+    <a href="{{ url_for('main.index') }}" 
+       class="px-4 py-2 bg-primary text-white rounded hover:bg-primary-600 transition-colors duration-200">
+        Go to Homepage
+    </a>
+    <button onclick="history.back()" 
+            class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors duration-200">
+        Go Back
+    </button>
+</div>
+{% endblock %}

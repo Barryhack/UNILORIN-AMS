@@ -1,0 +1,62 @@
+<!-- Dashboard -->
+<li>
+    <a href="{{ url_for('admin.dashboard') }}" 
+       class="nav-link flex items-center space-x-3 {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+        <i class="fas fa-chart-line w-5"></i>
+        <span>Dashboard</span>
+    </a>
+</li>
+
+<!-- Users -->
+<li>
+    <a href="{{ url_for('admin.users') }}"
+       class="nav-link flex items-center space-x-3 {% if request.endpoint == 'admin.users' %}active{% endif %}">
+        <i class="fas fa-users w-5"></i>
+        <span>Users</span>
+    </a>
+</li>
+
+<!-- Departments -->
+<li>
+    <a href="{{ url_for('admin.departments') }}"
+       class="nav-link flex items-center space-x-3 {% if request.endpoint == 'admin.departments' %}active{% endif %}">
+        <i class="fas fa-building w-5"></i>
+        <span>Departments</span>
+    </a>
+</li>
+
+<!-- Courses -->
+<li>
+    <a href="{{ url_for('admin.courses') }}"
+       class="nav-link flex items-center space-x-3 {% if request.endpoint == 'admin.courses' %}active{% endif %}">
+        <i class="fas fa-book w-5"></i>
+        <span>Courses</span>
+    </a>
+</li>
+
+<!-- Attendance -->
+<li>
+    <a href="{{ url_for('admin.attendance') }}"
+       class="nav-link flex items-center space-x-3 {% if request.endpoint == 'admin.attendance' %}active{% endif %}">
+        <i class="fas fa-clipboard-check w-5"></i>
+        <span>Attendance</span>
+    </a>
+</li>
+
+<!-- Reports -->
+<li>
+    <a href="{{ url_for('admin.reports') }}"
+       class="nav-link flex items-center space-x-3 {% if request.endpoint == 'admin.reports' %}active{% endif %}">
+        <i class="fas fa-chart-bar w-5"></i>
+        <span>Reports</span>
+    </a>
+</li>
+
+<!-- Settings -->
+<li>
+    <a href="{{ url_for('admin.settings') }}"
+       class="nav-link flex items-center space-x-3 {% if request.endpoint == 'admin.settings' %}active{% endif %}">
+        <i class="fas fa-cog w-5"></i>
+        <span>Settings</span>
+    </a>
+</li>

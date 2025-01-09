@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Dashboard{% endblock %} - Attendance System</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <style>
+        .sidebar-link {
+            @apply flex items-center space-x-3 px-4 py-3 text-gray-600 hover:bg-[#002147] hover:text-white rounded-lg transition-colors;
+        }
+        
+        .sidebar-link.active {
+            @apply bg-[#002147] text-white;
+        }
+        
+        .card {
+            @apply bg-white rounded-lg shadow-md p-6 border-l-4;
+        }
+        
+        .btn-primary {
+            @apply bg-[#002147] text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transition-colors;
+        }
+        
+        .btn-secondary {
+            @apply bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors;
+        }
+    </style>
+    {% block styles %}{% endblock %}
+</head>
+<body class="bg-gray-100">
+    <!-- Top Navigation Bar -->
+    <nav class="bg-white shadow-md fixed w-full z-50">
+        <div class="max-w-full mx-auto px-4">
+            <div class="flex justify-between h-16">
+                <!-- Left side -->
+                <div class="flex items-center">
+                    <!-- Mobile menu button -->
+                    <button id="mobile-menu-button" class="lg:hidden">
+                        <i class="fas fa-bars text-gray-600 text-xl"></i>
+                    </button>
+                    <div class="ml-4">
+                        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="h-8">
+                    </div>
+                </div>
+
+                <!-- Right side -->
+                <div class="flex items-center space-x-4">
+                    <!-- Notifications -->
+                    <div class="relative">
+                        <button class="text-gray-600 hover:text-gray-800">
+                            <i class="fas fa-bell text-xl"></i>
+                            <span class="absolute top-0 right-0 -mt-1 -mr-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">3</span>
+                        </button>
+                    </div>
+
+                    <!-- Profile Dropdown -->
+                    <div class="relative" x-data="{ open: false }">
+                        <button @click="open = !open" class="flex items-center space-x-3">
+                            <img src="{{ url_for('static', filename='images/default-avatar.png') }}" alt="Profile" class="h-8 w-8 rounded-full">
+                            <span class="hidden md:block text-gray-700">{{ current_user.name }}</span>
+                            <i class="fas fa-chevron-down text-gray-600"></i>
+                        </button>
+                        
+                        <!-- Dropdown Menu -->
+                        <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2">
+                            <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-user-circle mr-2"></i>Profile
+                            </a>
+                            <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-cog mr-2"></i>Settings
+                            </a>
+                            <hr class="my-2">
+                            <a href="{{ url_for('auth.logout') }}" class="block px-4 py-2 text-red-600 hover:bg-gray-100">
+                                <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar and Main Content -->
+    <div class="flex h-screen pt-16">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-white shadow-lg transform lg:translate-x-0 transition-transform duration-200 ease-in-out mt-16">
+            <nav class="flex flex-col h-full">
+                <div class="flex-1 space-y-1 p-4">
+                    <a href="{{ url_for('admin.dashboard') }}" class="sidebar-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+                        <i class="fas fa-home w-6"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="{{ url_for('admin.users') }}" class="sidebar-link {% if request.endpoint == 'admin.users' %}active{% endif %}">
+                        <i class="fas fa-users w-6"></i>
+                        <span>Users</span>
+                    </a>
+                    <a href="{{ url_for('admin.departments') }}" class="sidebar-link {% if request.endpoint == 'admin.departments' %}active{% endif %}">
+                        <i class="fas fa-building w-6"></i>
+                        <span>Departments</span>
+                    </a>
+                    <a href="{{ url_for('admin.courses') }}" class="sidebar-link {% if request.endpoint == 'admin.courses' %}active{% endif %}">
+                        <i class="fas fa-book w-6"></i>
+                        <span>Courses</span>
+                    </a>
+                    <a href="{{ url_for('admin.attendance') }}" class="sidebar-link {% if request.endpoint == 'admin.attendance' %}active{% endif %}">
+                        <i class="fas fa-clipboard-check w-6"></i>
+                        <span>Attendance</span>
+                    </a>
+                    <a href="{{ url_for('admin.reports') }}" class="sidebar-link {% if request.endpoint == 'admin.reports' %}active{% endif %}">
+                        <i class="fas fa-chart-bar w-6"></i>
+                        <span>Reports</span>
+                    </a>
+                    <hr class="my-4">
+                    <a href="{{ url_for('admin.activity_logs') }}" class="sidebar-link {% if request.endpoint == 'admin.activity_logs' %}active{% endif %}">
+                        <i class="fas fa-history w-6"></i>
+                        <span>Activity Logs</span>
+                    </a>
+                    <a href="{{ url_for('admin.login_logs') }}" class="sidebar-link {% if request.endpoint == 'admin.login_logs' %}active{% endif %}">
+                        <i class="fas fa-sign-in-alt w-6"></i>
+                        <span>Login Logs</span>
+                    </a>
+                    <a href="{{ url_for('admin.settings') }}" class="sidebar-link {% if request.endpoint == 'admin.settings' %}active{% endif %}">
+                        <i class="fas fa-cog w-6"></i>
+                        <span>Settings</span>
+                    </a>
+                </div>
+                
+                <!-- System Status -->
+                <div class="p-4 border-t">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                        <span class="text-sm text-gray-600">System Online</span>
+                    </div>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 ml-64 p-8 bg-gray-100 min-h-screen">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <!-- AlpineJS -->
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Custom Scripts -->
+    <script>
+        // Mobile menu toggle
+        document.getElementById('mobile-menu-button').addEventListener('click', function() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('-translate-x-full');
+        });
+
+        // Close sidebar on mobile when clicking outside
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            
+            if (!sidebar.contains(event.target) && !mobileMenuButton.contains(event.target)) {
+                if (window.innerWidth < 1024) {  // lg breakpoint
+                    sidebar.classList.add('-translate-x-full');
+                }
+            }
+        });
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

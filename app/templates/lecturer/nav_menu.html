@@ -1,0 +1,66 @@
+<!-- Dashboard -->
+<li>
+    <a href="{{ url_for('lecturer.dashboard') }}"
+       class="nav-link group flex items-center p-3 text-base font-normal rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300 {% if request.endpoint == 'lecturer.dashboard' %}bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400{% endif %}">
+        <i class="fas fa-chart-line w-5 h-5 transition-colors duration-300 {% if request.endpoint == 'lecturer.dashboard' %}text-primary-600 dark:text-primary-400{% else %}text-gray-500 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400{% endif %}"></i>
+        <span class="ml-3 transition-colors duration-300 {% if request.endpoint == 'lecturer.dashboard' %}text-primary-600 dark:text-primary-400{% else %}text-gray-500 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400{% endif %}">Dashboard</span>
+    </a>
+</li>
+
+<!-- My Courses -->
+<li>
+    <a href="{{ url_for('lecturer.view_courses') }}"
+       class="nav-link group flex items-center p-3 text-base font-normal rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300 {% if request.endpoint == 'lecturer.view_courses' %}bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400{% endif %}">
+        <i class="fas fa-book w-5 h-5 transition-colors duration-300 {% if request.endpoint == 'lecturer.view_courses' %}text-primary-600 dark:text-primary-400{% else %}text-gray-500 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400{% endif %}"></i>
+        <span class="ml-3 transition-colors duration-300 {% if request.endpoint == 'lecturer.view_courses' %}text-primary-600 dark:text-primary-400{% else %}text-gray-500 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400{% endif %}">My Courses</span>
+    </a>
+</li>
+
+<!-- Take Attendance -->
+<li>
+    <a href="{{ url_for('lecturer.take_attendance') }}"
+       class="nav-link group flex items-center p-3 text-base font-normal rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300 {% if request.endpoint == 'lecturer.take_attendance' %}bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400{% endif %}">
+        <i class="fas fa-qrcode w-5 h-5 transition-colors duration-300 {% if request.endpoint == 'lecturer.take_attendance' %}text-primary-600 dark:text-primary-400{% else %}text-gray-500 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400{% endif %}"></i>
+        <span class="ml-3 transition-colors duration-300 {% if request.endpoint == 'lecturer.take_attendance' %}text-primary-600 dark:text-primary-400{% else %}text-gray-500 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400{% endif %}">Take Attendance</span>
+        <span class="inline-flex justify-center items-center ml-auto">
+            <span class="animate-ping absolute h-2 w-2 rounded-full bg-primary-400 opacity-75"></span>
+            <span class="relative rounded-full h-2 w-2 bg-primary-500"></span>
+        </span>
+    </a>
+</li>
+
+<!-- Attendance Records -->
+<li>
+    <a href="{{ url_for('lecturer.attendance_records') }}"
+       class="nav-link group flex items-center p-3 text-base font-normal rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300 {% if request.endpoint == 'lecturer.attendance_records' %}bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400{% endif %}">
+        <i class="fas fa-clipboard-list w-5 h-5 transition-colors duration-300 {% if request.endpoint == 'lecturer.attendance_records' %}text-primary-600 dark:text-primary-400{% else %}text-gray-500 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400{% endif %}"></i>
+        <span class="ml-3 transition-colors duration-300 {% if request.endpoint == 'lecturer.attendance_records' %}text-primary-600 dark:text-primary-400{% else %}text-gray-500 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400{% endif %}">Attendance Records</span>
+    </a>
+</li>
+
+<!-- Reports -->
+<li>
+    <a href="{{ url_for('lecturer.reports') }}"
+       class="nav-link group flex items-center p-3 text-base font-normal rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300 {% if request.endpoint == 'lecturer.reports' %}bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400{% endif %}">
+        <i class="fas fa-chart-bar w-5 h-5 transition-colors duration-300 {% if request.endpoint == 'lecturer.reports' %}text-primary-600 dark:text-primary-400{% else %}text-gray-500 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400{% endif %}"></i>
+        <span class="ml-3 transition-colors duration-300 {% if request.endpoint == 'lecturer.reports' %}text-primary-600 dark:text-primary-400{% else %}text-gray-500 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400{% endif %}">Reports</span>
+    </a>
+</li>
+
+<!-- Profile -->
+<li>
+    <a href="{{ url_for('lecturer.profile') }}"
+       class="nav-link group flex items-center p-3 text-base font-normal rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300 {% if request.endpoint == 'lecturer.profile' %}bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400{% endif %}">
+        <i class="fas fa-user w-5 h-5 transition-colors duration-300 {% if request.endpoint == 'lecturer.profile' %}text-primary-600 dark:text-primary-400{% else %}text-gray-500 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400{% endif %}"></i>
+        <span class="ml-3 transition-colors duration-300 {% if request.endpoint == 'lecturer.profile' %}text-primary-600 dark:text-primary-400{% else %}text-gray-500 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400{% endif %}">Profile</span>
+    </a>
+</li>
+
+<!-- Settings -->
+<li>
+    <a href="{{ url_for('lecturer.settings') }}"
+       class="nav-link group flex items-center p-3 text-base font-normal rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300 {% if request.endpoint == 'lecturer.settings' %}bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400{% endif %}">
+        <i class="fas fa-cog w-5 h-5 transition-colors duration-300 {% if request.endpoint == 'lecturer.settings' %}text-primary-600 dark:text-primary-400{% else %}text-gray-500 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400{% endif %}"></i>
+        <span class="ml-3 transition-colors duration-300 {% if request.endpoint == 'lecturer.settings' %}text-primary-600 dark:text-primary-400{% else %}text-gray-500 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400{% endif %}">Settings</span>
+    </a>
+</li>

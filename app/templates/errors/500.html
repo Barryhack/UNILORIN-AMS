@@ -1,0 +1,39 @@
+{% extends "errors/error_base.html" %}
+
+{% block title %}500 Internal Server Error{% endblock %}
+
+{% block error_code %}500{% endblock %}
+
+{% block heading %}Internal Server Error{% endblock %}
+
+{% block message %}
+<div class="space-y-4">
+    <p class="text-gray-600">Something went wrong on our end. Our team has been notified and we're working to fix it.</p>
+    
+    {% if error_details and config.DEBUG %}
+    <div class="mt-4">
+        <div class="bg-gray-100 dark:bg-gray-800 rounded-lg p-4">
+            <div class="flex items-center mb-2">
+                <i class="fas fa-bug text-red-500 mr-2"></i>
+                <span class="font-semibold text-gray-700 dark:text-gray-300">Error Details</span>
+            </div>
+            <pre class="text-sm text-gray-800 dark:text-gray-200 overflow-auto">{{ error_details }}</pre>
+        </div>
+    </div>
+    {% endif %}
+    
+    <div class="mt-6">
+        <p class="text-sm text-gray-500">Error ID: {{ error_id }}</p>
+        <p class="text-sm text-gray-500">Time: {{ error_time }}</p>
+    </div>
+    
+    <div class="mt-6 space-x-4">
+        <button onclick="window.location.reload()" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+            <i class="fas fa-redo mr-2"></i> Try Again
+        </button>
+        <a href="{{ url_for('main.index') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+            <i class="fas fa-home mr-2"></i> Return Home
+        </a>
+    </div>
+</div>
+{% endblock %}

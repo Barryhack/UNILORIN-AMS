@@ -1,0 +1,122 @@
+{% extends "lecturer/base_lecturer_new.html" %}
+
+{% block title %}Lecturer Dashboard{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <!-- Total Courses -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="flex items-center">
+            <div class="p-3 rounded-full bg-primary-green bg-opacity-10">
+                <i class="fas fa-book text-primary-green text-2xl"></i>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm font-medium text-gray-500">Total Courses</p>
+                <p class="text-2xl font-semibold text-gray-800">{{ courses|length }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Students -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="flex items-center">
+            <div class="p-3 rounded-full bg-secondary-green bg-opacity-10">
+                <i class="fas fa-users text-secondary-green text-2xl"></i>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm font-medium text-gray-500">Total Students</p>
+                <p class="text-2xl font-semibold text-gray-800">{{ total_students }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Today's Lectures -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="flex items-center">
+            <div class="p-3 rounded-full bg-accent-gold bg-opacity-10">
+                <i class="fas fa-calendar-day text-accent-gold text-2xl"></i>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm font-medium text-gray-500">Today's Lectures</p>
+                <p class="text-2xl font-semibold text-gray-800">{{ today_lectures|length }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Average Attendance -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="flex items-center">
+            <div class="p-3 rounded-full bg-light-blue bg-opacity-10">
+                <i class="fas fa-chart-line text-light-blue text-2xl"></i>
+            </div>
+            <div class="ml-4">
+                <p class="text-sm font-medium text-gray-500">Average Attendance</p>
+                <p class="text-2xl font-semibold text-gray-800">{{ "{:.1f}%".format(avg_attendance) }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity and Schedule Section -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+    <!-- Recent Activity -->
+    <div class="bg-white rounded-lg shadow-md">
+        <div class="p-6">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">Recent Activity</h2>
+            <div class="space-y-4">
+                {% for activity in recent_activities %}
+                <div class="flex items-start space-x-4 p-4 rounded-lg bg-gray-50">
+                    <div class="flex-shrink-0">
+                        {% if activity.type == 'attendance' %}
+                            <div class="w-10 h-10 rounded-full bg-primary-green bg-opacity-10 flex items-center justify-center">
+                                <i class="fas fa-clipboard-check text-primary-green"></i>
+                            </div>
+                        {% elif activity.type == 'course' %}
+                            <div class="w-10 h-10 rounded-full bg-secondary-green bg-opacity-10 flex items-center justify-center">
+                                <i class="fas fa-book text-secondary-green"></i>
+                            </div>
+                        {% else %}
+                            <div class="w-10 h-10 rounded-full bg-accent-gold bg-opacity-10 flex items-center justify-center">
+                                <i class="fas fa-bell text-accent-gold"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-gray-800">{{ activity.description }}</p>
+                        <p class="text-sm text-gray-500">{{ activity.timestamp }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Today's Schedule -->
+    <div class="bg-white rounded-lg shadow-md">
+        <div class="p-6">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">Today's Schedule</h2>
+            <div class="space-y-4">
+                {% for lecture in today_lectures %}
+                <div class="flex items-start space-x-4 p-4 rounded-lg bg-gray-50">
+                    <div class="flex-shrink-0">
+                        <div class="w-10 h-10 rounded-full bg-primary-green bg-opacity-10 flex items-center justify-center">
+                            <i class="fas fa-clock text-primary-green"></i>
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-gray-800">{{ lecture.course.code }} - {{ lecture.course.title }}</p>
+                        <p class="text-sm text-gray-500">{{ lecture.start_time.strftime('%I:%M %p') }} - {{ lecture.end_time.strftime('%I:%M %p') }}</p>
+                        <div class="mt-2">
+                            <a href="{{ url_for('lecturer.take_attendance', lecture_id=lecture.id) }}" 
+                               class="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                                Take Attendance
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
