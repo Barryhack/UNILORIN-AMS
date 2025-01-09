@@ -6,13 +6,11 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_talisman import Talisman
 from flask_seasurf import SeaSurf
-from flask_migrate import Migrate
 
 # Initialize extensions
 db = SQLAlchemy()
 login_manager = LoginManager()
 csrf = CSRFProtect()
-migrate = Migrate()
 
 # Initialize security extensions
 limiter = Limiter(
@@ -27,7 +25,6 @@ __all__ = [
     'db',
     'login_manager',
     'csrf',
-    'migrate',
     'limiter',
     'talisman',
     'seasurf'
@@ -38,7 +35,6 @@ def init_extensions(app):
     db.init_app(app)
     login_manager.init_app(app)
     csrf.init_app(app)
-    migrate.init_app(app, db)
     limiter.init_app(app)
     talisman.init_app(app,
                      force_https=False,  # Set to True in production
