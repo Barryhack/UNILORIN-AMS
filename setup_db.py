@@ -29,12 +29,13 @@ def setup_database():
             # Create default admin user
             admin = User(
                 name='Administrator',
-                email='admin@unilorin.edu.ng',
+                email='admin@example.com',
                 role='admin',
-                id_number='AD001'
+                id_number='ADMIN001'
             )
-            admin.set_password('Admin123!')
+            admin.set_password('admin123')
             db.session.add(admin)
+            print("Created default admin user")
             
             # Create faculties
             faculties_data = [
