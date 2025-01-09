@@ -3,10 +3,11 @@
 set -o errexit
 
 # Install Python dependencies
+python -m pip install --upgrade pip
 pip install -r requirements.txt
 
-# Create instance folder
+# Create necessary directories
 mkdir -p instance
 
-# Run database migrations if needed
+# Initialize the database
 python -c "from app import create_app, db; app = create_app(); app.app_context().push(); db.create_all()"

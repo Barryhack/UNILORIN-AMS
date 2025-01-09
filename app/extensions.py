@@ -2,7 +2,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
-from flask_socketio import SocketIO
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_talisman import Talisman
@@ -13,7 +12,6 @@ from flask_migrate import Migrate
 db = SQLAlchemy()
 login_manager = LoginManager()
 csrf = CSRFProtect()
-socketio = SocketIO()
 migrate = Migrate()
 
 # Initialize security extensions
@@ -29,7 +27,6 @@ __all__ = [
     'db',
     'login_manager',
     'csrf',
-    'socketio',
     'migrate',
     'limiter',
     'talisman',
@@ -42,9 +39,15 @@ def init_extensions(app):
     login_manager.init_app(app)
     csrf.init_app(app)
     migrate.init_app(app, db)
-    socketio.init_app(app, cors_allowed_origins="*")
     limiter.init_app(app)
-    talisman.init_app(app)
+    talisman.init_app(app,
+                     force_https=False,  # Set to True in production
+                     content_security_policy={
+                         'default-src': "'self'",
+                         'img-src': "'self' data:",
+                         'script-src': "'self' 'unsafe-inline' 'unsafe-eval'",
+                         'style-src': "'self' 'unsafe-inline'",
+                     })
     seasurf.init_app(app)
     
     # Configure login manager
