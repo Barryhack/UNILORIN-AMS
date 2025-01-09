@@ -3,60 +3,62 @@
 {% block title %}Login - Attendance System{% endblock %}
 
 {% block content %}
-<div class="split-container">
-    <div class="left-side">
-        <img src="{{ url_for('static', filename='images/unilorin-logo.png') }}" 
-             alt="University of Ilorin Logo" 
-             class="university-logo">
-        <div class="welcome-content">
-            <h1>University of Ilorin</h1>
-            <p class="subtitle">Better By Far...</p>
-            <p class="system-name">Attendance Management System</p>
-            <div class="features-list">
-                <div class="feature-item">
-                    <i class="fas fa-check-circle"></i>
-                    <span>Effortless attendance tracking</span>
-                </div>
-                <div class="feature-item">
-                    <i class="fas fa-chart-bar"></i>
-                    <span>Real-time analytics & reporting</span>
-                </div>
-                <div class="feature-item">
-                    <i class="fas fa-shield-alt"></i>
-                    <span>Secure and reliable system</span>
+<div class="login-wrapper">
+    <div class="split-container">
+        <div class="left-side">
+            <img src="{{ url_for('static', filename='images/unilorin-logo.png') }}" 
+                 alt="University of Ilorin Logo" 
+                 class="university-logo">
+            <div class="welcome-content">
+                <h1>University of Ilorin</h1>
+                <p class="subtitle">Better By Far...</p>
+                <p class="system-name">Attendance Management System</p>
+                <div class="features-list">
+                    <div class="feature-item">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Effortless attendance tracking</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>Real-time analytics & reporting</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Secure and reliable system</span>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-    <div class="right-side">
-        <div class="login-form-container">
-            <h2>Welcome Back</h2>
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ category }}">{{ message }}</div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-            <form method="POST" action="{{ url_for('auth.login') }}">
-                {{ form.csrf_token }}
-                <div class="form-group">
-                    <label for="login">ID Number</label>
-                    {{ form.login(class="form-control", placeholder="Enter your ID number") }}
-                </div>
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    {{ form.password(class="form-control", placeholder="Enter your password") }}
-                </div>
-                <div class="form-group remember-me">
-                    <label class="checkbox-container">
-                        {{ form.remember }}
-                        <span class="checkmark"></span>
-                        Remember me
-                    </label>
-                </div>
-                <button type="submit" class="btn btn-primary">Sign In</button>
-            </form>
+        <div class="right-side">
+            <div class="login-form-container">
+                <h2>Welcome Back</h2>
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                <form method="POST" action="{{ url_for('auth.login') }}">
+                    {{ form.csrf_token }}
+                    <div class="form-group">
+                        <label for="login">ID Number</label>
+                        {{ form.login(class="form-control", placeholder="Enter your ID number") }}
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        {{ form.password(class="form-control", placeholder="Enter your password") }}
+                    </div>
+                    <div class="form-group remember-me">
+                        <label class="checkbox-container">
+                            {{ form.remember }}
+                            <span class="checkmark"></span>
+                            Remember me
+                        </label>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Sign In</button>
+                </form>
+            </div>
         </div>
     </div>
 </div>
@@ -64,53 +66,57 @@
 
 {% block styles %}
 <style>
+    /* Reset and base styles */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
     body {
         margin: 0;
         padding: 0;
         min-height: 100vh;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        overflow-x: hidden;
+    }
+
+    .login-wrapper {
+        min-height: 100vh;
+        width: 100vw;
         display: flex;
         flex-direction: column;
     }
 
     .split-container {
+        flex: 1;
         display: flex;
-        min-height: 100vh;
         width: 100%;
-        margin: 0;
-        padding: 0;
-        position: relative;
+        min-height: 100vh;
     }
 
     .left-side {
         flex: 1;
-        position: relative;
         background: linear-gradient(135deg, rgba(0, 32, 96, 0.92), rgba(0, 51, 153, 0.88)), url("{{ url_for('static', filename='images/campus.jpg') }}");
         background-size: cover;
         background-position: center;
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: space-evenly;
+        justify-content: center;
         padding: clamp(2rem, 4vw, 3rem);
         color: white;
         text-align: center;
-        position: relative;
-        overflow: hidden;
     }
 
     .university-logo {
         width: clamp(100px, 20vw, 140px);
         height: auto;
         margin-bottom: clamp(1.5rem, 2vh, 2rem);
-        position: relative;
-        z-index: 2;
         filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
     }
 
     .welcome-content {
-        position: relative;
-        z-index: 2;
         max-width: clamp(300px, 90vw, 600px);
         padding: 0 clamp(1rem, 3vw, 1.5rem);
     }
@@ -151,7 +157,6 @@
         width: 100%;
         max-width: clamp(300px, 85vw, 450px);
         margin: 0 auto;
-        padding: clamp(0.5rem, 1vw, 1rem);
     }
 
     .feature-item {
@@ -201,8 +206,8 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: clamp(2rem, 4vw, 3rem);
-        background: white;
+        background: #002060;
+        padding: clamp(1.5rem, 4vw, 3rem);
     }
 
     .login-form-container {
@@ -210,13 +215,13 @@
         max-width: clamp(300px, 90vw, 400px);
         padding: clamp(2rem, 5vw, 2.5rem);
         background: white;
-        border-radius: clamp(12px, 4vw, 20px);
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        border-radius: clamp(12px, 2vw, 20px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
     }
 
     .login-form-container h2 {
         text-align: center;
-        color: #333;
+        color: #002060;
         margin-bottom: clamp(1.5rem, 4vw, 2rem);
         font-size: clamp(1.5rem, 3.5vw, 2rem);
         font-weight: 700;
@@ -224,14 +229,21 @@
 
     .form-group {
         margin-bottom: clamp(1.2rem, 3.5vw, 1.8rem);
-        position: relative;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: #333;
+        font-size: clamp(0.9rem, 1.8vw, 1rem);
+        font-weight: 500;
     }
 
     .form-control {
         width: 100%;
         padding: clamp(0.8rem, 2vw, 0.9rem);
         border: 2px solid #e1e1e1;
-        border-radius: clamp(8px, 2vw, 10px);
+        border-radius: clamp(8px, 1.5vw, 10px);
         transition: all 0.3s ease;
         font-size: clamp(0.9rem, 1.8vw, 1rem);
         background: #f8f9fa;
@@ -244,18 +256,33 @@
         background: white;
     }
 
+    .remember-me {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: clamp(1.5rem, 3vw, 2rem);
+    }
+
+    .checkbox-container {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        font-size: clamp(0.85rem, 1.6vw, 0.95rem);
+        color: #555;
+    }
+
     .btn-primary {
         width: 100%;
         padding: clamp(0.9rem, 2vw, 1rem);
         background: #002060;
         border: none;
-        border-radius: clamp(8px, 2vw, 10px);
+        border-radius: clamp(8px, 1.5vw, 10px);
         color: white;
         font-size: clamp(1rem, 2vw, 1.1rem);
         font-weight: 600;
         cursor: pointer;
         transition: all 0.3s ease;
-        margin-top: clamp(1rem, 2vw, 1.5rem);
     }
 
     .btn-primary:hover {
@@ -271,7 +298,7 @@
     .alert {
         margin-bottom: clamp(1.2rem, 3vw, 1.5rem);
         padding: clamp(0.8rem, 2vw, 1rem);
-        border-radius: clamp(8px, 2vw, 10px);
+        border-radius: clamp(8px, 1.5vw, 10px);
         font-weight: 500;
         border: 1px solid transparent;
         font-size: clamp(0.9rem, 1.8vw, 1rem);
@@ -289,46 +316,44 @@
         color: #276749;
     }
 
-    @media (max-width: 1024px) {
-        .split-container {
-            min-height: 100vh;
-        }
-    }
-
+    /* Mobile Styles */
     @media (max-width: 768px) {
         .split-container {
             flex-direction: column;
+            min-height: 100vh;
         }
         
         .left-side {
-            min-height: clamp(400px, 50vh, 500px);
+            flex: none;
+            min-height: 45vh;
             padding: clamp(1.5rem, 3vh, 2rem);
         }
 
         .right-side {
-            min-height: clamp(300px, 40vh, 400px);
+            flex: none;
+            min-height: 55vh;
             padding: clamp(1.5rem, 4vw, 2rem);
         }
 
-        .features-list {
-            max-width: clamp(280px, 85vw, 350px);
+        .login-form-container {
+            margin: 0 auto;
+            padding: clamp(1.5rem, 4vw, 2rem);
         }
     }
 
     @media (max-width: 480px) {
         .left-side {
-            min-height: clamp(350px, 60vh, 400px);
-            padding: clamp(1rem, 3vh, 1.5rem);
+            min-height: 40vh;
+            padding: 1rem;
         }
 
         .right-side {
-            min-height: clamp(300px, 50vh, 350px);
-            padding: clamp(1rem, 4vw, 1.5rem);
+            min-height: 60vh;
+            padding: 1rem;
         }
 
         .login-form-container {
             padding: clamp(1.2rem, 3vw, 1.5rem);
-            margin: clamp(0.5rem, 2vw, 1rem);
         }
 
         .welcome-content h1 {
@@ -341,20 +366,85 @@
 
         .system-name {
             font-size: clamp(1.2rem, 3vw, 1.4rem);
+            margin-bottom: 1.5rem;
+        }
+
+        .features-list {
+            gap: 0.8rem;
         }
 
         .feature-item {
-            padding: clamp(0.6rem, 1.6vh, 0.8rem) clamp(1rem, 2.4vw, 1.2rem);
+            padding: 0.8rem 1rem;
         }
 
         .feature-item i {
-            font-size: clamp(1rem, 2.2vw, 1.1rem);
-            width: clamp(20px, 6vw, 24px);
-            height: clamp(20px, 6vw, 24px);
+            font-size: 1rem;
+            width: 24px;
+            height: 24px;
+            padding: 0.4rem;
         }
 
         .feature-item span {
-            font-size: clamp(0.8rem, 1.8vw, 0.9rem);
+            font-size: 0.9rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-control {
+            padding: 0.8rem;
+        }
+
+        .btn-primary {
+            padding: 0.8rem;
+        }
+    }
+
+    /* Handle very small screens */
+    @media (max-width: 360px) {
+        .left-side {
+            min-height: 35vh;
+        }
+
+        .right-side {
+            min-height: 65vh;
+        }
+
+        .welcome-content h1 {
+            font-size: 1.3rem;
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+        }
+
+        .system-name {
+            font-size: 1.1rem;
+        }
+
+        .feature-item {
+            padding: 0.6rem 0.8rem;
+        }
+    }
+
+    /* Handle landscape mode on mobile */
+    @media (max-height: 480px) and (orientation: landscape) {
+        .split-container {
+            flex-direction: row;
+        }
+
+        .left-side, .right-side {
+            flex: 1;
+            min-height: 100vh;
+        }
+
+        .features-list {
+            display: none;
+        }
+
+        .welcome-content {
+            padding: 1rem;
         }
     }
 </style>
