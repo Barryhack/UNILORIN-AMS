@@ -15,8 +15,12 @@ class SystemSettings(db.Model):
     is_public = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    created_by_id = db.Column(db.String(10), db.ForeignKey('users.id'))
-    updated_by_id = db.Column(db.String(10), db.ForeignKey('users.id'))
+    created_by_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    updated_by_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+
+    # Relationships
+    created_by = db.relationship('User', foreign_keys=[created_by_id])
+    updated_by = db.relationship('User', foreign_keys=[updated_by_id])
 
     def __repr__(self):
         return f'<SystemSettings {self.key}>'
