@@ -4,7 +4,6 @@ from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from flask_talisman import Talisman
 
 # Initialize extensions
 db = SQLAlchemy()
@@ -16,7 +15,6 @@ limiter = Limiter(
     key_func=get_remote_address,
     default_limits=["200 per day", "50 per hour"]
 )
-talisman = Talisman()
 
 # Make extensions available at module level
 __all__ = [
@@ -24,7 +22,7 @@ __all__ = [
     'login_manager',
     'csrf',
     'limiter',
-    'talisman'
+    'init_extensions'
 ]
 
 def init_extensions(app):
@@ -33,14 +31,6 @@ def init_extensions(app):
     login_manager.init_app(app)
     csrf.init_app(app)
     limiter.init_app(app)
-    talisman.init_app(app,
-                     force_https=False,  # Set to True in production
-                     content_security_policy={
-                         'default-src': "'self'",
-                         'img-src': "'self' data:",
-                         'script-src': "'self' 'unsafe-inline' 'unsafe-eval'",
-                         'style-src': "'self' 'unsafe-inline'",
-                     })
     
     # Configure login manager
     login_manager.login_view = 'auth.login'
