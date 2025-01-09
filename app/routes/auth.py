@@ -19,6 +19,10 @@ def login():
         return render_template('auth/login.html', form=form)
         
     if request.method == 'POST':
+        if not form.csrf_token.validate(form):
+            flash('CSRF token validation failed. Please try again.', 'error')
+            return redirect(url_for('auth.login'))
+            
         if form.validate_on_submit():
             # Try to find user by ID number
             user = User.query.filter_by(id_number=form.login.data).first()
