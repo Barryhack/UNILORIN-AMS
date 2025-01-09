@@ -5,7 +5,7 @@ from sqlalchemy.orm import relationship
 # Association table for many-to-many relationship between courses and students
 course_students = db.Table('course_students',
     db.Column('course_id', db.Integer, db.ForeignKey('courses.id'), primary_key=True),
-    db.Column('student_id', db.String(10), db.ForeignKey('users.id'), primary_key=True),
+    db.Column('student_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
     db.Column('enrolled_at', db.DateTime, default=datetime.utcnow)
 )
 
@@ -19,7 +19,7 @@ class Course(db.Model):
     description = db.Column(db.Text)
     credits = db.Column(db.Integer, default=3)
     department_id = db.Column(db.Integer, db.ForeignKey('departments.id'), nullable=False)
-    lecturer_id = db.Column(db.String(10), db.ForeignKey('users.id'), nullable=False)
+    lecturer_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     semester = db.Column(db.String(20))  # e.g., 'Fall 2023'
     level = db.Column(db.String(10))  # e.g., '100L', '200L'
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
