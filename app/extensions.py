@@ -5,7 +5,6 @@ from flask_wtf.csrf import CSRFProtect
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_talisman import Talisman
-from flask_seasurf import SeaSurf
 
 # Initialize extensions
 db = SQLAlchemy()
@@ -18,7 +17,6 @@ limiter = Limiter(
     default_limits=["200 per day", "50 per hour"]
 )
 talisman = Talisman()
-seasurf = SeaSurf()  # Additional CSRF protection for AJAX requests
 
 # Make extensions available at module level
 __all__ = [
@@ -26,8 +24,7 @@ __all__ = [
     'login_manager',
     'csrf',
     'limiter',
-    'talisman',
-    'seasurf'
+    'talisman'
 ]
 
 def init_extensions(app):
@@ -44,7 +41,6 @@ def init_extensions(app):
                          'script-src': "'self' 'unsafe-inline' 'unsafe-eval'",
                          'style-src': "'self' 'unsafe-inline'",
                      })
-    seasurf.init_app(app)
     
     # Configure login manager
     login_manager.login_view = 'auth.login'
