@@ -33,7 +33,8 @@ class User(UserMixin, db.Model):
         back_populates='enrolled_students',
         lazy=True
     )
-    marked_attendances = db.relationship('Attendance', back_populates='marked_by')
+    attendances = db.relationship('Attendance', back_populates='student', foreign_keys='Attendance.student_id')
+    marked_attendances = db.relationship('Attendance', back_populates='marked_by', foreign_keys='Attendance.marked_by_id')
     login_logs = db.relationship('LoginLog', back_populates='user')
     activity_logs = db.relationship('ActivityLog', back_populates='user')
     notifications = db.relationship('Notification', back_populates='user')
