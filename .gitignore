@@ -22,6 +22,7 @@ wheels/
 
 # Virtual Environment
 venv/
+venv-*/
 env/
 ENV/
 
@@ -45,10 +46,12 @@ logs/
 .env
 .env.local
 .env.*.local
+.flaskenv
 
 # Database
 *.sqlite3
 *.db
+app/attendance.db
 
 # System Files
 .DS_Store
@@ -74,3 +77,53 @@ coverage.xml
 *.seed
 *.pid.lock
 .env.production
+
+# Dependencies
+node_modules/
+
+# Compiled files
+*.pyc
+*.pyo
+*.pyd
+*.so
+*.dll
+*.dylib
+
+# Local development
+.python-version
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# PyCharm
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Distribution / packaging
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
