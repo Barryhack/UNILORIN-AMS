@@ -6,12 +6,17 @@ from app.models.user import User
 class LoginForm(FlaskForm):
     """Form for user login"""
     login = StringField('ID Number', validators=[
-        DataRequired(),
+        DataRequired(message='Please enter your ID number'),
         Length(max=20, message='ID number must be less than 20 characters')
     ])
-    password = PasswordField('Password', validators=[DataRequired()])
+    password = PasswordField('Password', validators=[
+        DataRequired(message='Please enter your password')
+    ])
     remember = BooleanField('Remember Me')
     submit = SubmitField('Log In')
+
+    class Meta:
+        csrf = True
 
 class ChangePasswordForm(FlaskForm):
     """Form for changing password"""
