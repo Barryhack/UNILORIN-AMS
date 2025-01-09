@@ -1,9 +1,8 @@
 from flask import Flask, request
 from config import Config
-from app.extensions import db, login_manager, csrf, limiter, talisman
+from app.extensions import db, login_manager, csrf, limiter
 from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
-from flask_talisman import Talisman
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import logging
