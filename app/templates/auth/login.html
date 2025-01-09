@@ -40,7 +40,7 @@
                     {% endif %}
                 {% endwith %}
                 <form method="POST" action="{{ url_for('auth.login') }}" enctype="application/x-www-form-urlencoded">
-                    {{ form.csrf_token }}
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="form-group">
                         <label for="login">ID Number</label>
                         {{ form.login(class="form-control", placeholder="Enter your ID number") }}

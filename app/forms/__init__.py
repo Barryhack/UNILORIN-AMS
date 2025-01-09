@@ -7,10 +7,3 @@ class BaseForm(FlaskForm):
     class Meta:
         csrf = True  # Enable CSRF protection by default
         csrf_time_limit = 3600  # 1 hour
-
-from .auth_forms import LoginForm
-from .settings import SystemSettingsForm
-
-# Update all forms to inherit from BaseForm
-LoginForm.__bases__ = (BaseForm,)
-SystemSettingsForm.__bases__ = (BaseForm,)

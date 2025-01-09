@@ -4,7 +4,7 @@ from wtforms.validators import DataRequired, ValidationError, Length, EqualTo
 from app.models.user import User
 from app.forms import BaseForm
 
-class LoginForm(BaseForm):
+class LoginForm(FlaskForm, BaseForm):
     """Form for user login"""
     login = StringField('ID Number', validators=[
         DataRequired(message='Please enter your ID number'),
@@ -19,7 +19,7 @@ class LoginForm(BaseForm):
     class Meta:
         csrf = True
 
-class ChangePasswordForm(BaseForm):
+class ChangePasswordForm(FlaskForm, BaseForm):
     """Form for changing password"""
     current_password = PasswordField('Current Password', validators=[DataRequired()])
     new_password = PasswordField('New Password', validators=[
