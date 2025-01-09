@@ -3,12 +3,12 @@ from datetime import datetime
 from sqlalchemy.orm import relationship
 
 class Attendance(db.Model):
-    """Attendance model for tracking student attendance"""
+    """Attendance model for tracking user attendance"""
     __tablename__ = 'attendances'
 
     id = db.Column(db.Integer, primary_key=True)
     lecture_id = db.Column(db.Integer, db.ForeignKey('lectures.id'), nullable=False)
-    student_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     status = db.Column(db.String(20), default='present')  # present, absent, late
     marked_by_id = db.Column(db.Integer, db.ForeignKey('users.id'))  # if marked by lecturer/admin
@@ -20,18 +20,18 @@ class Attendance(db.Model):
 
     # Relationships
     lecture = relationship('Lecture', back_populates='attendances')
-    student = relationship('User', foreign_keys=[student_id], back_populates='attendances')
-    marked_by = relationship('User', foreign_keys=[marked_by_id])
+    user = relationship('User', foreign_keys=[user_id], back_populates='attendances')
+    marked_by = relationship('User', foreign_keys=[marked_by_id], back_populates='marked_attendances')
 
     def __repr__(self):
-        return f'<Attendance {self.student.name} - {self.lecture.title}>'
+        return f'<Attendance {self.user.name} - {self.lecture.title}>'
 
     def to_dict(self):
         """Convert attendance record to dictionary"""
         return {
             'id': self.id,
             'lecture_id': self.lecture_id,
-            'student_id': self.student_id,
+            'user_id': self.user_id,
             'timestamp': self.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
             'status': self.status,
             'marked_by_id': self.marked_by_id,
@@ -40,11 +40,11 @@ class Attendance(db.Model):
             'notes': self.notes,
             'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S'),
             'updated_at': self.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
-            'student': {
-                'id': self.student.id,
-                'name': self.student.name,
-                'email': self.student.email
-            } if self.student else None,
+            'user': {
+                'id': self.user.id,
+                'name': self.user.name,
+                'email': self.user.email
+            } if self.user else None,
             'lecture': {
                 'id': self.lecture.id,
                 'title': self.lecture.title,
@@ -62,12 +62,12 @@ class Attendance(db.Model):
         }
 
     @classmethod
-    def mark_attendance(cls, lecture_id, student_id, status='present', marked_by_id=None, 
+    def mark_attendance(cls, lecture_id, user_id, status='present', marked_by_id=None, 
                        verification_method='manual', verification_data=None, notes=None):
-        """Mark attendance for a student"""
+        """Mark attendance for a user"""
         attendance = cls(
             lecture_id=lecture_id,
-            student_id=student_id,
+            user_id=user_id,
             status=status,
             marked_by_id=marked_by_id,
             verification_method=verification_method,
@@ -79,9 +79,9 @@ class Attendance(db.Model):
         return attendance
 
     @classmethod
-    def get_student_attendance(cls, student_id, lecture_id=None):
-        """Get attendance records for a student"""
-        query = cls.query.filter_by(student_id=student_id)
+    def get_user_attendance(cls, user_id, lecture_id=None):
+        """Get attendance records for a user"""
+        query = cls.query.filter_by(user_id=user_id)
         if lecture_id:
             query = query.filter_by(lecture_id=lecture_id)
         return query.order_by(cls.timestamp.desc()).all()
