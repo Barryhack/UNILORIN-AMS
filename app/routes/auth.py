@@ -16,11 +16,14 @@ def login():
     form = LoginForm()
     
     if request.method == 'GET':
-        # Generate a new CSRF token for the form
-        form.csrf_token.data = session.get('csrf_token')
         return render_template('auth/login.html', form=form)
         
     if request.method == 'POST':
+        # Validate CSRF token
+        if form.csrf_token.data != session.get('csrf_token'):
+            flash('Invalid CSRF token. Please try again.', 'error')
+            return redirect(url_for('auth.login'))
+            
         if form.validate_on_submit():
             # Try to find user by ID number
             user = User.query.filter_by(id_number=form.login.data).first()

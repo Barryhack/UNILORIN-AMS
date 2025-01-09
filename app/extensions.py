@@ -4,6 +4,7 @@ from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from flask import session
 
 # Initialize extensions
 db = SQLAlchemy()
@@ -36,6 +37,12 @@ def init_extensions(app):
     login_manager.login_view = 'auth.login'
     login_manager.login_message = 'Please log in to access this page.'
     login_manager.login_message_category = 'info'
+    
+    # Configure CSRF protection
+    @app.before_request
+    def csrf_protect():
+        if not session.get('csrf_token'):
+            session['csrf_token'] = csrf._get_token()
     
     @login_manager.user_loader
     def load_user(user_id):
