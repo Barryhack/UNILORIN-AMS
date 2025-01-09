@@ -8,7 +8,6 @@ from sqlalchemy import func
 import json
 import serial
 import serial.tools.list_ports
-from app.extensions import socketio
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -48,210 +47,62 @@ def dashboard():
         ).count(),
         'fingerprint_count': User.query.filter(
             User.fingerprint_data.isnot(None)
-        ).count(),
-        'rfid_count': User.query.filter(
-            User.rfid_data.isnot(None)
         ).count()
     }
     
-    # Get recent activities
+    # Get recent activity logs
     recent_activities = ActivityLog.query.order_by(
         ActivityLog.timestamp.desc()
-    ).limit(5).all()
+    ).limit(10).all()
     
-    activities_list = []
-    for activity in recent_activities:
-        icon = 'fa-user'  # default icon
-        if 'login' in activity.action.lower():
-            icon = 'fa-sign-in-alt'
-        elif 'attendance' in activity.action.lower():
-            icon = 'fa-clipboard-check'
-        elif 'registration' in activity.action.lower():
-            icon = 'fa-id-card'
-            
-        activities_list.append({
-            'action': activity.action,
-            'timestamp': activity.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
-            'icon': icon
-        })
+    # Get recent login logs
+    recent_logins = LoginLog.query.order_by(
+        LoginLog.timestamp.desc()
+    ).limit(10).all()
     
-    return render_template(
-        'admin/dashboard.html',
-        stats=stats,
-        recent_activities=activities_list
-    )
-
-@socketio.on('connect')
-def handle_connect():
-    current_app.logger.info('Client connected')
-    socketio.emit('status', hardware_state)
-
-@socketio.on('disconnect')
-def handle_disconnect():
-    current_app.logger.info('Client disconnected')
-
-@admin_bp.route('/hardware/connect', methods=['POST'])
-@login_required
-@roles_required('admin')
-def connect_controller():
-    try:
-        if hardware_state['controller_connected']:
-            return jsonify({'success': False, 'error': 'Controller already connected'})
-            
-        # Find available COM ports
-        ports = list(serial.tools.list_ports.comports())
-        if not ports:
-            return jsonify({'success': False, 'error': 'No COM ports found'})
-            
-        # Try to connect to the first available port
-        for port in ports:
-            try:
-                ser = serial.Serial(port.device, 9600, timeout=1)
-                hardware_state['serial_port'] = ser
-                hardware_state['controller_connected'] = True
-                
-                # Send initialization command
-                ser.write(b'INIT\n')
-                response = ser.readline().decode().strip()
-                
-                if response == 'OK':
-                    hardware_state['fingerprint_ready'] = True
-                    hardware_state['rfid_ready'] = True
-                    socketio.emit('status', hardware_state)
-                    return jsonify({'success': True})
-                else:
-                    ser.close()
-                    hardware_state['controller_connected'] = False
-                    return jsonify({'success': False, 'error': 'Invalid response from controller'})
-                    
-            except Exception as e:
-                continue
-                
-        return jsonify({'success': False, 'error': 'Could not connect to any available port'})
-        
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-@admin_bp.route('/hardware/test', methods=['POST'])
-@login_required
-@roles_required('admin')
-def test_hardware():
-    try:
-        if not hardware_state['controller_connected']:
-            return jsonify({'success': False, 'error': 'Controller not connected'})
-            
-        ser = hardware_state['serial_port']
-        
-        # Send test command
-        ser.write(b'TEST\n')
-        response = ser.readline().decode().strip()
-        
-        if response == 'OK':
-            socketio.emit('status', hardware_state)
-            return jsonify({'success': True})
-        else:
-            return jsonify({'success': False, 'error': 'Test failed'})
-            
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
+    return render_template('admin/dashboard.html',
+                         stats=stats,
+                         recent_activities=recent_activities,
+                         recent_logins=recent_logins)
 
 @admin_bp.route('/system-info')
 @login_required
 @roles_required('admin')
 def system_info():
-    cpu_percent = psutil.cpu_percent()
+    """Get system information for monitoring."""
+    cpu_percent = psutil.cpu_percent(interval=1)
     memory = psutil.virtual_memory()
+    disk = psutil.disk_usage('/')
     
     return jsonify({
-        'status': 'Online' if cpu_percent < 80 else 'High Load',
         'cpu_percent': cpu_percent,
-        'memory': {
-            'total': memory.total,
-            'available': memory.available,
-            'percent': memory.percent
-        }
+        'memory_percent': memory.percent,
+        'disk_percent': disk.percent,
+        'hardware_state': hardware_state
     })
 
 @admin_bp.route('/users')
 @login_required
 @roles_required('admin')
 def users():
-    users = User.query.all()
-    return render_template('admin/users.html', users=users, datetime=datetime)
+    """List all users."""
+    users_list = User.query.all()
+    return render_template('admin/users.html', users=users_list)
 
-@admin_bp.route('/user/<string:user_id>', methods=['GET', 'POST'])
+@admin_bp.route('/user/<int:user_id>', methods=['GET', 'POST'])
 @login_required
 @roles_required('admin')
 def edit_user(user_id):
+    """Edit a user."""
     user = User.query.get_or_404(user_id)
     if request.method == 'POST':
-        user.username = request.form.get('username')
-        user.email = request.form.get('email')
-        user.first_name = request.form.get('first_name')
-        user.last_name = request.form.get('last_name')
-        user.role = request.form.get('role')
-        user.is_active = bool(request.form.get('is_active'))
-        
-        if request.form.get('password'):
-            user.password_hash = generate_password_hash(request.form.get('password'))
-        
-        db.session.commit()
-        
-        ActivityLog.log_activity(
-            current_user.id,
-            'edit_user',
-            f'Updated user {user.username}',
-            'user',
-            user.id
-        )
-        
-        flash('User updated successfully', 'success')
-        return redirect(url_for('admin.users'))
-    
-    return render_template('admin/edit_user.html', user=user, datetime=datetime)
-
-@admin_bp.route('/user/create', methods=['GET', 'POST'])
-@login_required
-@roles_required('admin')
-def create_user():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        email = request.form.get('email')
-        password = request.form.get('password')
-        role = request.form.get('role')
-        
-        if User.query.filter_by(username=username).first():
-            flash('Username already exists', 'error')
-            return redirect(url_for('admin.create_user'))
-        
-        if User.query.filter_by(email=email).first():
-            flash('Email already exists', 'error')
-            return redirect(url_for('admin.create_user'))
-        
-        user = User(
-            username=username,
-            email=email,
-            password_hash=generate_password_hash(password),
-            role=role,
-            first_name=request.form.get('first_name'),
-            last_name=request.form.get('last_name')
-        )
-        
-        db.session.add(user)
-        db.session.commit()
-        
-        ActivityLog.log_activity(
-            current_user.id,
-            'create_user',
-            f'Created new user {username}',
-            'user',
-            user.id
-        )
-        
-        flash('User created successfully', 'success')
-        return redirect(url_for('admin.users'))
-    
-    return render_template('admin/create_user.html', datetime=datetime)
+        data = request.get_json()
+        user.email = data.get('email', user.email)
+        user.role = data.get('role', user.role)
+        user.is_active = data.get('is_active', user.is_active)
+        user.save()
+        return jsonify({'message': 'User updated successfully'})
+    return render_template('admin/edit_user.html', user=user)
 
 @admin_bp.route('/user/<string:user_id>/delete', methods=['POST'])
 @login_required
@@ -259,8 +110,7 @@ def create_user():
 def delete_user(user_id):
     user = User.query.get_or_404(user_id)
     if user.id == current_user.id:
-        flash('You cannot delete your own account', 'error')
-        return redirect(url_for('admin.users'))
+        return jsonify({'success': False, 'error': 'You cannot delete your own account'})
     
     username = user.username
     db.session.delete(user)
@@ -274,8 +124,7 @@ def delete_user(user_id):
         user_id
     )
     
-    flash('User deleted successfully', 'success')
-    return redirect(url_for('admin.users'))
+    return jsonify({'success': True, 'message': 'User deleted successfully'})
 
 @admin_bp.route('/departments')
 @login_required
@@ -294,8 +143,7 @@ def create_department():
     faculty_id = request.form.get('faculty_id')
     
     if Department.query.filter_by(code=code).first():
-        flash('Department code already exists', 'error')
-        return redirect(url_for('admin.departments'))
+        return jsonify({'success': False, 'error': 'Department code already exists'})
     
     department = Department(
         name=name,
@@ -314,8 +162,7 @@ def create_department():
         department.id
     )
     
-    flash('Department created successfully', 'success')
-    return redirect(url_for('admin.departments'))
+    return jsonify({'success': True, 'message': 'Department created successfully'})
 
 @admin_bp.route('/department/<int:dept_id>/edit', methods=['POST'])
 @login_required
@@ -337,8 +184,7 @@ def edit_department(dept_id):
         department.id
     )
     
-    flash('Department updated successfully', 'success')
-    return redirect(url_for('admin.departments'))
+    return jsonify({'success': True, 'message': 'Department updated successfully'})
 
 @admin_bp.route('/department/<int:dept_id>/delete', methods=['POST'])
 @login_required
@@ -348,8 +194,7 @@ def delete_department(dept_id):
     
     # Check if department has any courses
     if department.courses:
-        flash('Cannot delete department with associated courses', 'error')
-        return redirect(url_for('admin.departments'))
+        return jsonify({'success': False, 'error': 'Cannot delete department with associated courses'})
     
     name = department.name
     db.session.delete(department)
@@ -363,8 +208,7 @@ def delete_department(dept_id):
         dept_id
     )
     
-    flash('Department deleted successfully', 'success')
-    return redirect(url_for('admin.departments'))
+    return jsonify({'success': True, 'message': 'Department deleted successfully'})
 
 @admin_bp.route('/courses')
 @login_required
@@ -383,8 +227,7 @@ def create_course():
     department_id = request.form.get('department_id')
     
     if Course.query.filter_by(code=code).first():
-        flash('Course code already exists', 'error')
-        return redirect(url_for('admin.courses'))
+        return jsonify({'success': False, 'error': 'Course code already exists'})
     
     course = Course(
         name=name,
@@ -403,8 +246,7 @@ def create_course():
         course.id
     )
     
-    flash('Course created successfully', 'success')
-    return redirect(url_for('admin.courses'))
+    return jsonify({'success': True, 'message': 'Course created successfully'})
 
 @admin_bp.route('/course/<int:course_id>/edit', methods=['POST'])
 @login_required
@@ -426,8 +268,7 @@ def edit_course(course_id):
         course.id
     )
     
-    flash('Course updated successfully', 'success')
-    return redirect(url_for('admin.courses'))
+    return jsonify({'success': True, 'message': 'Course updated successfully'})
 
 @admin_bp.route('/course/<int:course_id>/delete', methods=['POST'])
 @login_required
@@ -437,8 +278,7 @@ def delete_course(course_id):
     
     # Check if course has any lectures
     if course.lectures:
-        flash('Cannot delete course with associated lectures', 'error')
-        return redirect(url_for('admin.courses'))
+        return jsonify({'success': False, 'error': 'Cannot delete course with associated lectures'})
     
     name = course.name
     db.session.delete(course)
@@ -452,8 +292,7 @@ def delete_course(course_id):
         course_id
     )
     
-    flash('Course deleted successfully', 'success')
-    return redirect(url_for('admin.courses'))
+    return jsonify({'success': True, 'message': 'Course deleted successfully'})
 
 @admin_bp.route('/activity-logs')
 @login_required
