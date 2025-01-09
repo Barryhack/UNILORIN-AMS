@@ -4,7 +4,7 @@ from functools import wraps
 from app.models.course import Course
 from app.models.lecture import Lecture
 from app.models.attendance import Attendance
-from app.models.student import Student
+from app.models.user import User
 from app.models.notification import Notification
 from app.extensions import db
 from datetime import datetime, timedelta
@@ -50,32 +50,21 @@ def dashboard():
         Lecture.date <= current_time.date() + timedelta(days=7)
     ).order_by(Lecture.date, Lecture.start_time).all()
 
-    # Add has_started and has_ended flags to lectures
-    for lecture in upcoming_lectures:
-        lecture_datetime = datetime.combine(lecture.date, lecture.start_time)
-        lecture_end_datetime = datetime.combine(lecture.date, lecture.end_time)
-        lecture.has_started = current_time >= lecture_datetime
-        lecture.has_ended = current_time >= lecture_end_datetime
-
     # Get recent attendance records
-    recent_attendance = (Attendance.query
-                        .join(Lecture)
-                        .filter(Lecture.lecturer_id == current_user.id)
-                        .order_by(Attendance.timestamp.desc())
-                        .limit(10)
-                        .all())
+    recent_attendances = Attendance.query.join(Lecture).filter(
+        Lecture.lecturer_id == current_user.id
+    ).order_by(Attendance.timestamp.desc()).limit(10).all()
 
     # Get unread notifications
-    notifications = (Notification.query
-                    .filter_by(user_id=current_user.id, is_read=False)
-                    .order_by(Notification.created_at.desc())
-                    .limit(5)
-                    .all())
+    notifications = Notification.query.filter_by(
+        user_id=current_user.id,
+        is_read=False
+    ).order_by(Notification.created_at.desc()).all()
 
     return render_template('lecturer/dashboard.html',
                          stats=stats,
                          upcoming_lectures=upcoming_lectures,
-                         recent_attendance=recent_attendance,
+                         recent_attendances=recent_attendances,
                          notifications=notifications)
 
 @lecturer_bp.route('/courses')
@@ -83,136 +72,117 @@ def dashboard():
 @lecturer_required
 def view_courses():
     courses = Course.query.filter_by(lecturer_id=current_user.id).all()
-    
-    # Calculate attendance statistics for each course
-    for course in courses:
-        total_lectures = Lecture.query.filter_by(course_id=course.id).count()
-        course.total_lectures = total_lectures
-        
-        if total_lectures > 0:
-            # Calculate average attendance percentage
-            attendance_stats = (db.session.query(
-                func.count(Attendance.id).label('total_present')
-            )
-            .join(Lecture)
-            .filter(
-                Lecture.course_id == course.id,
-                Attendance.status == 'present'
-            ).first())
-            
-            total_possible = total_lectures * course.enrolled_students.count()
-            course.attendance_percentage = (attendance_stats.total_present / total_possible * 100) if total_possible > 0 else 0
-        else:
-            course.attendance_percentage = 0
-            
     return render_template('lecturer/courses.html', courses=courses)
 
-@lecturer_bp.route('/take-attendance')
+@lecturer_bp.route('/take-attendance/<int:lecture_id>', methods=['GET', 'POST'])
 @login_required
 @lecturer_required
-def take_attendance():
-    # Get active lectures for the current lecturer
-    current_time = datetime.now()
-    active_lectures = Lecture.query.filter(
-        Lecture.lecturer_id == current_user.id,
-        Lecture.date == current_time.date(),
-        Lecture.start_time <= current_time.time(),
-        Lecture.end_time >= current_time.time()
-    ).all()
+def take_attendance(lecture_id):
+    lecture = Lecture.query.get_or_404(lecture_id)
+    
+    if request.method == 'POST':
+        attendance_data = request.get_json()
+        for student_id, status in attendance_data.items():
+            attendance = Attendance(
+                lecture_id=lecture_id,
+                student_id=student_id,
+                status=status,
+                marked_by_id=current_user.id,
+                verification_method='manual'
+            )
+            db.session.add(attendance)
+        
+        db.session.commit()
+        flash('Attendance has been recorded successfully.', 'success')
+        return jsonify({'status': 'success'})
 
-    # Get upcoming lectures for today
-    upcoming_lectures = Lecture.query.filter(
-        Lecture.lecturer_id == current_user.id,
-        Lecture.date == current_time.date(),
-        Lecture.start_time > current_time.time()
-    ).order_by(Lecture.start_time).all()
-
-    # Get completed lectures for today
-    completed_lectures = Lecture.query.filter(
-        Lecture.lecturer_id == current_user.id,
-        Lecture.date == current_time.date(),
-        Lecture.end_time < current_time.time()
-    ).order_by(Lecture.start_time.desc()).all()
-
+    students = User.query.filter_by(role='student').join(
+        Course.enrolled_students
+    ).filter(Course.id == lecture.course_id).all()
+    
     return render_template('lecturer/take_attendance.html',
-                         active_lectures=active_lectures,
-                         upcoming_lectures=upcoming_lectures,
-                         completed_lectures=completed_lectures)
+                         lecture=lecture,
+                         students=students)
 
 @lecturer_bp.route('/attendance-records')
 @login_required
 @lecturer_required
 def attendance_records():
-    # Get filter parameters
     course_id = request.args.get('course_id', type=int)
-    start_date = request.args.get('start_date', type=str)
-    end_date = request.args.get('end_date', type=str)
-    status = request.args.get('status', type=str)
+    lecture_id = request.args.get('lecture_id', type=int)
+    student_id = request.args.get('student_id', type=int)
+    date_from = request.args.get('date_from')
+    date_to = request.args.get('date_to')
 
-    # Base query
-    query = (Attendance.query
-             .join(Lecture)
-             .join(Course)
-             .filter(Course.lecturer_id == current_user.id))
+    query = Attendance.query.join(Lecture).filter(Lecture.lecturer_id == current_user.id)
 
-    # Apply filters
     if course_id:
-        query = query.filter(Course.id == course_id)
-    if start_date:
-        query = query.filter(Lecture.date >= datetime.strptime(start_date, '%Y-%m-%d').date())
-    if end_date:
-        query = query.filter(Lecture.date <= datetime.strptime(end_date, '%Y-%m-%d').date())
-    if status:
-        query = query.filter(Attendance.status == status)
+        query = query.filter(Lecture.course_id == course_id)
+    if lecture_id:
+        query = query.filter(Attendance.lecture_id == lecture_id)
+    if student_id:
+        query = query.filter(Attendance.student_id == student_id)
+    if date_from:
+        query = query.filter(Lecture.date >= datetime.strptime(date_from, '%Y-%m-%d').date())
+    if date_to:
+        query = query.filter(Lecture.date <= datetime.strptime(date_to, '%Y-%m-%d').date())
 
-    # Get records with pagination
-    page = request.args.get('page', 1, type=int)
-    per_page = 20
-    records = query.order_by(Attendance.timestamp.desc()).paginate(page=page, per_page=per_page)
+    attendances = query.order_by(Lecture.date.desc(), Lecture.start_time.desc()).all()
 
-    # Get courses for filter dropdown
     courses = Course.query.filter_by(lecturer_id=current_user.id).all()
+    students = User.query.filter_by(role='student').join(
+        Course.enrolled_students
+    ).filter(Course.lecturer_id == current_user.id).all()
 
     return render_template('lecturer/attendance_records.html',
-                         records=records,
-                         courses=courses)
+                         attendances=attendances,
+                         courses=courses,
+                         students=students)
 
 @lecturer_bp.route('/reports')
 @login_required
 @lecturer_required
 def reports():
+    course_id = request.args.get('course_id', type=int)
+    date_from = request.args.get('date_from')
+    date_to = request.args.get('date_to')
+
     courses = Course.query.filter_by(lecturer_id=current_user.id).all()
     
-    # Calculate course statistics
-    course_stats = []
-    for course in courses:
-        # Get total lectures
-        total_lectures = Lecture.query.filter_by(course_id=course.id).count()
+    if course_id:
+        course = Course.query.get_or_404(course_id)
+        students = User.query.filter_by(role='student').join(
+            Course.enrolled_students
+        ).filter(Course.id == course_id).all()
         
-        # Get attendance statistics
-        attendance_stats = (db.session.query(
-            Attendance.status,
-            func.count(Attendance.id).label('count')
-        )
-        .join(Lecture)
-        .filter(Lecture.course_id == course.id)
-        .group_by(Attendance.status)
-        .all())
+        attendance_stats = []
+        for student in students:
+            query = Attendance.query.join(Lecture).filter(
+                Lecture.course_id == course_id,
+                Attendance.student_id == student.id
+            )
+            
+            if date_from:
+                query = query.filter(Lecture.date >= datetime.strptime(date_from, '%Y-%m-%d').date())
+            if date_to:
+                query = query.filter(Lecture.date <= datetime.strptime(date_to, '%Y-%m-%d').date())
+            
+            total = query.count()
+            present = query.filter(Attendance.status == 'present').count()
+            
+            attendance_stats.append({
+                'student': student,
+                'total': total,
+                'present': present,
+                'percentage': round((present / total * 100) if total > 0 else 0, 2)
+            })
         
-        # Calculate percentages
-        total_students = course.enrolled_students.count()
-        stats = {
-            'course': course,
-            'total_lectures': total_lectures,
-            'total_students': total_students,
-            'attendance_stats': {status: count for status, count in attendance_stats},
-            'attendance_percentage': sum(count for _, count in attendance_stats) / (total_lectures * total_students) * 100 if total_lectures > 0 and total_students > 0 else 0
-        }
-        course_stats.append(stats)
+        return render_template('lecturer/reports.html',
+                             courses=courses,
+                             selected_course=course,
+                             attendance_stats=attendance_stats)
     
-    return render_template('lecturer/reports.html',
-                         courses=courses,
-                         course_stats=course_stats)
+    return render_template('lecturer/reports.html', courses=courses)
 
 @lecturer_bp.route('/profile')
 @login_required
