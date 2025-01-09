@@ -8,7 +8,7 @@ class Notification(db.Model):
     __tablename__ = 'notifications'
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.String(10), db.ForeignKey('users.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     title = db.Column(db.String(100), nullable=False)
     message = db.Column(db.Text, nullable=False)
     type = db.Column(db.String(20), default='info')  # info, warning, error, success
@@ -29,34 +29,37 @@ class Notification(db.Model):
         """Convert notification to dictionary"""
         return {
             'id': self.id,
+            'user_id': self.user_id,
             'title': self.title,
             'message': self.message,
             'type': self.type,
             'is_read': self.is_read,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
-            'read_at': self.read_at.isoformat() if self.read_at else None,
+            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'read_at': self.read_at.strftime('%Y-%m-%d %H:%M:%S') if self.read_at else None,
             'link': self.link,
             'source': self.source,
-            'priority': self.priority
+            'priority': self.priority,
+            'user': {
+                'id': self.user.id,
+                'username': self.user.username,
+                'email': self.user.email
+            } if self.user else None
         }
 
     def mark_as_read(self):
         """Mark notification as read"""
-        if not self.is_read:
-            self.is_read = True
-            self.read_at = datetime.utcnow()
-            db.session.commit()
+        self.is_read = True
+        self.read_at = datetime.utcnow()
+        db.session.commit()
 
     def mark_as_unread(self):
         """Mark notification as unread"""
-        if self.is_read:
-            self.is_read = False
-            self.read_at = None
-            db.session.commit()
+        self.is_read = False
+        self.read_at = None
+        db.session.commit()
 
     @classmethod
-    def create_notification(cls, user_id, title, message, type='info', link=None, 
-                          source='system', priority=0):
+    def create_notification(cls, user_id, title, message, type='info', link=None, source='system', priority=0):
         """Create a new notification"""
         notification = cls(
             user_id=user_id,
@@ -72,27 +75,25 @@ class Notification(db.Model):
         return notification
 
     @classmethod
+    def get_user_notifications(cls, user_id, limit=10, unread_only=False):
+        """Get notifications for a user"""
+        query = cls.query.filter_by(user_id=user_id)
+        if unread_only:
+            query = query.filter_by(is_read=False)
+        return query.order_by(cls.created_at.desc()).limit(limit).all()
+
+    @classmethod
     def get_unread_count(cls, user_id):
         """Get count of unread notifications for a user"""
         return cls.query.filter_by(user_id=user_id, is_read=False).count()
 
     @classmethod
-    def get_user_notifications(cls, user_id, limit=None, unread_only=False):
-        """Get notifications for a user"""
-        query = cls.query.filter_by(user_id=user_id)
-        if unread_only:
-            query = query.filter_by(is_read=False)
-        query = query.order_by(cls.priority.desc(), cls.created_at.desc())
-        if limit:
-            query = query.limit(limit)
-        return query.all()
-
-    @classmethod
     def mark_all_as_read(cls, user_id):
         """Mark all notifications as read for a user"""
-        notifications = cls.query.filter_by(user_id=user_id, is_read=False).all()
-        for notification in notifications:
-            notification.mark_as_read()
+        cls.query.filter_by(user_id=user_id, is_read=False).update({
+            'is_read': True,
+            'read_at': datetime.utcnow()
+        })
         db.session.commit()
 
     @classmethod
@@ -103,15 +104,6 @@ class Notification(db.Model):
         db.session.commit()
 
     @classmethod
-    def get_notifications_by_source(cls, user_id, source, limit=None):
-        """Get notifications by source"""
-        query = cls.query.filter_by(user_id=user_id, source=source)
-        query = query.order_by(cls.priority.desc(), cls.created_at.desc())
-        if limit:
-            query = query.limit(limit)
-        return query.all()
-
-    def delete(self):
-        """Delete the notification"""
-        db.session.delete(self)
-        db.session.commit()
+    def get_recent_notifications(cls, limit=10):
+        """Get recent notifications across all users"""
+        return cls.query.order_by(cls.created_at.desc()).limit(limit).all()
