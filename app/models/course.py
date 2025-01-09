@@ -2,13 +2,6 @@ from app.extensions import db
 from datetime import datetime
 from sqlalchemy.orm import relationship
 
-# Association table for many-to-many relationship between courses and students
-course_students = db.Table('course_students',
-    db.Column('course_id', db.Integer, db.ForeignKey('courses.id'), primary_key=True),
-    db.Column('student_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
-    db.Column('enrolled_at', db.DateTime, default=datetime.utcnow)
-)
-
 class Course(db.Model):
     """Course model for managing academic courses"""
     __tablename__ = 'courses'
@@ -29,9 +22,10 @@ class Course(db.Model):
     # Relationships
     department = relationship('Department', back_populates='courses')
     lecturer = relationship('User', back_populates='courses')
+    course_students = relationship('CourseStudent', back_populates='course')
     enrolled_students = relationship(
         'User',
-        secondary=course_students,
+        secondary='course_students',
         back_populates='enrolled_courses',
         lazy=True
     )
