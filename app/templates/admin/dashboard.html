@@ -20,6 +20,87 @@
         </div>
     </div>
 
+    <!-- Hardware Status Section -->
+    <div class="mb-8">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6">
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Hardware Control Center</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Status Card -->
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">System Status</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-600 dark:text-gray-300">Connection:</span>
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 rounded-full mr-2 {{ 'bg-green-500' if hardware_status.connected else 'bg-red-500' }}"></div>
+                                <span class="text-sm font-medium {{ 'text-green-600 dark:text-green-400' if hardware_status.connected else 'text-red-600 dark:text-red-400' }}">
+                                    {{ 'Connected' if hardware_status.connected else 'Disconnected' }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-600 dark:text-gray-300">Mode:</span>
+                            <span class="text-sm font-medium text-gray-900 dark:text-white">{{ hardware_status.mode|title }}</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-600 dark:text-gray-300">Fingerprint Reader:</span>
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 rounded-full mr-2 {{ 'bg-green-500' if hardware_status.fingerprint_ready else 'bg-red-500' }}"></div>
+                                <span class="text-sm font-medium {{ 'text-green-600 dark:text-green-400' if hardware_status.fingerprint_ready else 'text-red-600 dark:text-red-400' }}">
+                                    {{ 'Ready' if hardware_status.fingerprint_ready else 'Not Ready' }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-600 dark:text-gray-300">RFID Reader:</span>
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 rounded-full mr-2 {{ 'bg-green-500' if hardware_status.rfid_ready else 'bg-red-500' }}"></div>
+                                <span class="text-sm font-medium {{ 'text-green-600 dark:text-green-400' if hardware_status.rfid_ready else 'text-red-600 dark:text-red-400' }}">
+                                    {{ 'Ready' if hardware_status.rfid_ready else 'Not Ready' }}
+                                </span>
+                            </div>
+                        </div>
+                        {% if hardware_status.last_sync %}
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-600 dark:text-gray-300">Last Sync:</span>
+                            <span class="text-sm font-medium text-gray-900 dark:text-white">{{ hardware_status.last_sync.strftime('%H:%M:%S') }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Control Card -->
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Controls</h3>
+                    <div class="space-y-4">
+                        <button onclick="connectHardware()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200">
+                            {{ 'Disconnect' if hardware_status.connected else 'Connect' }}
+                        </button>
+                        <button onclick="resetHardware()" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200" {{ 'disabled' if not hardware_status.connected }}>
+                            Reset Hardware
+                        </button>
+                        <button onclick="testHardware()" class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200" {{ 'disabled' if not hardware_status.connected }}>
+                            Test Device
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Log Card -->
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Hardware Logs</h3>
+                    <div id="hardware-logs" class="space-y-2 h-[200px] overflow-y-auto">
+                        {% if hardware_status.last_error %}
+                        <div class="flex items-start space-x-2 text-red-600 dark:text-red-400">
+                            <i class="fas fa-exclamation-circle mt-1"></i>
+                            <span class="text-sm">{{ hardware_status.last_error }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Statistics Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <!-- Total Users Card -->
@@ -72,56 +153,6 @@
                     <i class="fas fa-clipboard-check text-yellow-600 dark:text-yellow-400 text-xl"></i>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Quick Actions -->
-    <div class="mb-8">
-        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Quick Actions</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <a href="{{ url_for('admin.users') }}" class="group">
-                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100 dark:border-gray-700">
-                    <div class="flex items-center space-x-4">
-                        <div class="bg-blue-100 dark:bg-blue-900 p-3 rounded-lg group-hover:bg-blue-200 dark:group-hover:bg-blue-800 transition-colors">
-                            <i class="fas fa-user-plus text-blue-600 dark:text-blue-400 text-xl"></i>
-                        </div>
-                        <span class="font-semibold text-gray-700 dark:text-gray-200">Manage Users</span>
-                    </div>
-                </div>
-            </a>
-
-            <a href="{{ url_for('admin.departments') }}" class="group">
-                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100 dark:border-gray-700">
-                    <div class="flex items-center space-x-4">
-                        <div class="bg-green-100 dark:bg-green-900 p-3 rounded-lg group-hover:bg-green-200 dark:group-hover:bg-green-800 transition-colors">
-                            <i class="fas fa-building text-green-600 dark:text-green-400 text-xl"></i>
-                        </div>
-                        <span class="font-semibold text-gray-700 dark:text-gray-200">Departments</span>
-                    </div>
-                </div>
-            </a>
-
-            <a href="{{ url_for('admin.courses') }}" class="group">
-                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100 dark:border-gray-700">
-                    <div class="flex items-center space-x-4">
-                        <div class="bg-purple-100 dark:bg-purple-900 p-3 rounded-lg group-hover:bg-purple-200 dark:group-hover:bg-purple-800 transition-colors">
-                            <i class="fas fa-book text-purple-600 dark:text-purple-400 text-xl"></i>
-                        </div>
-                        <span class="font-semibold text-gray-700 dark:text-gray-200">Courses</span>
-                    </div>
-                </div>
-            </a>
-
-            <a href="{{ url_for('admin.reports') }}" class="group">
-                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100 dark:border-gray-700">
-                    <div class="flex items-center space-x-4">
-                        <div class="bg-yellow-100 dark:bg-yellow-900 p-3 rounded-lg group-hover:bg-yellow-200 dark:group-hover:bg-yellow-800 transition-colors">
-                            <i class="fas fa-chart-bar text-yellow-600 dark:text-yellow-400 text-xl"></i>
-                        </div>
-                        <span class="font-semibold text-gray-700 dark:text-gray-200">Reports</span>
-                    </div>
-                </div>
-            </a>
         </div>
     </div>
 
@@ -182,35 +213,102 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
-<!-- Add custom styles for animations -->
-<style>
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    .animate-fadeIn {
-        animation: fadeIn 0.5s ease-out forwards;
-    }
-
-    .hover\:scale-card:hover {
-        transform: scale(1.02);
-        transition: transform 0.2s ease-in-out;
-    }
-</style>
-
-<!-- Add custom scripts for interactivity -->
+{% block scripts %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Add animation classes to elements
-    const cards = document.querySelectorAll('.bg-white');
-    cards.forEach((card, index) => {
-        card.style.animationDelay = `${index * 0.1}s`;
-        card.classList.add('animate-fadeIn');
-    });
+// Hardware Control Functions
+let hardwareConnected = {{ 'true' if hardware_status.connected else 'false' }};
 
-    // Initialize any charts or real-time updates here
-});
+function updateHardwareStatus() {
+    fetch('/admin/hardware/status')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();  // Refresh to update all status indicators
+            }
+        })
+        .catch(error => addHardwareLog('Error updating status: ' + error));
+}
+
+function connectHardware() {
+    const endpoint = hardwareConnected ? '/admin/hardware/disconnect' : '/admin/hardware/connect';
+    fetch(endpoint, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            hardwareConnected = !hardwareConnected;
+            updateHardwareStatus();
+        } else {
+            addHardwareLog('Error: ' + data.error);
+        }
+    })
+    .catch(error => addHardwareLog('Error: ' + error));
+}
+
+function resetHardware() {
+    fetch('/admin/hardware/reset', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            updateHardwareStatus();
+        } else {
+            addHardwareLog('Error: ' + data.error);
+        }
+    })
+    .catch(error => addHardwareLog('Error: ' + error));
+}
+
+function testHardware() {
+    fetch('/admin/hardware/test', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            addHardwareLog('Test completed successfully');
+            if (data.test_result) {
+                addHardwareLog('Test result: ' + JSON.stringify(data.test_result));
+            }
+            updateHardwareStatus();
+        } else {
+            addHardwareLog('Error: ' + data.error);
+        }
+    })
+    .catch(error => addHardwareLog('Error: ' + error));
+}
+
+function addHardwareLog(message) {
+    const logsContainer = document.getElementById('hardware-logs');
+    const logEntry = document.createElement('div');
+    logEntry.className = 'flex items-start space-x-2 text-gray-600 dark:text-gray-400';
+    
+    const timestamp = new Date().toLocaleTimeString();
+    logEntry.innerHTML = `
+        <span class="text-xs">[${timestamp}]</span>
+        <span class="text-sm">${message}</span>
+    `;
+    
+    logsContainer.insertBefore(logEntry, logsContainer.firstChild);
+}
+
+// Update status periodically
+setInterval(updateHardwareStatus, 30000);  // Every 30 seconds
 </script>
 {% endblock %}
