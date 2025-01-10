@@ -2,17 +2,74 @@
 
 {% block title %}Admin Dashboard{% endblock %}
 
+{% block styles %}
+<style>
+    .dashboard-card {
+        @apply bg-white dark:bg-gray-800 rounded-xl shadow-lg transition-transform duration-200 hover:scale-[1.02];
+    }
+    .status-indicator {
+        @apply w-3 h-3 rounded-full;
+    }
+    .status-indicator.active {
+        @apply bg-green-500;
+        animation: pulse 2s infinite;
+    }
+    .status-indicator.inactive {
+        @apply bg-red-500;
+    }
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+    .hardware-button {
+        @apply w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+    }
+    .hardware-button.primary {
+        @apply bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500;
+    }
+    .hardware-button.warning {
+        @apply bg-yellow-600 hover:bg-yellow-700 text-white focus:ring-yellow-500;
+    }
+    .hardware-button.success {
+        @apply bg-green-600 hover:bg-green-700 text-white focus:ring-green-500;
+    }
+    .stat-card {
+        @apply dashboard-card p-6 relative overflow-hidden;
+    }
+    .stat-card::before {
+        content: '';
+        @apply absolute top-0 left-0 w-1.5 h-full;
+    }
+    .stat-card.blue::before {
+        @apply bg-blue-500;
+    }
+    .stat-card.green::before {
+        @apply bg-green-500;
+    }
+    .stat-card.purple::before {
+        @apply bg-purple-500;
+    }
+    .stat-card.yellow::before {
+        @apply bg-yellow-500;
+    }
+    .activity-icon {
+        @apply w-10 h-10 rounded-full flex items-center justify-center;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container mx-auto px-4 py-8">
-    <!-- Welcome Section -->
-    <div class="mb-8">
-        <div class="bg-gradient-to-r from-[#002147] to-[#003366] rounded-2xl shadow-xl p-8">
+    <!-- Welcome Banner -->
+    <div class="dashboard-card bg-gradient-to-r from-[#002147] to-[#003366] mb-8">
+        <div class="p-8">
             <div class="flex flex-col lg:flex-row justify-between items-center gap-4">
-                <div>
+                <div class="text-center lg:text-left">
                     <h1 class="text-3xl font-bold text-white mb-2">Welcome back, {{ current_user.name }}!</h1>
                     <p class="text-[#FFD700] text-lg">{{ datetime.now().strftime('%A, %B %d, %Y') }}</p>
                 </div>
-                <div class="text-white text-right bg-white/10 p-4 rounded-xl backdrop-blur-sm">
+                <div class="text-white text-center lg:text-right bg-white/10 p-4 rounded-xl backdrop-blur-sm">
                     <p class="text-sm text-[#FFD700]">Last Login</p>
                     <p class="font-semibold">{{ current_user.last_login.strftime('%Y-%m-%d %H:%M:%S') if current_user.last_login else 'First Login' }}</p>
                 </div>
@@ -20,41 +77,44 @@
         </div>
     </div>
 
-    <!-- Hardware Status Section -->
-    <div class="mb-8">
-        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6">
-            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Hardware Control Center</h2>
+    <!-- Hardware Control Center -->
+    <div class="dashboard-card mb-8">
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Hardware Control Center</h2>
+                <span class="text-sm text-gray-500 dark:text-gray-400">Real-time Status</span>
+            </div>
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Status Card -->
+                <!-- Status Panel -->
                 <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-6">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">System Status</h3>
                     <div class="space-y-4">
                         <div class="flex items-center justify-between">
-                            <span class="text-gray-600 dark:text-gray-300">Connection:</span>
-                            <div class="flex items-center">
-                                <div class="w-3 h-3 rounded-full mr-2 {{ 'bg-green-500' if hardware_status.connected else 'bg-red-500' }}"></div>
+                            <span class="text-gray-600 dark:text-gray-300">Connection</span>
+                            <div class="flex items-center gap-2">
+                                <div class="status-indicator {{ 'active' if hardware_status.connected else 'inactive' }}"></div>
                                 <span class="text-sm font-medium {{ 'text-green-600 dark:text-green-400' if hardware_status.connected else 'text-red-600 dark:text-red-400' }}">
                                     {{ 'Connected' if hardware_status.connected else 'Disconnected' }}
                                 </span>
                             </div>
                         </div>
                         <div class="flex items-center justify-between">
-                            <span class="text-gray-600 dark:text-gray-300">Mode:</span>
+                            <span class="text-gray-600 dark:text-gray-300">Mode</span>
                             <span class="text-sm font-medium text-gray-900 dark:text-white">{{ hardware_status.mode|title }}</span>
                         </div>
                         <div class="flex items-center justify-between">
-                            <span class="text-gray-600 dark:text-gray-300">Fingerprint Reader:</span>
-                            <div class="flex items-center">
-                                <div class="w-3 h-3 rounded-full mr-2 {{ 'bg-green-500' if hardware_status.fingerprint_ready else 'bg-red-500' }}"></div>
+                            <span class="text-gray-600 dark:text-gray-300">Fingerprint Reader</span>
+                            <div class="flex items-center gap-2">
+                                <div class="status-indicator {{ 'active' if hardware_status.fingerprint_ready else 'inactive' }}"></div>
                                 <span class="text-sm font-medium {{ 'text-green-600 dark:text-green-400' if hardware_status.fingerprint_ready else 'text-red-600 dark:text-red-400' }}">
                                     {{ 'Ready' if hardware_status.fingerprint_ready else 'Not Ready' }}
                                 </span>
                             </div>
                         </div>
                         <div class="flex items-center justify-between">
-                            <span class="text-gray-600 dark:text-gray-300">RFID Reader:</span>
-                            <div class="flex items-center">
-                                <div class="w-3 h-3 rounded-full mr-2 {{ 'bg-green-500' if hardware_status.rfid_ready else 'bg-red-500' }}"></div>
+                            <span class="text-gray-600 dark:text-gray-300">RFID Reader</span>
+                            <div class="flex items-center gap-2">
+                                <div class="status-indicator {{ 'active' if hardware_status.rfid_ready else 'inactive' }}"></div>
                                 <span class="text-sm font-medium {{ 'text-green-600 dark:text-green-400' if hardware_status.rfid_ready else 'text-red-600 dark:text-red-400' }}">
                                     {{ 'Ready' if hardware_status.rfid_ready else 'Not Ready' }}
                                 </span>
@@ -62,33 +122,33 @@
                         </div>
                         {% if hardware_status.last_sync %}
                         <div class="flex items-center justify-between">
-                            <span class="text-gray-600 dark:text-gray-300">Last Sync:</span>
+                            <span class="text-gray-600 dark:text-gray-300">Last Sync</span>
                             <span class="text-sm font-medium text-gray-900 dark:text-white">{{ hardware_status.last_sync.strftime('%H:%M:%S') }}</span>
                         </div>
                         {% endif %}
                     </div>
                 </div>
 
-                <!-- Control Card -->
+                <!-- Control Panel -->
                 <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-6">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Controls</h3>
                     <div class="space-y-4">
-                        <button onclick="connectHardware()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200">
+                        <button onclick="connectHardware()" class="hardware-button primary">
                             {{ 'Disconnect' if hardware_status.connected else 'Connect' }}
                         </button>
-                        <button onclick="resetHardware()" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200" {{ 'disabled' if not hardware_status.connected }}>
+                        <button onclick="resetHardware()" class="hardware-button warning" {{ 'disabled' if not hardware_status.connected }}>
                             Reset Hardware
                         </button>
-                        <button onclick="testHardware()" class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200" {{ 'disabled' if not hardware_status.connected }}>
+                        <button onclick="testHardware()" class="hardware-button success" {{ 'disabled' if not hardware_status.connected }}>
                             Test Device
                         </button>
                     </div>
                 </div>
 
-                <!-- Log Card -->
+                <!-- Log Panel -->
                 <div class="bg-gray-50 dark:bg-gray-700 rounded-xl p-6">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Hardware Logs</h3>
-                    <div id="hardware-logs" class="space-y-2 h-[200px] overflow-y-auto">
+                    <div id="hardware-logs" class="space-y-2 h-[200px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 dark:scrollbar-thumb-gray-600">
                         {% if hardware_status.last_error %}
                         <div class="flex items-start space-x-2 text-red-600 dark:text-red-400">
                             <i class="fas fa-exclamation-circle mt-1"></i>
@@ -103,112 +163,110 @@
 
     <!-- Statistics Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <!-- Total Users Card -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
+        <!-- Total Users -->
+        <div class="stat-card blue">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm text-gray-500 dark:text-gray-400">Total Users</p>
-                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white">{{ stats.total_users }}</h3>
+                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mt-1">{{ stats.total_users }}</h3>
                 </div>
-                <div class="bg-blue-100 dark:bg-blue-900 p-3 rounded-lg">
+                <div class="bg-blue-100 dark:bg-blue-900 activity-icon">
                     <i class="fas fa-users text-blue-600 dark:text-blue-400 text-xl"></i>
                 </div>
             </div>
         </div>
 
-        <!-- Students Card -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border-l-4 border-green-500">
+        <!-- Students -->
+        <div class="stat-card green">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm text-gray-500 dark:text-gray-400">Students</p>
-                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white">{{ stats.total_students }}</h3>
+                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mt-1">{{ stats.total_students }}</h3>
                 </div>
-                <div class="bg-green-100 dark:bg-green-900 p-3 rounded-lg">
+                <div class="bg-green-100 dark:bg-green-900 activity-icon">
                     <i class="fas fa-user-graduate text-green-600 dark:text-green-400 text-xl"></i>
                 </div>
             </div>
         </div>
 
-        <!-- Lecturers Card -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
+        <!-- Lecturers -->
+        <div class="stat-card purple">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm text-gray-500 dark:text-gray-400">Lecturers</p>
-                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white">{{ stats.total_lecturers }}</h3>
+                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mt-1">{{ stats.total_lecturers }}</h3>
                 </div>
-                <div class="bg-purple-100 dark:bg-purple-900 p-3 rounded-lg">
+                <div class="bg-purple-100 dark:bg-purple-900 activity-icon">
                     <i class="fas fa-chalkboard-teacher text-purple-600 dark:text-purple-400 text-xl"></i>
                 </div>
             </div>
         </div>
 
-        <!-- Today's Attendance Card -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border-l-4 border-yellow-500">
+        <!-- Today's Attendance -->
+        <div class="stat-card yellow">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm text-gray-500 dark:text-gray-400">Today's Attendance</p>
-                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white">{{ stats.today_attendance }}</h3>
+                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mt-1">{{ stats.today_attendance }}</h3>
                 </div>
-                <div class="bg-yellow-100 dark:bg-yellow-900 p-3 rounded-lg">
+                <div class="bg-yellow-100 dark:bg-yellow-900 activity-icon">
                     <i class="fas fa-clipboard-check text-yellow-600 dark:text-yellow-400 text-xl"></i>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Recent Activity and Logs -->
+    <!-- Activity Panels -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <!-- Recent Activity -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Recent Activity</h3>
-            <div class="space-y-4">
-                {% for activity in recent_activities %}
-                <div class="flex items-start space-x-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                    <div class="flex-shrink-0">
-                        <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-                            <i class="fas fa-history text-blue-600 dark:text-blue-400"></i>
+        <div class="dashboard-card">
+            <div class="p-6">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Recent Activity</h3>
+                <div class="space-y-4">
+                    {% for activity in recent_activities %}
+                    <div class="flex items-start space-x-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                        <div class="flex-shrink-0">
+                            <div class="bg-blue-100 dark:bg-blue-900 activity-icon">
+                                <i class="fas fa-history text-blue-600 dark:text-blue-400"></i>
+                            </div>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900 dark:text-white">{{ activity.action }}</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">{{ activity.details }}</p>
+                            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                                {{ activity.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
+                            </p>
                         </div>
                     </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium text-gray-900 dark:text-white">
-                            {{ activity.action }}
-                        </p>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">
-                            {{ activity.details }}
-                        </p>
-                        <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                            {{ activity.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
-                        </p>
-                    </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
             </div>
         </div>
 
         <!-- Recent Logins -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Recent Logins</h3>
-            <div class="space-y-4">
-                {% for log in recent_logins %}
-                <div class="flex items-start space-x-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                    <div class="flex-shrink-0">
-                        <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
-                            <i class="fas fa-sign-in-alt text-green-600 dark:text-green-400"></i>
+        <div class="dashboard-card">
+            <div class="p-6">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Recent Logins</h3>
+                <div class="space-y-4">
+                    {% for log in recent_logins %}
+                    <div class="flex items-start space-x-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                        <div class="flex-shrink-0">
+                            <div class="bg-green-100 dark:bg-green-900 activity-icon">
+                                <i class="fas fa-sign-in-alt text-green-600 dark:text-green-400"></i>
+                            </div>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                {{ log.user.name if log.user else 'Unknown User' }}
+                            </p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">{{ log.action }} - {{ log.status }}</p>
+                            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                                {{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
+                            </p>
                         </div>
                     </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium text-gray-900 dark:text-white">
-                            {{ log.user.name if log.user else 'Unknown User' }}
-                        </p>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">
-                            {{ log.action }} - {{ log.status }}
-                        </p>
-                        <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                            {{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
-                        </p>
-                    </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
             </div>
         </div>
     </div>
@@ -308,7 +366,10 @@ function addHardwareLog(message) {
     logsContainer.insertBefore(logEntry, logsContainer.firstChild);
 }
 
-// Update status periodically
-setInterval(updateHardwareStatus, 30000);  // Every 30 seconds
+// Initialize dashboard
+document.addEventListener('DOMContentLoaded', function() {
+    // Set up periodic status updates
+    setInterval(updateHardwareStatus, 30000);  // Every 30 seconds
+});
 </script>
 {% endblock %}
