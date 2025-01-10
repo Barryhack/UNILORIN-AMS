@@ -4,7 +4,7 @@ services:
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: |
-      python create_admin.py
+      python -c "from create_admin import create_admin_user; create_admin_user()"
       gunicorn run:app --worker-class eventlet --bind 0.0.0.0:$PORT
     envVars:
       - key: FLASK_APP
