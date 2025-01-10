@@ -8,6 +8,7 @@ from app.models.login_log import LoginLog
 from app.models.activity_log import ActivityLog
 from app.models.faculty import Faculty
 import os
+import sqlalchemy as sa
 
 def setup_database():
     """Set up the database from scratch"""
@@ -26,9 +27,24 @@ def setup_database():
     
     with app.app_context():
         try:
-            # Drop all tables if they exist
-            db.drop_all()
-            print("Dropped all existing tables")
+            # Check if we're using SQLite or PostgreSQL
+            is_sqlite = 'sqlite' in app.config['SQLALCHEMY_DATABASE_URI']
+            
+            if is_sqlite:
+                # Drop all tables if they exist (SQLite)
+                db.drop_all()
+                print("Dropped all existing tables")
+            else:
+                # Drop all tables if they exist (PostgreSQL)
+                # Get all table names
+                inspector = sa.inspect(db.engine)
+                tables = inspector.get_table_names()
+                
+                # Drop all tables in reverse order to handle dependencies
+                for table in reversed(tables):
+                    db.session.execute(sa.text(f'DROP TABLE IF EXISTS {table} CASCADE'))
+                db.session.commit()
+                print("Dropped all existing tables")
             
             # Create all tables
             db.create_all()
