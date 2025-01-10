@@ -1,7 +1,7 @@
 """Flask extensions module."""
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
-from flask_wtf.csrf import CSRFProtect
+from flask_wtf.csrf import CSRFProtect, generate_csrf
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask import session
@@ -42,7 +42,7 @@ def init_extensions(app):
     @app.before_request
     def csrf_protect():
         if not session.get('csrf_token'):
-            session['csrf_token'] = csrf._get_token()
+            session['csrf_token'] = generate_csrf()
     
     @login_manager.user_loader
     def load_user(user_id):
