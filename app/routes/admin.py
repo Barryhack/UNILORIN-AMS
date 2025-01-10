@@ -63,7 +63,8 @@ def dashboard():
     return render_template('admin/dashboard.html',
                          stats=stats,
                          recent_activities=recent_activities,
-                         recent_logins=recent_logins)
+                         recent_logins=recent_logins,
+                         datetime=datetime)
 
 @admin_bp.route('/system-info')
 @login_required
