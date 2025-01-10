@@ -17,14 +17,22 @@ def setup_database():
     if not os.path.exists('logs'):
         os.makedirs('logs')
         print("Created logs directory")
+        
+    # Create instance directory if it doesn't exist
+    instance_dir = os.path.join(os.path.dirname(__file__), 'instance')
+    if not os.path.exists(instance_dir):
+        os.makedirs(instance_dir)
+        print("Created instance directory")
     
     with app.app_context():
         try:
             # Drop all tables if they exist
             db.drop_all()
+            print("Dropped all existing tables")
             
             # Create all tables
             db.create_all()
+            print("Created all tables")
             
             # Create default admin user
             admin = User(

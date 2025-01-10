@@ -1,8 +1,7 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SubmitField, HiddenField
+from wtforms import StringField, PasswordField, BooleanField, SubmitField
 from wtforms.validators import DataRequired, ValidationError, Length, EqualTo
 from app.models.user import User
-from flask import session
 
 class LoginForm(FlaskForm):
     """Form for user login"""
@@ -14,13 +13,10 @@ class LoginForm(FlaskForm):
         DataRequired(message='Please enter your password')
     ])
     remember = BooleanField('Remember Me')
-    csrf_token = HiddenField()
     submit = SubmitField('Log In')
 
-    def __init__(self, *args, **kwargs):
-        super(LoginForm, self).__init__(*args, **kwargs)
-        if not self.csrf_token.data:
-            self.csrf_token.data = session.get('csrf_token')
+    class Meta:
+        csrf = False  # Disable WTForms CSRF protection since we're handling it manually
 
 class ChangePasswordForm(FlaskForm):
     """Form for changing password"""

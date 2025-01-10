@@ -18,9 +18,10 @@ class Config:
     
     # CSRF Protection
     WTF_CSRF_ENABLED = True
-    WTF_CSRF_SECRET_KEY = os.environ.get('WTF_CSRF_SECRET_KEY') or 'csrf-key-change-in-production'
-    WTF_CSRF_TIME_LIMIT = 3600  # 1 hour
+    WTF_CSRF_SECRET_KEY = 'csrf-key-change-in-production'
+    WTF_CSRF_TIME_LIMIT = None  # Disable CSRF token timeout
     WTF_CSRF_SSL_STRICT = False  # Changed to False for development
+    WTF_CSRF_CHECK_DEFAULT = False  # Disable automatic CSRF checking
     
     # Security headers
     SECURITY_HEADERS = {
