@@ -40,11 +40,12 @@ def dashboard():
     recent_logins = LoginLog.query.order_by(LoginLog.timestamp.desc()).limit(5).all()
     
     return render_template('admin/dashboard.html',
-                         hardware_status=hardware_status,
-                         stats=stats,
-                         recent_activities=recent_activities,
-                         recent_logins=recent_logins,
-                         datetime=datetime)
+        hardware_status=hardware_status,
+        stats=stats,
+        recent_activities=recent_activities,
+        recent_logins=recent_logins,
+        datetime=datetime
+    )
 
 @admin_bp.route('/system-info')
 @login_required
