@@ -64,34 +64,36 @@ def login():
                     flash('Your account has been deactivated. Please contact an administrator.', 'error')
                     return redirect(url_for('auth.login'))
                 
-                # Update last login time
-                user.update_last_login()
-                
-                login_user(user, remember=form.remember.data)
-                
-                # Log successful login
-                log = LoginLog(
-                    user_id=user.id,
-                    status='success',
-                    ip_address=request.remote_addr,
-                    user_agent=request.user_agent.string
-                )
-                db.session.add(log)
-                
                 try:
+                    # Update last login time
+                    user.update_last_login()
+                    
+                    # Log successful login
+                    log = LoginLog(
+                        user_id=user.id,
+                        status='success',
+                        ip_address=request.remote_addr,
+                        user_agent=request.user_agent.string
+                    )
+                    db.session.add(log)
                     db.session.commit()
+                    
+                    # Login user after successful database operations
+                    login_user(user, remember=form.remember.data)
                     flash('Logged in successfully!', 'success')
                     logger.info(f"User {user.email} logged in successfully")
+                    
+                    next_page = request.args.get('next')
+                    if not next_page or urlparse(next_page).netloc != '':
+                        next_page = url_for(user.get_dashboard_route())
+                    logger.info(f"Redirecting to: {next_page}")
+                    return redirect(next_page)
+                    
                 except Exception as e:
                     db.session.rollback()
                     logger.error(f"Error during login: {str(e)}")
                     flash('An error occurred during login. Please try again.', 'error')
-                
-                next_page = request.args.get('next')
-                if not next_page or urlparse(next_page).netloc != '':
-                    next_page = url_for(user.get_dashboard_route())
-                logger.info(f"Redirecting to: {next_page}")
-                return redirect(next_page)
+                    return redirect(url_for('auth.login'))
             else:
                 if user:
                     logger.error(f"Password check failed for user {id_number}")

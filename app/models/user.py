@@ -61,8 +61,9 @@ class User(UserMixin, db.Model):
         return check_password_hash(self.password_hash, password)
 
     def update_last_login(self):
+        """Update the last login timestamp."""
         self.last_login = datetime.utcnow()
-        db.session.commit()
+        # Remove the commit from here since it will be handled in the route
         logger.info(f"Last login updated for user {self.email}")
 
     def get_dashboard_route(self):
