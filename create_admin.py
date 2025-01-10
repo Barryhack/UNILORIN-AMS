@@ -11,11 +11,11 @@ def create_admin_user():
     with app.app_context():
         try:
             # Check if admin user exists
-            admin = User.query.filter_by(id_number='ADMIN001').first()
+            admin = User.query.filter_by(id_number='19/52AD001').first()
             if admin:
                 print("Admin user already exists")
                 # Update admin password
-                admin.set_password('admin123')
+                admin.set_password('Admin@2024')
                 db.session.commit()
                 print("Admin password updated")
                 return
@@ -23,11 +23,11 @@ def create_admin_user():
             # Create admin user
             admin = User(
                 name='Administrator',
-                email='admin@example.com',
+                email='admin@unilorin.edu.ng',
                 role='admin',
-                id_number='ADMIN001'
+                id_number='19/52AD001'
             )
-            admin.set_password('admin123')
+            admin.set_password('Admin@2024')
             db.session.add(admin)
             db.session.commit()
             print("Created admin user successfully")

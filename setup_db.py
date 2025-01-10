@@ -53,11 +53,11 @@ def setup_database():
             # Create default admin user
             admin = User(
                 name='Administrator',
-                email='admin@example.com',
+                email='admin@unilorin.edu.ng',
                 role='admin',
-                id_number='ADMIN001'
+                id_number='19/52AD001'
             )
-            admin.set_password('admin123')
+            admin.set_password('Admin@2024')
             db.session.add(admin)
             print("Created default admin user")
             
