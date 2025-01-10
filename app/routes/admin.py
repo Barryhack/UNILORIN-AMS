@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, jsonify, request, current_app, redirect, url_for
+from flask import Blueprint, render_template, jsonify, request, current_app, redirect, url_for, make_response
 from flask_login import login_required, current_user
 from datetime import datetime
 from ..models import User, Course, Department, Attendance, LoginLog, ActivityLog
@@ -39,13 +39,17 @@ def dashboard():
     # Get recent logins
     recent_logins = LoginLog.query.order_by(LoginLog.timestamp.desc()).limit(5).all()
     
-    return render_template('admin/dashboard.html',
+    response = make_response(render_template('admin/dashboard.html',
         hardware_status=hardware_status,
         stats=stats,
         recent_activities=recent_activities,
         recent_logins=recent_logins,
         datetime=datetime
-    )
+    ))
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
 
 @admin_bp.route('/system-info')
 @login_required
