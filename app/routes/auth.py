@@ -28,9 +28,14 @@ def login():
     if request.method == 'POST':
         # Log form data for debugging
         logger.info(f"Form data received: {request.form}")
+        logger.info(f"Form validation result: {form.validate()}")
+        if not form.validate():
+            logger.error(f"Form validation errors: {form.errors}")
         
         # Validate CSRF token
         token = request.form.get('csrf_token')
+        logger.info(f"Received CSRF token: {token}")
+        logger.info(f"Session CSRF token: {session.get('csrf_token')}")
         if not token or token != session.get('csrf_token'):
             flash('Invalid CSRF token. Please try again.', 'error')
             return redirect(url_for('auth.login'))
@@ -42,8 +47,17 @@ def login():
             
             logger.info(f"Attempting login with ID: {id_number}")
             
+            # List all users in database for debugging
+            all_users = User.query.all()
+            logger.info(f"All users in database: {[(u.id_number, u.email) for u in all_users]}")
+            
             user = User.query.filter_by(id_number=id_number).first()
             logger.info(f"User found: {user is not None}")
+            
+            if user:
+                logger.info(f"Found user: ID={user.id_number}, Email={user.email}, Role={user.role}")
+                password_check = user.check_password(password)
+                logger.info(f"Password check result: {password_check}")
             
             if user and user.check_password(password):
                 if not user.is_active:
