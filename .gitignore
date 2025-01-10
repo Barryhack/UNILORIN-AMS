@@ -127,3 +127,15 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+
+# Admin scripts and backups
+activate_admin.py
+create_admin_direct.py
+setup_prod_admin.py
+*.old
+*.bak
+
+# Keep migrations
+!migrations/
+!migrations/versions/
+!migrations/versions/*.py
