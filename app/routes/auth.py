@@ -90,6 +90,7 @@ def login():
                 next_page = request.args.get('next')
                 if not next_page or urlparse(next_page).netloc != '':
                     next_page = url_for(user.get_dashboard_route())
+                logger.info(f"Redirecting to: {next_page}")
                 return redirect(next_page)
             else:
                 if user:

@@ -68,7 +68,7 @@ class User(UserMixin, db.Model):
     def get_dashboard_route(self):
         """Return the appropriate dashboard route based on user role."""
         if self.role == 'admin':
-            return 'admin.dashboard'
+            return 'admin.dashboard'  # This will resolve to /admin/dashboard
         elif self.role == 'lecturer':
             return 'lecturer.dashboard'
         elif self.role == 'student':
