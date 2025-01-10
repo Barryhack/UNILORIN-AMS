@@ -1,13 +1,9 @@
-from flask import Blueprint, render_template, jsonify, request, current_app
+from flask import Blueprint, render_template, jsonify, request, current_app, redirect, url_for
 from flask_login import login_required, current_user
 from datetime import datetime
-import psutil
-from app.models import User, Attendance, Lecture, LoginLog, ActivityLog
-from app.utils.decorators import roles_required
-from sqlalchemy import func
-import json
-import serial
-import serial.tools.list_ports
+from ..models import User, Course, Department, Attendance, LoginLog, ActivityLog
+from .. import db
+from ..hardware.controller import controller, HardwareMode
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -21,46 +17,30 @@ hardware_state = {
 
 @admin_bp.route('/dashboard')
 @login_required
-@roles_required('admin')
+@admin_required
 def dashboard():
-    today = datetime.utcnow().date()
+    """Admin dashboard view."""
+    # Get hardware status
+    hardware_status = current_app.hardware_controller.get_status()
     
-    # Get statistics for dashboard
+    # Get statistics
     stats = {
         'total_users': User.query.count(),
         'total_students': User.query.filter_by(role='student').count(),
         'total_lecturers': User.query.filter_by(role='lecturer').count(),
         'today_attendance': Attendance.query.filter(
-            func.date(Attendance.timestamp) == today
-        ).count(),
-        'present_count': Attendance.query.filter(
-            func.date(Attendance.timestamp) == today,
-            Attendance.status == 'present'
-        ).count(),
-        'absent_count': Attendance.query.filter(
-            func.date(Attendance.timestamp) == today,
-            Attendance.status == 'absent'
-        ).count(),
-        'total_registrations': User.query.filter(
-            (User.fingerprint_data.isnot(None)) | 
-            (User.rfid_data.isnot(None))
-        ).count(),
-        'fingerprint_count': User.query.filter(
-            User.fingerprint_data.isnot(None)
+            Attendance.timestamp >= datetime.now().replace(hour=0, minute=0, second=0)
         ).count()
     }
     
-    # Get recent activity logs
-    recent_activities = ActivityLog.query.order_by(
-        ActivityLog.timestamp.desc()
-    ).limit(10).all()
+    # Get recent activities
+    recent_activities = ActivityLog.query.order_by(ActivityLog.timestamp.desc()).limit(5).all()
     
-    # Get recent login logs
-    recent_logins = LoginLog.query.order_by(
-        LoginLog.timestamp.desc()
-    ).limit(10).all()
+    # Get recent logins
+    recent_logins = LoginLog.query.order_by(LoginLog.timestamp.desc()).limit(5).all()
     
     return render_template('admin/dashboard.html',
+                         hardware_status=hardware_status,
                          stats=stats,
                          recent_activities=recent_activities,
                          recent_logins=recent_logins,
@@ -331,7 +311,7 @@ def statistics():
     # Attendance statistics
     total_attendance = Attendance.query.count()
     today_attendance = Attendance.query.join(Lecture).filter(
-        func.date(Lecture.date) == datetime.utcnow().date()
+        db.func.date(Lecture.date) == datetime.utcnow().date()
     ).count()
     
     # Recent activities
@@ -373,3 +353,78 @@ def reports():
 def settings():
     """View and modify system settings"""
     return render_template('admin/settings.html')
+
+@admin_bp.route('/hardware/status')
+@login_required
+@admin_required
+def hardware_status():
+    """Get hardware status."""
+    try:
+        status = current_app.hardware_controller.get_status()
+        return jsonify({'success': True, 'status': status})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@admin_bp.route('/hardware/connect', methods=['POST'])
+@login_required
+@admin_required
+def hardware_connect():
+    """Connect to hardware."""
+    try:
+        current_app.hardware_controller.connect()
+        ActivityLog.create(
+            user_id=current_user.id,
+            action='Hardware Connection',
+            details='Successfully connected to hardware'
+        )
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@admin_bp.route('/hardware/disconnect', methods=['POST'])
+@login_required
+@admin_required
+def hardware_disconnect():
+    """Disconnect from hardware."""
+    try:
+        current_app.hardware_controller.disconnect()
+        ActivityLog.create(
+            user_id=current_user.id,
+            action='Hardware Connection',
+            details='Successfully disconnected from hardware'
+        )
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@admin_bp.route('/hardware/reset', methods=['POST'])
+@login_required
+@admin_required
+def hardware_reset():
+    """Reset hardware."""
+    try:
+        current_app.hardware_controller.reset()
+        ActivityLog.create(
+            user_id=current_user.id,
+            action='Hardware Reset',
+            details='Successfully reset hardware'
+        )
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@admin_bp.route('/hardware/test', methods=['POST'])
+@login_required
+@admin_required
+def hardware_test():
+    """Test hardware."""
+    try:
+        test_result = current_app.hardware_controller.test()
+        ActivityLog.create(
+            user_id=current_user.id,
+            action='Hardware Test',
+            details='Hardware test completed'
+        )
+        return jsonify({'success': True, 'test_result': test_result})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
