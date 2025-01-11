@@ -12,6 +12,7 @@ import os
 from datetime import timedelta
 from flask import redirect
 
+# Initialize extensions
 db = SQLAlchemy()
 migrate = Migrate()
 login_manager = LoginManager()
@@ -44,22 +45,26 @@ def create_app(config_class=Config):
         except Exception as e:
             app.logger.error(f'Error setting up logging: {e}')
 
-    # Initialize extensions
-    db.init_app(app)
-    migrate.init_app(app, db)
-    login_manager.init_app(app)
-    csrf.init_app(app)
-    limiter.init_app(app)
-    
-    # Initialize hardware controller
-    app.hardware_controller = HardwareController()
+    with app.app_context():
+        # Initialize extensions
+        db.init_app(app)
+        migrate.init_app(app, db)
+        login_manager.init_app(app)
+        csrf.init_app(app)
+        limiter.init_app(app)
+        
+        # Initialize hardware controller
+        app.hardware_controller = HardwareController()
 
-    # Set up login view
-    login_manager.login_view = 'auth.login'
-    login_manager.login_message_category = 'info'
+        # Set up login view
+        login_manager.login_view = 'auth.login'
+        login_manager.login_message_category = 'info'
 
-    # Register blueprints
-    from app.routes import register_blueprints
-    register_blueprints(app)
+        # Register blueprints
+        from app.routes import register_blueprints
+        register_blueprints(app)
+
+        # Create tables
+        db.create_all()
 
     return app
