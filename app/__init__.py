@@ -30,9 +30,11 @@ def create_app(config_class=Config):
     from .extensions import init_extensions, db
     init_extensions(app)
 
-    # Initialize database
+    # Initialize database and create default users
     with app.app_context():
         db.create_all()
+        from .models import User
+        User.create_default_users()
 
     # Register blueprints with URL prefixes
     from .routes import auth_bp, lecturer_bp, student_bp, admin_bp, main_bp

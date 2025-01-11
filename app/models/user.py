@@ -106,52 +106,52 @@ class User(UserMixin, db.Model):
             'last_login': self.last_login.strftime('%Y-%m-%d %H:%M:%S') if self.last_login else None
         }
 
-# Create default admin, lecturer and student users if they don't exist.
-def create_default_users():
-    """Create default admin, lecturer and student users if they don't exist."""
-    try:
-        # Create admin user
-        if not User.query.filter_by(login_id='ADMIN001').first():
-            admin = User(
-                login_id='ADMIN001',
-                email='admin@example.com',
-                first_name='Admin',
-                last_name='User',
-                role='admin',
-                password='admin123'
-            )
-            db.session.add(admin)
-            logger.info("Created default admin user")
+    @classmethod
+    def create_default_users(cls):
+        """Create default admin, lecturer and student users if they don't exist."""
+        try:
+            # Create admin user
+            if not cls.query.filter_by(login_id='ADMIN001').first():
+                admin = cls(
+                    login_id='ADMIN001',
+                    email='admin@example.com',
+                    first_name='Admin',
+                    last_name='User',
+                    role='admin',
+                    password='admin123'
+                )
+                db.session.add(admin)
+                logger.info("Created default admin user")
 
-        # Create lecturer user
-        if not User.query.filter_by(login_id='LECT001').first():
-            lecturer = User(
-                login_id='LECT001',
-                email='lecturer@example.com',
-                first_name='Lecturer',
-                last_name='User',
-                role='lecturer',
-                password='lecturer123'
-            )
-            db.session.add(lecturer)
-            logger.info("Created default lecturer user")
+            # Create lecturer user
+            if not cls.query.filter_by(login_id='LECT001').first():
+                lecturer = cls(
+                    login_id='LECT001',
+                    email='lecturer@example.com',
+                    first_name='Lecturer',
+                    last_name='User',
+                    role='lecturer',
+                    password='lecturer123'
+                )
+                db.session.add(lecturer)
+                logger.info("Created default lecturer user")
 
-        # Create student user
-        if not User.query.filter_by(login_id='STU001').first():
-            student = User(
-                login_id='STU001',
-                email='student@example.com',
-                first_name='Student',
-                last_name='User',
-                role='student',
-                password='student123'
-            )
-            db.session.add(student)
-            logger.info("Created default student user")
+            # Create student user
+            if not cls.query.filter_by(login_id='STU001').first():
+                student = cls(
+                    login_id='STU001',
+                    email='student@example.com',
+                    first_name='Student',
+                    last_name='User',
+                    role='student',
+                    password='student123'
+                )
+                db.session.add(student)
+                logger.info("Created default student user")
 
-        db.session.commit()
-        logger.info("Successfully created default users")
-    except Exception as e:
-        db.session.rollback()
-        logger.error(f"Error creating default users: {str(e)}")
-        raise
+            db.session.commit()
+            logger.info("Successfully created default users")
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error creating default users: {str(e)}")
+            raise
