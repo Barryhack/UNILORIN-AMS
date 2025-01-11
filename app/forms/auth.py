@@ -1,7 +1,7 @@
 from flask import current_user
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SubmitField
-from wtforms.validators import DataRequired, Email, Length, ValidationError, EqualTo
+from wtforms import StringField, PasswordField, BooleanField, SubmitField, validators
+from wtforms.validators import DataRequired, Email, Length, ValidationError
 from app.models import User
 
 class LoginForm(FlaskForm):
@@ -28,7 +28,7 @@ class ChangePasswordForm(FlaskForm):
     ])
     confirm_password = PasswordField('Confirm New Password', validators=[
         DataRequired(message='Please confirm your new password'),
-        EqualTo('new_password', message='Passwords must match')
+        validators.EqualTo('new_password', message='Passwords must match')
     ])
     submit = SubmitField('Change Password')
 
