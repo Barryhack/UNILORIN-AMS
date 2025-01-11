@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
+from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.urls import url_parse
 from app.forms.auth import LoginForm
@@ -17,62 +17,67 @@ def login():
         return redirect(url_for('main.index'))
 
     form = LoginForm()
-    logger.info(f"Form data received: {request.form}")
-    logger.info(f"Form validation result: {form.validate_on_submit()}")
-
-    if form.validate_on_submit():
-        login_id = form.login.data
-        logger.info(f"Attempting login with ID: {login_id}")
+    
+    if request.method == 'POST':
+        logger.info(f"Login attempt from IP: {request.remote_addr}")
         
-        user = User.query.filter_by(login_id=login_id).first()
-        
-        if user and user.verify_password(form.password.data):
-            # Update last login
-            user.last_login = datetime.utcnow()
+        if form.validate_on_submit():
+            login_id = form.login.data
+            logger.info(f"Attempting login with ID: {login_id}")
             
-            # Create login log
-            login_log = LoginLog(
-                user_id=user.id,
-                ip_address=request.remote_addr,
-                user_agent=request.user_agent.string
-            )
+            user = User.query.filter_by(login_id=login_id).first()
             
-            # Create activity log
-            activity_log = ActivityLog(
-                user_id=user.id,
-                action='login',
-                details=f'User logged in from {request.remote_addr}'
-            )
-            
-            try:
-                db.session.add(login_log)
-                db.session.add(activity_log)
-                db.session.commit()
+            if user and user.verify_password(form.password.data):
+                # Update last login
+                user.last_login = datetime.utcnow()
                 
-                # Log in user
-                login_user(user)
-                logger.info(f"User {login_id} logged in successfully")
+                # Create login log
+                login_log = LoginLog(
+                    user_id=user.id,
+                    ip_address=request.remote_addr,
+                    user_agent=request.user_agent.string
+                )
                 
-                # Redirect to next page or default
-                next_page = request.args.get('next')
-                if not next_page or url_parse(next_page).netloc != '':
-                    if user.is_admin:
-                        next_page = url_for('admin.dashboard')
-                    elif user.is_lecturer:
-                        next_page = url_for('lecturer.dashboard')
-                    else:
-                        next_page = url_for('student.dashboard')
-                return redirect(next_page)
+                # Create activity log
+                activity_log = ActivityLog(
+                    user_id=user.id,
+                    action='login',
+                    details=f'User logged in from {request.remote_addr}'
+                )
                 
-            except Exception as e:
-                db.session.rollback()
-                logger.error(f"Error during login: {str(e)}")
-                flash('An error occurred during login. Please try again.', 'error')
-                return render_template('auth/login.html', form=form)
+                try:
+                    db.session.add(login_log)
+                    db.session.add(activity_log)
+                    db.session.commit()
+                    
+                    # Log in user
+                    login_user(user, remember=form.remember.data)
+                    logger.info(f"User {login_id} logged in successfully")
+                    
+                    # Redirect to next page or default
+                    next_page = request.args.get('next')
+                    if not next_page or url_parse(next_page).netloc != '':
+                        if user.role == 'admin':
+                            next_page = url_for('admin.dashboard')
+                        elif user.role == 'lecturer':
+                            next_page = url_for('lecturer.dashboard')
+                        else:
+                            next_page = url_for('student.dashboard')
+                    return redirect(next_page)
+                    
+                except Exception as e:
+                    db.session.rollback()
+                    logger.error(f"Error during login: {str(e)}")
+                    flash('An error occurred during login. Please try again.', 'error')
+            else:
+                logger.warning(f"Failed login attempt for ID: {login_id}")
+                flash('Invalid username or password', 'error')
         else:
-            logger.warning(f"Failed login attempt for ID: {login_id}")
-            flash('Invalid username or password', 'error')
-            
+            logger.warning("Form validation failed")
+            for field, errors in form.errors.items():
+                for error in errors:
+                    flash(f"{field}: {error}", 'error')
+    
     return render_template('auth/login.html', form=form)
 
 @auth_bp.route('/logout')
