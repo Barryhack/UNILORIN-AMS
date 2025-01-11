@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for
+from flask import Blueprint, render_template, redirect, url_for, request
 from flask_login import login_required, current_user
 from app.models.user import User
 from app.extensions import db
@@ -8,6 +8,7 @@ from app.models.department import Department
 from app.models.activity_log import ActivityLog
 import logging
 import psutil
+from urllib.parse import url_parse
 
 logger = logging.getLogger(__name__)
 main_bp = Blueprint('main', __name__)
@@ -15,7 +16,10 @@ main_bp = Blueprint('main', __name__)
 @main_bp.route('/')
 def index():
     if not current_user.is_authenticated:
-        return redirect(url_for('auth.login'))
+        next_page = request.args.get('next')
+        if not next_page or url_parse(next_page).netloc != '':
+            next_page = url_for('main.dashboard')
+        return redirect(url_for('auth.login', next=next_page))
         
     # Redirect to appropriate dashboard based on user role
     if current_user.role == 'admin':

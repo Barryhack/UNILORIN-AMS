@@ -25,13 +25,36 @@ class User(UserMixin, db.Model):
 
     # Relationships
     department = db.relationship('Department', back_populates='department_users')
-    enrolled_courses = db.relationship('Course', secondary='course_students',
+    enrolled_courses = db.relationship('Course', 
+                                     secondary='course_students',
                                      back_populates='enrolled_students',
-                                     lazy='dynamic')
-    course_enrollments = db.relationship('CourseStudent', back_populates='student')
-    attendances = db.relationship('Attendance', back_populates='user', lazy='dynamic')
-    activity_logs = db.relationship('ActivityLog', backref='user', lazy='dynamic')
-    login_logs = db.relationship('LoginLog', backref='user', lazy='dynamic')
+                                     lazy='dynamic',
+                                     overlaps="course_enrollments")
+    course_enrollments = db.relationship('CourseStudent', 
+                                       back_populates='student',
+                                       overlaps="enrolled_courses")
+    taught_courses = db.relationship('Course',
+                                   foreign_keys='Course.lecturer_id',
+                                   back_populates='lecturer',
+                                   lazy='dynamic')
+    attendances = db.relationship('Attendance', 
+                                foreign_keys='Attendance.user_id',
+                                back_populates='user', 
+                                lazy='dynamic')
+    marked_attendances = db.relationship('Attendance',
+                                       foreign_keys='Attendance.marked_by_id',
+                                       back_populates='marked_by',
+                                       lazy='dynamic')
+    activity_logs = db.relationship('ActivityLog', 
+                                  back_populates='user', 
+                                  lazy='dynamic')
+    login_logs = db.relationship('LoginLog', 
+                               back_populates='user', 
+                               lazy='dynamic')
+    notifications = db.relationship('Notification',
+                                  back_populates='user',
+                                  lazy='dynamic',
+                                  cascade='all, delete-orphan')
 
     def __init__(self, login_id, email=None, first_name=None, last_name=None, role='student'):
         self.login_id = login_id
@@ -49,31 +72,39 @@ class User(UserMixin, db.Model):
         self.password_hash = generate_password_hash(password)
 
     def verify_password(self, password):
-        return check_password_hash(self.password_hash, password)
+        try:
+            return check_password_hash(self.password_hash, password)
+        except Exception as e:
+            logger.error(f"Error verifying password for user {self.login_id}: {str(e)}")
+            return False
 
     def get_id(self):
         return str(self.id)
 
     @property
-    def is_admin(self):
-        return self.role == 'admin'
-
-    @property
-    def is_lecturer(self):
-        return self.role == 'lecturer'
-
-    @property
-    def is_student(self):
-        return self.role == 'student'
-
-    @property
-    def full_name(self):
+    def name(self):
+        """Return user's full name"""
         if self.first_name and self.last_name:
             return f"{self.first_name} {self.last_name}"
         return self.login_id
 
     def __repr__(self):
         return f'<User {self.login_id}>'
+
+    def to_dict(self):
+        """Convert user object to dictionary"""
+        return {
+            'id': self.id,
+            'login_id': self.login_id,
+            'email': self.email,
+            'first_name': self.first_name,
+            'last_name': self.last_name,
+            'role': self.role,
+            'department_id': self.department_id,
+            'is_active': self.is_active,
+            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S') if self.created_at else None,
+            'last_login': self.last_login.strftime('%Y-%m-%d %H:%M:%S') if self.last_login else None
+        }
 
 # Create default admin, lecturer and student users if they don't exist.
 def create_default_users():

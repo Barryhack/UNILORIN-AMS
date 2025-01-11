@@ -35,7 +35,9 @@ def login():
                 login_log = LoginLog(
                     user_id=user.id,
                     ip_address=request.remote_addr,
-                    user_agent=request.user_agent.string
+                    user_agent=request.user_agent.string,
+                    action='login',
+                    status='success'
                 )
                 
                 # Create activity log
@@ -72,13 +74,29 @@ def login():
             else:
                 logger.warning(f"Failed login attempt for ID: {login_id}")
                 flash('Invalid username or password', 'error')
+                
+                # Log failed login attempt
+                try:
+                    login_log = LoginLog(
+                        user_id=user.id if user else None,
+                        ip_address=request.remote_addr,
+                        user_agent=request.user_agent.string,
+                        action='login',
+                        status='failed'
+                    )
+                    db.session.add(login_log)
+                    db.session.commit()
+                except Exception as e:
+                    logger.error(f"Error logging failed login attempt: {str(e)}")
         else:
             logger.warning("Form validation failed")
             for field, errors in form.errors.items():
                 for error in errors:
                     flash(f"{field}: {error}", 'error')
     
-    return render_template('auth/login.html', form=form)
+    # Pass next parameter to template
+    next_page = request.args.get('next')
+    return render_template('auth/login.html', form=form, next=next_page)
 
 @auth_bp.route('/logout')
 @login_required

@@ -35,6 +35,10 @@ class Config:
     TESTING = False
     TEMPLATES_AUTO_RELOAD = True
     
+    # Server name for URL generation
+    SERVER_NAME = os.environ.get('SERVER_NAME', 'localhost:5000')
+    PREFERRED_URL_SCHEME = os.environ.get('PREFERRED_URL_SCHEME', 'http')
+    
     # Logging
     LOG_LEVEL = 'INFO'
     LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -72,6 +76,8 @@ class ProductionConfig(Config):
     }
     LOG_LEVEL = 'ERROR'
     RATELIMIT_ENABLED = True
+    SERVER_NAME = 'unilorin-ams-vf9i.onrender.com'
+    PREFERRED_URL_SCHEME = 'https'
 
 class TestingConfig(Config):
     TESTING = True

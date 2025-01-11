@@ -28,7 +28,10 @@ __all__ = [
 
 def init_extensions(app):
     """Initialize Flask extensions"""
+    # Initialize SQLAlchemy
     db.init_app(app)
+    
+    # Initialize other extensions
     login_manager.init_app(app)
     csrf.init_app(app)
     limiter.init_app(app)
@@ -48,9 +51,18 @@ def init_extensions(app):
     def load_user(user_id):
         from app.models.user import User
         return User.query.get(int(user_id))
-
-    # Create database tables
+        
+    # Ensure all models are registered
     with app.app_context():
+        from app.models.user import User
+        from app.models.department import Department
+        from app.models.course import Course
+        from app.models.lecture import Lecture
+        from app.models.attendance import Attendance
+        from app.models.activity_log import ActivityLog
+        from app.models.login_log import LoginLog
+        from app.models.notification import Notification
+        from app.models.course_student import CourseStudent
+        
+        # Create tables
         db.create_all()
-
-    return app

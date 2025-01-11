@@ -19,6 +19,14 @@ class LoginLog(db.Model):
     # Relationships
     user = relationship('User', back_populates='login_logs')
 
+    def __init__(self, user_id=None, action='login', status='success', ip_address=None, user_agent=None, details=None):
+        self.user_id = user_id
+        self.action = action
+        self.status = status
+        self.ip_address = ip_address
+        self.user_agent = user_agent
+        self.details = details
+
     def __repr__(self):
         return f'<LoginLog {self.user_id} - {self.action}:{self.status} at {self.timestamp}>'
 
@@ -54,30 +62,35 @@ class LoginLog(db.Model):
         return query.all()
 
     @classmethod
-    def get_failed_attempts(cls, user_id, minutes=30):
-        """Get number of failed login attempts for a user in the last X minutes"""
-        cutoff = datetime.utcnow() - timedelta(minutes=minutes)
+    def get_failed_attempts(cls, ip_address, minutes=15):
+        """Get number of failed login attempts from an IP address in the last X minutes"""
+        since = datetime.utcnow() - timedelta(minutes=minutes)
         return cls.query.filter(
-            cls.user_id == user_id,
+            cls.ip_address == ip_address,
             cls.status == 'failed',
-            cls.timestamp >= cutoff
+            cls.timestamp >= since
         ).count()
 
     @classmethod
-    def get_login_stats(cls, days=7):
-        """Get login statistics for the dashboard"""
+    def cleanup_old_logs(cls, days=30):
+        """Delete logs older than specified days"""
         cutoff = datetime.utcnow() - timedelta(days=days)
+        try:
+            cls.query.filter(cls.timestamp < cutoff).delete()
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error cleaning up old login logs: {str(e)}")
+
+    def to_dict(self):
+        """Convert login log to dictionary"""
         return {
-            'total_logins': cls.query.filter(
-                cls.status == 'success',
-                cls.timestamp >= cutoff
-            ).count(),
-            'failed_attempts': cls.query.filter(
-                cls.status == 'failed',
-                cls.timestamp >= cutoff
-            ).count(),
-            'unique_users': db.session.query(db.func.count(db.distinct(cls.user_id))).filter(
-                cls.status == 'success',
-                cls.timestamp >= cutoff
-            ).scalar()
+            'id': self.id,
+            'user_id': self.user_id,
+            'timestamp': self.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+            'action': self.action,
+            'status': self.status,
+            'ip_address': self.ip_address,
+            'user_agent': self.user_agent,
+            'details': self.details
         }

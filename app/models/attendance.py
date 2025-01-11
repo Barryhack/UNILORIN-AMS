@@ -40,11 +40,7 @@ class Attendance(db.Model):
             'notes': self.notes,
             'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S'),
             'updated_at': self.updated_at.strftime('%Y-%m-%d %H:%M:%S'),
-            'user': {
-                'id': self.user.id,
-                'name': self.user.name,
-                'email': self.user.email
-            } if self.user else None,
+            'user': self.user.to_dict() if self.user else None,
             'lecture': {
                 'id': self.lecture.id,
                 'title': self.lecture.title,
@@ -52,8 +48,9 @@ class Attendance(db.Model):
                     'id': self.lecture.course.id,
                     'code': self.lecture.course.code,
                     'title': self.lecture.course.title
-                }
-            } if self.lecture else None
+                } if self.lecture.course else None
+            } if self.lecture else None,
+            'marked_by': self.marked_by.to_dict() if self.marked_by else None
         }
 
     @classmethod

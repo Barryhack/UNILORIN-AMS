@@ -21,16 +21,22 @@ class Course(db.Model):
 
     # Relationships
     department = db.relationship('Department', back_populates='courses')
-    lecturer = db.relationship('User', foreign_keys=[lecturer_id], backref=db.backref('taught_courses', lazy='dynamic'))
-    course_students = db.relationship('CourseStudent', back_populates='course')
+    lecturer = db.relationship('User', 
+                             foreign_keys=[lecturer_id], 
+                             back_populates='taught_courses')
+    course_students = db.relationship('CourseStudent', 
+                                    back_populates='course',
+                                    overlaps="enrolled_students")
     enrolled_students = db.relationship(
         'User',
         secondary='course_students',
         back_populates='enrolled_courses',
-        lazy=True
+        lazy=True,
+        overlaps="course_students"
     )
-    lectures = relationship('Lecture', back_populates='course', cascade='all, delete-orphan')
-    attendances = db.relationship('Attendance', back_populates='course', lazy='dynamic')
+    lectures = db.relationship('Lecture', 
+                             back_populates='course', 
+                             cascade='all, delete-orphan')
 
     def __repr__(self):
         return f'<Course {self.code}: {self.title}>'
@@ -50,9 +56,83 @@ class Course(db.Model):
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
             'is_active': self.is_active,
-            'department': self.department.name if self.department else None,
-            'lecturer': self.lecturer.name if self.lecturer else None,
-            'student_count': len(self.enrolled_students)
+            'department': self.department.to_dict() if self.department else None,
+            'lecturer': {
+                'id': self.lecturer.id,
+                'name': self.lecturer.name,
+                'email': self.lecturer.email
+            } if self.lecturer else None,
+            'enrolled_students_count': self.enrolled_students.count() if hasattr(self.enrolled_students, 'count') else len(self.enrolled_students)
+        }
+
+    def add_student(self, student, status='enrolled'):
+        """Add a student to the course"""
+        if not self.is_student_enrolled(student):
+            enrollment = CourseStudent(course=self, student=student, status=status)
+            db.session.add(enrollment)
+            try:
+                db.session.commit()
+                return True
+            except Exception as e:
+                db.session.rollback()
+                return False
+        return False
+
+    def remove_student(self, student):
+        """Remove a student from the course"""
+        enrollment = CourseStudent.query.filter_by(
+            course_id=self.id,
+            student_id=student.id
+        ).first()
+        if enrollment:
+            db.session.delete(enrollment)
+            try:
+                db.session.commit()
+                return True
+            except Exception as e:
+                db.session.rollback()
+                return False
+        return False
+
+    def is_student_enrolled(self, student):
+        """Check if a student is enrolled in the course"""
+        return CourseStudent.query.filter_by(
+            course_id=self.id,
+            student_id=student.id
+        ).first() is not None
+
+    def get_attendance_stats(self):
+        """Get attendance statistics for the course"""
+        total_lectures = self.lectures.count()
+        if total_lectures == 0:
+            return {
+                'total_lectures': 0,
+                'total_students': 0,
+                'average_attendance': 0,
+                'attendance_by_lecture': []
+            }
+
+        total_students = self.enrolled_students.count()
+        attendance_by_lecture = []
+
+        for lecture in self.lectures:
+            attended = lecture.attendances.filter_by(status='present').count()
+            attendance_by_lecture.append({
+                'lecture_id': lecture.id,
+                'title': lecture.title,
+                'date': lecture.date.strftime('%Y-%m-%d'),
+                'attendance_count': attended,
+                'attendance_percentage': (attended / total_students * 100) if total_students > 0 else 0
+            })
+
+        total_attendance = sum(item['attendance_count'] for item in attendance_by_lecture)
+        average_attendance = (total_attendance / (total_lectures * total_students) * 100) if total_students > 0 else 0
+
+        return {
+            'total_lectures': total_lectures,
+            'total_students': total_students,
+            'average_attendance': average_attendance,
+            'attendance_by_lecture': attendance_by_lecture
         }
 
     def get_enrolled_students(self):
@@ -62,16 +142,6 @@ class Course(db.Model):
     def get_student_count(self):
         """Get number of enrolled students"""
         return len(self.enrolled_students)
-
-    def get_attendance_rate(self):
-        """Calculate overall attendance rate for the course"""
-        total_attendance = 0
-        total_possible = 0
-        for lecture in self.lectures:
-            present_count = sum(1 for a in lecture.attendances if a.status == 'present')
-            total_attendance += present_count
-            total_possible += len(lecture.attendances)
-        return (total_attendance / total_possible * 100) if total_possible > 0 else 0
 
     def get_lecture_count(self):
         """Get total number of lectures"""
@@ -95,18 +165,6 @@ class Course(db.Model):
         return next((l for l in self.lectures 
                     if l.date == now.date() 
                     and l.start_time <= now.time() <= l.end_time), None)
-
-    def enroll_student(self, student):
-        """Enroll a student in the course"""
-        if student not in self.enrolled_students:
-            self.enrolled_students.append(student)
-            db.session.commit()
-
-    def unenroll_student(self, student):
-        """Remove a student from the course"""
-        if student in self.enrolled_students:
-            self.enrolled_students.remove(student)
-            db.session.commit()
 
     def update(self, **kwargs):
         """Update course attributes"""

@@ -45,26 +45,19 @@ def create_app(config_class=Config):
         except Exception as e:
             app.logger.error(f'Error setting up logging: {e}')
 
-    with app.app_context():
-        # Initialize extensions
-        db.init_app(app)
-        migrate.init_app(app, db)
-        login_manager.init_app(app)
-        csrf.init_app(app)
-        limiter.init_app(app)
-        
-        # Initialize hardware controller
-        app.hardware_controller = HardwareController()
+    # Initialize extensions
+    from .extensions import init_extensions
+    init_extensions(app)
 
-        # Set up login view
-        login_manager.login_view = 'auth.login'
-        login_manager.login_message_category = 'info'
+    # Register blueprints with URL prefixes
+    from .routes import auth_bp, lecturer_bp, student_bp, admin_bp, main_bp
+    app.register_blueprint(main_bp)  # No prefix for main routes
+    app.register_blueprint(auth_bp, url_prefix='/auth')
+    app.register_blueprint(lecturer_bp, url_prefix='/lecturer')
+    app.register_blueprint(student_bp, url_prefix='/student')
+    app.register_blueprint(admin_bp, url_prefix='/admin')
 
-        # Register blueprints
-        from app.routes import register_blueprints
-        register_blueprints(app)
-
-        # Create tables
-        db.create_all()
+    # Initialize hardware controller
+    app.hardware_controller = HardwareController()
 
     return app
