@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect
+from flask_mail import Mail
 from config import Config
 from .hardware.controller import HardwareController
 from flask_limiter import Limiter
@@ -17,6 +18,7 @@ db = SQLAlchemy()
 migrate = Migrate()
 login_manager = LoginManager()
 csrf = CSRFProtect()
+mail = Mail()
 limiter = Limiter(key_func=get_remote_address)
 
 @login_manager.user_loader
@@ -51,6 +53,7 @@ def create_app(config_class=Config):
         migrate.init_app(app, db)
         login_manager.init_app(app)
         csrf.init_app(app)
+        mail.init_app(app)
         limiter.init_app(app)
         
         # Initialize hardware controller

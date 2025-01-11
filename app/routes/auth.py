@@ -19,10 +19,6 @@ def login():
     form = LoginForm()
     logger.info(f"Form data received: {request.form}")
     logger.info(f"Form validation result: {form.validate_on_submit()}")
-    
-    if form.csrf_token.data:
-        logger.info(f"Received CSRF token: {form.csrf_token.data}")
-        logger.info(f"Session CSRF token: {form.csrf_token.current_token}")
 
     if form.validate_on_submit():
         login_id = form.login.data
