@@ -4,16 +4,17 @@ from wtforms.validators import DataRequired, ValidationError, Length, EqualTo
 from app.models.user import User
 
 class LoginForm(FlaskForm):
-    """Form for user login"""
-    login = StringField('ID Number', validators=[
-        DataRequired(message='Please enter your ID number'),
-        Length(max=20, message='ID number must be less than 20 characters')
+    """Form for user login."""
+    login = StringField('Login ID', validators=[
+        DataRequired(),
+        Length(min=3, max=20, message='Login ID must be between 3 and 20 characters')
     ])
     password = PasswordField('Password', validators=[
-        DataRequired(message='Please enter your password')
+        DataRequired(),
+        Length(min=6, message='Password must be at least 6 characters')
     ])
     remember = BooleanField('Remember Me')
-    submit = SubmitField('Log In')
+    submit = SubmitField('Sign In')
 
     class Meta:
         csrf = False  # Disable WTForms CSRF protection since we're handling it manually

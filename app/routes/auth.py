@@ -1,118 +1,107 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, session
+from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_user, logout_user, login_required, current_user
-from app.models.user import User
-from app.models.login_log import LoginLog
-from app.extensions import db, csrf
+from werkzeug.urls import url_parse
 from app.forms.auth import LoginForm
-from urllib.parse import urlparse
-from flask_wtf.csrf import generate_csrf
+from app.models import User, LoginLog, ActivityLog
+from app.extensions import db
+from datetime import datetime
 import logging
 
 logger = logging.getLogger(__name__)
-
 auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
+    """Handle user login."""
     if current_user.is_authenticated:
-        return redirect(url_for(current_user.get_dashboard_route()))
-        
+        return redirect(url_for('main.index'))
+
     form = LoginForm()
+    logger.info(f"Form data received: {request.form}")
+    logger.info(f"Form validation result: {form.validate_on_submit()}")
     
-    if request.method == 'GET':
-        # Generate a new CSRF token for the form
-        csrf_token = generate_csrf()
-        session['csrf_token'] = csrf_token
-        return render_template('auth/login.html', form=form, csrf_token=csrf_token)
+    if form.csrf_token.data:
+        logger.info(f"Received CSRF token: {form.csrf_token.data}")
+        logger.info(f"Session CSRF token: {form.csrf_token.current_token}")
+
+    if form.validate_on_submit():
+        login_id = form.login.data
+        logger.info(f"Attempting login with ID: {login_id}")
         
-    if request.method == 'POST':
-        # Log form data for debugging
-        logger.info(f"Form data received: {request.form}")
-        logger.info(f"Form validation result: {form.validate()}")
-        if not form.validate():
-            logger.error(f"Form validation errors: {form.errors}")
+        user = User.query.filter_by(login_id=login_id).first()
         
-        # Validate CSRF token
-        token = request.form.get('csrf_token')
-        logger.info(f"Received CSRF token: {token}")
-        logger.info(f"Session CSRF token: {session.get('csrf_token')}")
-        if not token or token != session.get('csrf_token'):
-            flash('Invalid CSRF token. Please try again.', 'error')
-            return redirect(url_for('auth.login'))
+        if user and user.verify_password(form.password.data):
+            # Update last login
+            user.last_login = datetime.utcnow()
             
-        if form.validate():
-            # Try to find user by ID number
-            id_number = form.login.data.strip()
-            password = form.password.data
+            # Create login log
+            login_log = LoginLog(
+                user_id=user.id,
+                ip_address=request.remote_addr,
+                user_agent=request.user_agent.string
+            )
             
-            logger.info(f"Attempting login with ID: {id_number}")
+            # Create activity log
+            activity_log = ActivityLog(
+                user_id=user.id,
+                action='login',
+                details=f'User logged in from {request.remote_addr}'
+            )
             
-            # List all users in database for debugging
-            all_users = User.query.all()
-            logger.info(f"All users in database: {[(u.id_number, u.email) for u in all_users]}")
-            
-            user = User.query.filter_by(id_number=id_number).first()
-            logger.info(f"User found: {user is not None}")
-            
-            if user:
-                logger.info(f"Found user: ID={user.id_number}, Email={user.email}, Role={user.role}")
-                password_check = user.check_password(password)
-                logger.info(f"Password check result: {password_check}")
-            
-            if user and user.check_password(password):
-                if not user.is_active:
-                    flash('Your account has been deactivated. Please contact an administrator.', 'error')
-                    return redirect(url_for('auth.login'))
+            try:
+                db.session.add(login_log)
+                db.session.add(activity_log)
+                db.session.commit()
                 
-                try:
-                    # Update last login time
-                    user.update_last_login()
-                    
-                    # Log successful login
-                    log = LoginLog(
-                        user_id=user.id,
-                        status='success',
-                        ip_address=request.remote_addr,
-                        user_agent=request.user_agent.string
-                    )
-                    db.session.add(log)
-                    db.session.commit()
-                    
-                    # Login user after successful database operations
-                    login_user(user, remember=form.remember.data)
-                    flash('Logged in successfully!', 'success')
-                    logger.info(f"User {user.email} logged in successfully")
-                    
-                    next_page = request.args.get('next')
-                    if not next_page or urlparse(next_page).netloc != '':
-                        next_page = url_for(user.get_dashboard_route())
-                    logger.info(f"Redirecting to: {next_page}")
-                    return redirect(next_page)
-                    
-                except Exception as e:
-                    db.session.rollback()
-                    logger.error(f"Error during login: {str(e)}")
-                    flash('An error occurred during login. Please try again.', 'error')
-                    return redirect(url_for('auth.login'))
-            else:
-                if user:
-                    logger.error(f"Password check failed for user {id_number}")
-                else:
-                    logger.error(f"No user found with ID {id_number}")
-                flash('Invalid ID number or password.', 'error')
+                # Log in user
+                login_user(user)
+                logger.info(f"User {login_id} logged in successfully")
+                
+                # Redirect to next page or default
+                next_page = request.args.get('next')
+                if not next_page or url_parse(next_page).netloc != '':
+                    if user.is_admin:
+                        next_page = url_for('admin.dashboard')
+                    elif user.is_lecturer:
+                        next_page = url_for('lecturer.dashboard')
+                    else:
+                        next_page = url_for('student.dashboard')
+                return redirect(next_page)
+                
+            except Exception as e:
+                db.session.rollback()
+                logger.error(f"Error during login: {str(e)}")
+                flash('An error occurred during login. Please try again.', 'error')
+                return render_template('auth/login.html', form=form)
         else:
-            for field, errors in form.errors.items():
-                for error in errors:
-                    flash(f'{error}', 'error')
-                    logger.error(f"Form validation error - {field}: {error}")
-    
+            logger.warning(f"Failed login attempt for ID: {login_id}")
+            flash('Invalid username or password', 'error')
+            
     return render_template('auth/login.html', form=form)
 
 @auth_bp.route('/logout')
 @login_required
 def logout():
-    logout_user()
-    flash('You have been logged out.', 'success')
+    """Handle user logout."""
+    try:
+        # Create activity log
+        activity_log = ActivityLog(
+            user_id=current_user.id,
+            action='logout',
+            details=f'User logged out from {request.remote_addr}'
+        )
+        db.session.add(activity_log)
+        db.session.commit()
+        
+        # Log out user
+        logout_user()
+        flash('You have been logged out.', 'success')
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error during logout: {str(e)}")
+        flash('An error occurred during logout.', 'error')
+        
     return redirect(url_for('auth.login'))
 
 @auth_bp.route('/profile')
