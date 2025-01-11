@@ -20,16 +20,17 @@ class Course(db.Model):
     is_active = db.Column(db.Boolean, default=True)
 
     # Relationships
-    department = relationship('Department', back_populates='courses')
-    lecturer = relationship('User', back_populates='courses')
-    course_students = relationship('CourseStudent', back_populates='course')
-    enrolled_students = relationship(
+    department = db.relationship('Department', back_populates='courses')
+    lecturer = db.relationship('User', foreign_keys=[lecturer_id], backref=db.backref('taught_courses', lazy='dynamic'))
+    course_students = db.relationship('CourseStudent', back_populates='course')
+    enrolled_students = db.relationship(
         'User',
         secondary='course_students',
         back_populates='enrolled_courses',
         lazy=True
     )
     lectures = relationship('Lecture', back_populates='course', cascade='all, delete-orphan')
+    attendances = db.relationship('Attendance', back_populates='course', lazy='dynamic')
 
     def __repr__(self):
         return f'<Course {self.code}: {self.title}>'
@@ -156,3 +157,37 @@ class Course(db.Model):
     def get_by_level(cls, level):
         """Get all courses for a specific level"""
         return cls.query.filter_by(level=level).all()
+
+# Create default courses if they don't exist
+def create_default_courses():
+    """Create default courses if they don't exist."""
+    try:
+        # Get Computer Science department
+        from .department import Department
+        cs_dept = Department.query.filter_by(code='CSC').first()
+        if not cs_dept:
+            return
+
+        # Create default courses
+        if not Course.query.filter_by(code='CSC101').first():
+            course = Course(
+                code='CSC101',
+                title='Introduction to Computer Science',
+                department_id=cs_dept.id,
+                description='Basic concepts of computer science'
+            )
+            db.session.add(course)
+
+        if not Course.query.filter_by(code='CSC102').first():
+            course = Course(
+                code='CSC102',
+                title='Programming Fundamentals',
+                department_id=cs_dept.id,
+                description='Introduction to programming concepts'
+            )
+            db.session.add(course)
+
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error creating default courses: {e}")

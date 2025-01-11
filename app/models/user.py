@@ -25,13 +25,11 @@ class User(UserMixin, db.Model):
 
     # Relationships
     department = db.relationship('Department', back_populates='department_users')
-    student_courses = db.relationship('Course', secondary='course_students',
-                                    backref=db.backref('students', lazy='dynamic'),
-                                    overlaps="enrolled_courses")
     enrolled_courses = db.relationship('Course', secondary='course_students',
-                                     backref=db.backref('enrolled_students', lazy='dynamic'),
-                                     overlaps="student_courses")
-    attendances = db.relationship('Attendance', backref='user', lazy='dynamic')
+                                     back_populates='enrolled_students',
+                                     lazy='dynamic')
+    course_enrollments = db.relationship('CourseStudent', back_populates='student')
+    attendances = db.relationship('Attendance', back_populates='user', lazy='dynamic')
     activity_logs = db.relationship('ActivityLog', backref='user', lazy='dynamic')
     login_logs = db.relationship('LoginLog', backref='user', lazy='dynamic')
 
