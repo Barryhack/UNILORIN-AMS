@@ -65,7 +65,7 @@ def login():
                             next_page = url_for('lecturer.dashboard')
                         else:
                             next_page = url_for('student.dashboard')
-                    return redirect(next_page)
+                    return redirect(url_parse(next_page).path)
                     
                 except Exception as e:
                     db.session.rollback()
@@ -121,7 +121,7 @@ def logout():
         logger.error(f"Error during logout: {str(e)}")
         flash('An error occurred during logout.', 'error')
         
-    return redirect(url_for('auth.login'))
+    return redirect(url_parse(url_for('auth.login')).path)
 
 @auth_bp.route('/profile')
 @login_required

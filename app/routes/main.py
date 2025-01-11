@@ -8,7 +8,7 @@ from app.models.department import Department
 from app.models.activity_log import ActivityLog
 import logging
 import psutil
-from urllib.parse import url_parse
+from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
 main_bp = Blueprint('main', __name__)
@@ -17,7 +17,7 @@ main_bp = Blueprint('main', __name__)
 def index():
     if not current_user.is_authenticated:
         next_page = request.args.get('next')
-        if not next_page or url_parse(next_page).netloc != '':
+        if not next_page or urlparse(next_page).netloc != '':
             next_page = url_for('main.dashboard')
         return redirect(url_for('auth.login', next=next_page))
         
