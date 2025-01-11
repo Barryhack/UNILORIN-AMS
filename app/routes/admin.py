@@ -4,7 +4,7 @@ from datetime import datetime
 from ..models import User, Course, Department, Attendance, LoginLog, ActivityLog
 from .. import db
 from ..hardware.controller import controller, HardwareMode
-from ..auth.decorators import admin_required
+from ..auth.decorators import admin_required, roles_required
 
 admin_bp = Blueprint('admin', __name__)
 

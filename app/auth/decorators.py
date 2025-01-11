@@ -12,3 +12,19 @@ def admin_required(f):
             abort(403)  # Forbidden
         return f(*args, **kwargs)
     return decorated_function
+
+def roles_required(*roles):
+    """
+    Decorator for views that require specific role(s).
+    Usage: @roles_required('admin', 'moderator')
+    """
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if not current_user.is_authenticated:
+                abort(401)  # Unauthorized
+            if not any(current_user.role == role for role in roles):
+                abort(403)  # Forbidden
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
