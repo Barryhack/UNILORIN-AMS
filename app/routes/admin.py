@@ -16,7 +16,7 @@ hardware_state = {
     'serial_port': None
 }
 
-@admin_bp.route('/admin/dashboard')
+@admin_bp.route('/dashboard')
 @login_required
 @admin_required
 def dashboard():
@@ -32,9 +32,16 @@ def dashboard():
         }
 
     # Get statistics
-    total_users = User.query.count()
-    total_courses = Course.query.count()
-    total_departments = Department.query.count()
+    stats = {
+        'total_users': User.query.count(),
+        'total_students': User.query.filter_by(role='student').count(),
+        'total_lecturers': User.query.filter_by(role='lecturer').count(),
+        'total_courses': Course.query.count(),
+        'total_departments': Department.query.count(),
+        'today_attendance': Attendance.query.filter(
+            Attendance.timestamp >= datetime.now().replace(hour=0, minute=0, second=0)
+        ).count()
+    }
     
     # Get recent activity logs
     recent_logs = ActivityLog.query.order_by(ActivityLog.timestamp.desc()).limit(10).all()
@@ -42,16 +49,18 @@ def dashboard():
     # Get recent attendance records
     recent_attendance = Attendance.query.order_by(Attendance.timestamp.desc()).limit(10).all()
 
+    # Get recent logins
+    recent_logins = LoginLog.query.order_by(LoginLog.timestamp.desc()).limit(5).all()
+
     return render_template('admin/dashboard.html',
                          hardware_status=hardware_status,
-                         total_users=total_users,
-                         total_courses=total_courses,
-                         total_departments=total_departments,
+                         stats=stats,
                          recent_logs=recent_logs,
                          recent_attendance=recent_attendance,
+                         recent_logins=recent_logins,
                          datetime=datetime)
 
-@admin_bp.route('/admin/manage-users')
+@admin_bp.route('/manage-users')
 @login_required
 @admin_required
 def manage_users():
@@ -59,15 +68,18 @@ def manage_users():
     users = User.query.all()
     return render_template('admin/manage_users.html', users=users)
 
-@admin_bp.route('/admin/manage-courses')
+@admin_bp.route('/manage-courses')
 @login_required
 @admin_required
 def manage_courses():
     """Manage courses view."""
     courses = Course.query.all()
-    return render_template('admin/manage_courses.html', courses=courses)
+    departments = Department.query.all()
+    return render_template('admin/manage_courses.html', 
+                         courses=courses,
+                         departments=departments)
 
-@admin_bp.route('/admin/manage-departments')
+@admin_bp.route('/manage-departments')
 @login_required
 @admin_required
 def manage_departments():
@@ -75,7 +87,22 @@ def manage_departments():
     departments = Department.query.all()
     return render_template('admin/manage_departments.html', departments=departments)
 
-@admin_bp.route('/admin/system-logs')
+@admin_bp.route('/activity-logs')
+@login_required
+@admin_required
+def activity_logs():
+    """View activity logs."""
+    logs = ActivityLog.query.order_by(ActivityLog.timestamp.desc()).limit(100).all()
+    return render_template('admin/activity_logs.html', logs=logs)
+
+@admin_bp.route('/reports')
+@login_required
+@admin_required
+def reports():
+    """View system reports."""
+    return render_template('admin/reports.html')
+
+@admin_bp.route('/system-logs')
 @login_required
 @admin_required
 def system_logs():
@@ -85,22 +112,6 @@ def system_logs():
     return render_template('admin/system_logs.html', 
                          activity_logs=activity_logs,
                          login_logs=login_logs)
-
-@admin_bp.route('/system-info')
-@login_required
-@roles_required('admin')
-def system_info():
-    """Get system information for monitoring."""
-    cpu_percent = psutil.cpu_percent(interval=1)
-    memory = psutil.virtual_memory()
-    disk = psutil.disk_usage('/')
-    
-    return jsonify({
-        'cpu_percent': cpu_percent,
-        'memory_percent': memory.percent,
-        'disk_percent': disk.percent,
-        'hardware_state': hardware_state
-    })
 
 @admin_bp.route('/users')
 @login_required
@@ -315,15 +326,6 @@ def delete_course(course_id):
     
     return jsonify({'success': True, 'message': 'Course deleted successfully'})
 
-@admin_bp.route('/activity-logs')
-@login_required
-@roles_required('admin')
-def activity_logs():
-    page = request.args.get('page', 1, type=int)
-    logs = ActivityLog.query.order_by(ActivityLog.timestamp.desc()).paginate(
-        page=page, per_page=50, error_out=False)
-    return render_template('admin/activity_logs.html', logs=logs, datetime=datetime)
-
 @admin_bp.route('/login-logs')
 @login_required
 @roles_required('admin')
@@ -379,20 +381,6 @@ def attendance():
     """View and manage attendance records"""
     attendance_records = Attendance.query.order_by(Attendance.marked_at.desc()).all()
     return render_template('admin/attendance.html', attendance_records=attendance_records)
-
-@admin_bp.route('/reports')
-@login_required
-@roles_required('admin')
-def reports():
-    """Generate and view reports"""
-    return render_template('admin/reports.html')
-
-@admin_bp.route('/settings')
-@login_required
-@roles_required('admin')
-def settings():
-    """View and modify system settings"""
-    return render_template('admin/settings.html')
 
 @admin_bp.route('/hardware/status')
 @login_required
