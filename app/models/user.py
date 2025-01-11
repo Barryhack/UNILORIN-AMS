@@ -24,7 +24,7 @@ class User(UserMixin, db.Model):
     fingerprint_data = db.Column(db.LargeBinary, nullable=True)
 
     # Relationships
-    department = db.relationship('Department', backref='users')
+    department = db.relationship('Department', back_populates='department_users')
     student_courses = db.relationship('Course', secondary='course_students',
                                     backref=db.backref('students', lazy='dynamic'),
                                     overlaps="enrolled_courses")
