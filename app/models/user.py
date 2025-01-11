@@ -1,136 +1,121 @@
-from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
+from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime
 from app.extensions import db
 import logging
-from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
 class User(UserMixin, db.Model):
-    """User model for storing user details"""
+    """User model for storing user related details."""
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    id_number = db.Column(db.String(20), unique=True, nullable=False)
-    name = db.Column(db.String(80), nullable=False)
+    login_id = db.Column(db.String(20), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=True)
     password_hash = db.Column(db.String(128))
-    role = db.Column(db.String(20), nullable=False)
+    first_name = db.Column(db.String(64))
+    last_name = db.Column(db.String(64))
+    role = db.Column(db.String(20), nullable=False)  # admin, lecturer, student
     department_id = db.Column(db.Integer, db.ForeignKey('departments.id'))
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_login = db.Column(db.DateTime)
-    fingerprint_data = db.Column(db.LargeBinary)
-    rfid_data = db.Column(db.String(50))
-    updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
-    
+    fingerprint_data = db.Column(db.LargeBinary, nullable=True)
+
     # Relationships
-    department = db.relationship('Department', back_populates='users')
-    courses = db.relationship('Course', back_populates='lecturer', foreign_keys='Course.lecturer_id')
-    enrolled_courses = db.relationship(
-        'Course',
-        secondary='course_students',
-        back_populates='enrolled_students',
-        lazy=True
-    )
-    student_courses = db.relationship('CourseStudent', back_populates='student')
-    attendances = db.relationship('Attendance', back_populates='user', foreign_keys='Attendance.user_id')
-    marked_attendances = db.relationship('Attendance', back_populates='marked_by', foreign_keys='Attendance.marked_by_id')
-    login_logs = db.relationship('LoginLog', back_populates='user')
-    activity_logs = db.relationship('ActivityLog', back_populates='user')
-    notifications = db.relationship('Notification', back_populates='user')
-    
-    def __init__(self, email, name, role, password=None, department_id=None, id_number=None):
+    department = db.relationship('Department', backref='users')
+    student_courses = db.relationship('Course', secondary='course_students',
+                                    backref=db.backref('students', lazy='dynamic'),
+                                    overlaps="enrolled_courses")
+    enrolled_courses = db.relationship('Course', secondary='course_students',
+                                     backref=db.backref('enrolled_students', lazy='dynamic'),
+                                     overlaps="student_courses")
+    attendances = db.relationship('Attendance', backref='user', lazy='dynamic')
+    activity_logs = db.relationship('ActivityLog', backref='user', lazy='dynamic')
+    login_logs = db.relationship('LoginLog', backref='user', lazy='dynamic')
+
+    def __init__(self, login_id, email=None, first_name=None, last_name=None, role='student'):
+        self.login_id = login_id
         self.email = email
-        self.name = name
+        self.first_name = first_name
+        self.last_name = last_name
         self.role = role
-        self.department_id = department_id
-        self.id_number = id_number
-        if password:
-            self.set_password(password)
-    
-    def set_password(self, password):
-        if not password:
-            raise ValueError("Password cannot be empty")
+
+    @property
+    def password(self):
+        raise AttributeError('password is not a readable attribute')
+
+    @password.setter
+    def password(self, password):
         self.password_hash = generate_password_hash(password)
-        logger.info(f"Password set for user {self.email}")
-    
-    def check_password(self, password):
-        if not password:
-            return False
+
+    def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
 
-    def update_last_login(self):
-        """Update the last login timestamp."""
-        self.last_login = datetime.utcnow()
-        # Remove the commit from here since it will be handled in the route
-        logger.info(f"Last login updated for user {self.email}")
-
-    def get_dashboard_route(self):
-        """Return the appropriate dashboard route based on user role."""
-        if self.role == 'admin':
-            return 'admin.dashboard'  # This will resolve to /admin/dashboard
-        elif self.role == 'lecturer':
-            return 'lecturer.dashboard'
-        elif self.role == 'student':
-            return 'student.dashboard'
-        else:
-            return 'main.index'  # Default route for unknown roles
+    def get_id(self):
+        return str(self.id)
 
     @property
     def is_admin(self):
-        """Check if user has admin role."""
         return self.role == 'admin'
 
     @property
     def is_lecturer(self):
-        """Check if user has lecturer role."""
         return self.role == 'lecturer'
 
     @property
     def is_student(self):
-        """Check if user has student role."""
         return self.role == 'student'
 
+    @property
+    def full_name(self):
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}"
+        return self.login_id
+
     def __repr__(self):
-        return f'<User {self.email}>'
+        return f'<User {self.login_id}>'
 
 # Create default admin, lecturer and student users if they don't exist.
 def create_default_users():
     """Create default admin, lecturer and student users if they don't exist."""
     try:
         # Create admin user
-        if not User.query.filter_by(id_number='ADMIN001').first():
+        if not User.query.filter_by(login_id='ADMIN001').first():
             admin = User(
+                login_id='ADMIN001',
                 email='admin@example.com',
-                name='Admin User',
+                first_name='Admin',
+                last_name='User',
                 role='admin',
-                password='admin123',
-                id_number='ADMIN001'
+                password='admin123'
             )
             db.session.add(admin)
             logger.info("Created default admin user")
 
         # Create lecturer user
-        if not User.query.filter_by(id_number='LECT001').first():
+        if not User.query.filter_by(login_id='LECT001').first():
             lecturer = User(
+                login_id='LECT001',
                 email='lecturer@example.com',
-                name='Lecturer User',
+                first_name='Lecturer',
+                last_name='User',
                 role='lecturer',
-                password='lecturer123',
-                id_number='LECT001'
+                password='lecturer123'
             )
             db.session.add(lecturer)
             logger.info("Created default lecturer user")
 
         # Create student user
-        if not User.query.filter_by(id_number='STU001').first():
+        if not User.query.filter_by(login_id='STU001').first():
             student = User(
+                login_id='STU001',
                 email='student@example.com',
-                name='Student User',
+                first_name='Student',
+                last_name='User',
                 role='student',
-                password='student123',
-                id_number='STU001'
+                password='student123'
             )
             db.session.add(student)
             logger.info("Created default student user")
