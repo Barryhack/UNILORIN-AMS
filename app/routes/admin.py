@@ -51,6 +51,41 @@ def dashboard():
                          recent_attendance=recent_attendance,
                          datetime=datetime)
 
+@admin_bp.route('/admin/manage-users')
+@login_required
+@admin_required
+def manage_users():
+    """Manage users view."""
+    users = User.query.all()
+    return render_template('admin/manage_users.html', users=users)
+
+@admin_bp.route('/admin/manage-courses')
+@login_required
+@admin_required
+def manage_courses():
+    """Manage courses view."""
+    courses = Course.query.all()
+    return render_template('admin/manage_courses.html', courses=courses)
+
+@admin_bp.route('/admin/manage-departments')
+@login_required
+@admin_required
+def manage_departments():
+    """Manage departments view."""
+    departments = Department.query.all()
+    return render_template('admin/manage_departments.html', departments=departments)
+
+@admin_bp.route('/admin/system-logs')
+@login_required
+@admin_required
+def system_logs():
+    """View system logs."""
+    activity_logs = ActivityLog.query.order_by(ActivityLog.timestamp.desc()).limit(100).all()
+    login_logs = LoginLog.query.order_by(LoginLog.timestamp.desc()).limit(100).all()
+    return render_template('admin/system_logs.html', 
+                         activity_logs=activity_logs,
+                         login_logs=login_logs)
+
 @admin_bp.route('/system-info')
 @login_required
 @roles_required('admin')
