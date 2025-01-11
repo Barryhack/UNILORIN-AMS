@@ -5,9 +5,11 @@ from flask_wtf.csrf import CSRFProtect, generate_csrf
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask import session
+from flask_migrate import Migrate
 
 # Initialize extensions
 db = SQLAlchemy()
+migrate = Migrate()
 login_manager = LoginManager()
 csrf = CSRFProtect()
 
@@ -20,6 +22,7 @@ limiter = Limiter(
 # Make extensions available at module level
 __all__ = [
     'db',
+    'migrate',
     'login_manager',
     'csrf',
     'limiter',
@@ -28,8 +31,9 @@ __all__ = [
 
 def init_extensions(app):
     """Initialize Flask extensions"""
-    # Initialize SQLAlchemy
+    # Initialize SQLAlchemy and Migrate
     db.init_app(app)
+    migrate.init_app(app, db)
     
     # Initialize other extensions
     login_manager.init_app(app)
