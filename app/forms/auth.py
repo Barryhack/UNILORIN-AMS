@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField
-from wtforms.validators import DataRequired, Email, Length, ValidationError
+from wtforms.validators import DataRequired, Email, Length, ValidationError, EqualTo
 from app.models import User
 
 class LoginForm(FlaskForm):
@@ -18,11 +18,15 @@ class LoginForm(FlaskForm):
 
 class ChangePasswordForm(FlaskForm):
     """Form for changing password"""
-    current_password = PasswordField('Current Password', validators=[DataRequired()])
-    new_password = PasswordField('New Password', validators=[
-        DataRequired(),
-        Length(min=8, message='Password must be at least 8 characters long'),
-        EqualTo('confirm_password', message='Passwords must match')
+    current_password = PasswordField('Current Password', validators=[
+        DataRequired(message='Please enter your current password')
     ])
-    confirm_password = PasswordField('Confirm New Password', validators=[DataRequired()])
+    new_password = PasswordField('New Password', validators=[
+        DataRequired(message='Please enter a new password'),
+        Length(min=6, message='Password must be at least 6 characters')
+    ])
+    confirm_password = PasswordField('Confirm New Password', validators=[
+        DataRequired(message='Please confirm your new password'),
+        EqualTo('new_password', message='Passwords must match')
+    ])
     submit = SubmitField('Change Password')
