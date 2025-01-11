@@ -77,6 +77,21 @@ class User(UserMixin, db.Model):
         else:
             return 'main.index'  # Default route for unknown roles
 
+    @property
+    def is_admin(self):
+        """Check if user has admin role."""
+        return self.role == 'admin'
+
+    @property
+    def is_lecturer(self):
+        """Check if user has lecturer role."""
+        return self.role == 'lecturer'
+
+    @property
+    def is_student(self):
+        """Check if user has student role."""
+        return self.role == 'student'
+
     def __repr__(self):
         return f'<User {self.email}>'
 
