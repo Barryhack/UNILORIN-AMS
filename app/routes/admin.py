@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 from datetime import datetime
 from ..models import User, Course, Department, Attendance, LoginLog, ActivityLog
 from .. import db
-from ..hardware.controller import controller, HardwareMode
+from ..hardware.controller import HardwareMode
 from ..auth.decorators import admin_required, roles_required
 
 admin_bp = Blueprint('admin', __name__)
@@ -16,41 +16,40 @@ hardware_state = {
     'serial_port': None
 }
 
-@admin_bp.route('/dashboard')
+@admin_bp.route('/admin/dashboard')
 @login_required
 @admin_required
 def dashboard():
     """Admin dashboard view."""
-    # Get hardware status
-    hardware_status = current_app.hardware_controller.get_status()
-    
+    try:
+        hardware_status = current_app.hardware_controller.get_status()
+    except Exception as e:
+        current_app.logger.error(f"Error getting hardware status: {e}")
+        hardware_status = {
+            'status': 'Error',
+            'mode': 'Unknown',
+            'last_update': datetime.now()
+        }
+
     # Get statistics
-    stats = {
-        'total_users': User.query.count(),
-        'total_students': User.query.filter_by(role='student').count(),
-        'total_lecturers': User.query.filter_by(role='lecturer').count(),
-        'today_attendance': Attendance.query.filter(
-            Attendance.timestamp >= datetime.now().replace(hour=0, minute=0, second=0)
-        ).count()
-    }
+    total_users = User.query.count()
+    total_courses = Course.query.count()
+    total_departments = Department.query.count()
     
-    # Get recent activities
-    recent_activities = ActivityLog.query.order_by(ActivityLog.timestamp.desc()).limit(5).all()
+    # Get recent activity logs
+    recent_logs = ActivityLog.query.order_by(ActivityLog.timestamp.desc()).limit(10).all()
     
-    # Get recent logins
-    recent_logins = LoginLog.query.order_by(LoginLog.timestamp.desc()).limit(5).all()
-    
-    response = make_response(render_template('admin/dashboard.html',
-        hardware_status=hardware_status,
-        stats=stats,
-        recent_activities=recent_activities,
-        recent_logins=recent_logins,
-        datetime=datetime
-    ))
-    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-    response.headers['Pragma'] = 'no-cache'
-    response.headers['Expires'] = '0'
-    return response
+    # Get recent attendance records
+    recent_attendance = Attendance.query.order_by(Attendance.timestamp.desc()).limit(10).all()
+
+    return render_template('admin/dashboard.html',
+                         hardware_status=hardware_status,
+                         total_users=total_users,
+                         total_courses=total_courses,
+                         total_departments=total_departments,
+                         recent_logs=recent_logs,
+                         recent_attendance=recent_attendance,
+                         datetime=datetime)
 
 @admin_bp.route('/system-info')
 @login_required

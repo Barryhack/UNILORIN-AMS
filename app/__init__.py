@@ -1,8 +1,10 @@
 from flask import Flask, request
-from config import Config
-from app.extensions import db, login_manager, csrf, limiter
+from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
+from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect
+from config import Config
+from .hardware.controller import HardwareController
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import logging
@@ -10,6 +12,12 @@ import os
 import click
 from datetime import timedelta
 from flask import redirect
+
+db = SQLAlchemy()
+migrate = Migrate()
+login_manager = LoginManager()
+csrf = CSRFProtect()
+limiter = Limiter(key_func=get_remote_address)
 
 def create_app(config_class=Config):
     # Initialize Flask app
@@ -23,8 +31,18 @@ def create_app(config_class=Config):
         pass
 
     # Initialize extensions
-    from app.extensions import init_extensions
-    init_extensions(app)
+    db.init_app(app)
+    migrate.init_app(app, db)
+    login_manager.init_app(app)
+    csrf.init_app(app)
+    limiter.init_app(app)
+    
+    # Initialize hardware controller
+    app.hardware_controller = HardwareController()
+
+    # Set up login view
+    login_manager.login_view = 'auth.login'
+    login_manager.login_message_category = 'info'
 
     # Register blueprints
     from app.routes import register_blueprints
