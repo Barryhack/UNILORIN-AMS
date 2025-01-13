@@ -3,9 +3,7 @@ services:
     name: attendance-system
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: |
-      python deployment.py
-      gunicorn wsgi:app --worker-class eventlet --bind 0.0.0.0:$PORT
+    startCommand: gunicorn wsgi:app --worker-class eventlet --bind 0.0.0.0:$PORT
     envVars:
       - key: FLASK_APP
         value: wsgi.py
