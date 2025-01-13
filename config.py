@@ -1,18 +1,20 @@
+"""Flask configuration."""
 import os
 from datetime import timedelta
+
+def get_database_url():
+    """Get database URI with proper handling of postgres://."""
+    uri = os.environ.get('DATABASE_URL')
+    if uri and uri.startswith('postgres://'):
+        uri = uri.replace('postgres://', 'postgresql://', 1)
+    return uri or 'sqlite:///' + os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance', 'attendance.db')
 
 class Config:
     # Basic Flask config
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
     
     # Database
-    @property
-    def SQLALCHEMY_DATABASE_URI(self):
-        """Get database URI with proper handling of postgres://."""
-        uri = os.environ.get('DATABASE_URL')
-        if uri and uri.startswith('postgres://'):
-            uri = uri.replace('postgres://', 'postgresql://', 1)
-        return uri or 'sqlite:///' + os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance', 'attendance.db')
+    SQLALCHEMY_DATABASE_URI = get_database_url()
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Session config
