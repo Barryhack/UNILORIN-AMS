@@ -28,3 +28,6 @@ psycopg2-binary==2.9.9
 requests==2.31.0
 Flask-Mail==0.9.1
 eventlet==0.33.3
+limits==3.6.0
+sentry-sdk==1.32.0
+flask-redis==0.4.0

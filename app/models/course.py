@@ -22,18 +22,18 @@ class Course(db.Model):
 
     # Relationships
     department = db.relationship('Department', back_populates='courses')
-    lecturer = db.relationship('User', 
-                             foreign_keys=[lecturer_id], 
-                             back_populates='taught_courses')
-    course_students = db.relationship('CourseStudent', 
-                                    back_populates='course',
-                                    overlaps="enrolled_students")
+    lecturer = db.relationship('User', foreign_keys=[lecturer_id], back_populates='taught_courses')
     enrolled_students = db.relationship(
         'User',
         secondary='course_students',
         back_populates='enrolled_courses',
-        lazy=True,
-        overlaps="course_students"
+        lazy='dynamic',
+        overlaps="course_students,course_enrollments"
+    )
+    course_students = db.relationship(
+        'CourseStudent',
+        back_populates='course',
+        overlaps="enrolled_students,enrolled_courses"
     )
     lectures = db.relationship('Lecture', 
                              back_populates='course', 
