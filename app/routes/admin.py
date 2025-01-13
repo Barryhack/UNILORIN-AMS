@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, jsonify, request, current_app, red
 from flask_login import login_required, current_user
 from datetime import datetime
 from ..models import User, Course, Department, Attendance, LoginLog, ActivityLog
-from .. import db
+from ..extensions import db
 from ..hardware.controller import HardwareMode
 from ..auth.decorators import admin_required, roles_required
 
