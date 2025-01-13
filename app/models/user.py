@@ -44,6 +44,34 @@ class User(UserMixin, db.Model):
         back_populates='lecturer',
         lazy='dynamic'
     )
+    attendances = db.relationship(
+        'Attendance',
+        foreign_keys='Attendance.user_id',
+        back_populates='user',
+        lazy='dynamic'
+    )
+    marked_attendances = db.relationship(
+        'Attendance',
+        foreign_keys='Attendance.marked_by_id',
+        back_populates='marked_by',
+        lazy='dynamic'
+    )
+    activity_logs = db.relationship(
+        'ActivityLog',
+        back_populates='user',
+        lazy='dynamic'
+    )
+    login_logs = db.relationship(
+        'LoginLog',
+        back_populates='user',
+        lazy='dynamic'
+    )
+    notifications = db.relationship(
+        'Notification',
+        back_populates='user',
+        lazy='dynamic',
+        cascade='all, delete-orphan'
+    )
 
     def __init__(self, login_id, email=None, first_name=None, last_name=None, role='student'):
         """Initialize a new user."""

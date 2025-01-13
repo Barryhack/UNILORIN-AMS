@@ -5,9 +5,17 @@ services:
     buildCommand: |
       pip install -r requirements.txt
       export FLASK_APP=wsgi.py
-      rm -rf migrations
-      flask db init
-      flask db migrate -m "Initial migration"
+      python -c "
+      from app import create_app
+      from app.extensions import db
+      from app.models import user, course, attendance, activity_log, notification, login_log
+      from config import ProductionConfig
+      app = create_app(ProductionConfig)
+      with app.app_context():
+          db.create_all()
+          print('Database tables created successfully')
+      "
+      flask db stamp head
       flask db upgrade
     startCommand: gunicorn wsgi:app --config gunicorn_config.py
     healthCheckPath: /health
