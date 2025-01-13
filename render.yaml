@@ -3,7 +3,9 @@ services:
     name: attendance-system
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn wsgi:app --worker-class eventlet --bind 0.0.0.0:$PORT
+    startCommand: gunicorn wsgi:app --config gunicorn_config.py
+    healthCheckPath: /health
+    autoDeploy: false
     envVars:
       - key: FLASK_APP
         value: wsgi.py
@@ -17,8 +19,31 @@ services:
         fromDatabase:
           name: attendance_db
           property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: redis
+          type: redis
+          property: connectionString
+      - key: SERVER_NAME
+        value: unilorin-ams-vf9i.onrender.com
+      - key: LOG_LEVEL
+        value: ERROR
+    disk:
+      name: attendance-data
+      mountPath: /data
+      sizeGB: 1
+
+  - type: redis
+    name: redis
+    ipAllowList:
+      - source: 0.0.0.0/0
+        description: everywhere
+    plan: free
 
 databases:
   - name: attendance_db
     databaseName: attendance
     plan: free
+    ipAllowList:
+      - source: 0.0.0.0/0
+        description: everywhere
