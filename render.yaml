@@ -5,10 +5,10 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: |
       python deployment.py
-      gunicorn run:app --worker-class eventlet --bind 0.0.0.0:$PORT
+      gunicorn wsgi:app --worker-class eventlet --bind 0.0.0.0:$PORT
     envVars:
       - key: FLASK_APP
-        value: run.py
+        value: wsgi.py
       - key: FLASK_ENV
         value: production
       - key: PYTHON_VERSION

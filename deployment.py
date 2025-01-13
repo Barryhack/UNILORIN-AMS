@@ -1,42 +1,31 @@
-import os
+"""Deployment script for render.com."""
+from app import create_app
+from app.extensions import db
+from config import ProductionConfig
 import logging
-from app import create_app, db
-from app.models.user import User
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def setup_deployment():
-    """Set up everything needed for deployment"""
+def deploy():
+    """Initialize the application for deployment."""
+    app = create_app(ProductionConfig)
+    
     try:
-        app = create_app()
         with app.app_context():
-            # Check if admin user exists
-            admin = User.query.filter_by(id_number='19/52AD001').first()
-            if admin:
-                logger.info("Admin user exists, updating password")
-                admin.set_password('Admin@2024')
-                db.session.commit()
-                logger.info("Admin password updated successfully")
-            else:
-                logger.info("Creating admin user")
-                admin = User(
-                    name='Administrator',
-                    email='admin@unilorin.edu.ng',
-                    role='admin',
-                    id_number='19/52AD001'
-                )
-                admin.set_password('Admin@2024')
-                db.session.add(admin)
-                db.session.commit()
-                logger.info("Admin user created successfully")
+            # Create database tables
+            db.create_all()
+            logger.info("Database tables created successfully")
             
-            # List all users for verification
-            users = User.query.all()
-            logger.info(f"Users in database: {[(u.id_number, u.email) for u in users]}")
+            # Create default users if needed
+            from app.models import User
+            User.create_default_users()
+            logger.info("Default users created successfully")
             
     except Exception as e:
-        logger.error(f"Error during deployment setup: {str(e)}")
+        logger.error(f"Error during deployment: {str(e)}")
         raise
 
 if __name__ == '__main__':
-    setup_deployment()
+    deploy()
