@@ -8,6 +8,7 @@ from .attendance import Attendance
 from .course_student import CourseStudent
 from .login_log import LoginLog
 from .activity_log import ActivityLog
+from .notification import Notification
 
 __all__ = [
     'User',
@@ -16,5 +17,6 @@ __all__ = [
     'Attendance',
     'CourseStudent',
     'LoginLog',
-    'ActivityLog'
+    'ActivityLog',
+    'Notification'
 ]
