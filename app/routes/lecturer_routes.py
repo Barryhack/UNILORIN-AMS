@@ -1,11 +1,11 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app
 from flask_login import login_required, current_user
-from app import db
 from app.models.user import User
 from app.models.course import Course
 from app.models.lecture import Lecture
 from app.models.attendance import Attendance
 from app.models.activity_log import ActivityLog
+from app.extensions import db
 from app.utils.decorators import lecturer_required
 from datetime import datetime, time, timedelta
 from sqlalchemy import func, and_

@@ -5,7 +5,7 @@ from app.models.course import Course
 from app.models.attendance import Attendance
 from app.models.lecture import Lecture
 from app.models.user import User
-from app import db
+from app.extensions import db
 from datetime import datetime, date, timedelta
 
 student_bp = Blueprint('student', __name__)
