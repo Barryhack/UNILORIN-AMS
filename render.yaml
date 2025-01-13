@@ -6,17 +6,39 @@ services:
       pip install -r requirements.txt
       export FLASK_APP=wsgi.py
       python -c "
+      import os
       from app import create_app
       from app.extensions import db
-      from app.models import user, course, attendance, activity_log, notification, login_log
+      from app.models import User, Course, Department, Attendance, CourseStudent, LoginLog, ActivityLog, Notification, Lecture
       from config import ProductionConfig
+      
       app = create_app(ProductionConfig)
       with app.app_context():
+          # Drop all tables and recreate them
+          db.drop_all()
           db.create_all()
           print('Database tables created successfully')
+          
+          # Create default department
+          dept = Department(name='Computer Science', code='CSC')
+          db.session.add(dept)
+          db.session.commit()
+          print('Default department created')
+          
+          # Create default admin user
+          admin = User(
+              login_id='ADMIN001',
+              email='admin@example.com',
+              first_name='Admin',
+              last_name='User',
+              role='admin'
+          )
+          admin.password = 'admin123'
+          admin.department_id = dept.id
+          db.session.add(admin)
+          db.session.commit()
+          print('Default admin user created')
       "
-      flask db stamp head
-      flask db upgrade
     startCommand: gunicorn wsgi:app --config gunicorn_config.py
     healthCheckPath: /health
     autoDeploy: false

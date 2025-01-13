@@ -26,6 +26,12 @@ def health_check():
         # Test database connection
         with app.app_context():
             db.session.execute(text('SELECT 1'))
+            # Also verify users table exists and has login_id column
+            result = db.session.execute(
+                text("SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'login_id'")
+            ).fetchone()
+            if not result:
+                raise Exception("users table is missing login_id column")
         return {'status': 'healthy'}, 200
     except Exception as e:
         logger.error(f"Health check failed: {str(e)}")
@@ -38,24 +44,36 @@ def init_database():
     
     while retry_count < max_retries:
         try:
+            from app.models import User, Department
+            
             # Create database tables
             db.create_all()
             logger.info("Database tables created successfully")
             
-            # Verify the users table structure
-            with db.engine.connect() as conn:
-                result = conn.execute(text("SELECT column_name FROM information_schema.columns WHERE table_name = 'users'"))
-                columns = [row[0] for row in result]
-                logger.info(f"Users table columns: {columns}")
-                
-                if 'login_id' not in columns:
-                    logger.error("login_id column is missing from users table")
-                    raise Exception("Database schema is incomplete")
+            # Create default department if it doesn't exist
+            dept = Department.query.filter_by(code='CSC').first()
+            if not dept:
+                dept = Department(name='Computer Science', code='CSC')
+                db.session.add(dept)
+                db.session.commit()
+                logger.info("Created default department")
             
-            # Create default users if needed
-            from app.models import User
-            User.create_default_users()
-            logger.info("Default users created successfully")
+            # Create default admin user if it doesn't exist
+            admin = User.query.filter_by(login_id='ADMIN001').first()
+            if not admin:
+                admin = User(
+                    login_id='ADMIN001',
+                    email='admin@example.com',
+                    first_name='Admin',
+                    last_name='User',
+                    role='admin'
+                )
+                admin.password = 'admin123'
+                admin.department_id = dept.id
+                db.session.add(admin)
+                db.session.commit()
+                logger.info("Created default admin user")
+            
             return True
             
         except Exception as e:
