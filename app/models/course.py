@@ -1,6 +1,7 @@
 from app.extensions import db
 from datetime import datetime
 from sqlalchemy.orm import relationship
+from .lecture import Lecture
 
 class Course(db.Model):
     """Course model for managing academic courses"""
