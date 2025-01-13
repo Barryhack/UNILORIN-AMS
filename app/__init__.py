@@ -5,7 +5,7 @@ from .hardware.controller import HardwareController
 import logging
 import os
 from datetime import timedelta
-from .extensions import db, init_extensions
+from .extensions import db, init_extensions, migrate
 
 def create_app(config_class=Config):
     # Initialize Flask app
@@ -33,9 +33,13 @@ def create_app(config_class=Config):
 
     # Initialize database and create default users
     with app.app_context():
-        db.create_all()
-        from .models import User
-        User.create_default_users()
+        try:
+            # Run migrations instead of create_all()
+            migrate.init_app(app, db)
+            from .models import User
+            User.create_default_users()
+        except Exception as e:
+            app.logger.error(f'Error initializing database: {e}')
 
     # Register blueprints with URL prefixes
     from .routes import auth_bp, lecturer_bp, student_bp, admin_bp, main_bp
