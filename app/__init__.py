@@ -1,9 +1,11 @@
+"""Flask application factory."""
 from flask import Flask, request, redirect
 from config import Config
 from .hardware.controller import HardwareController
 import logging
 import os
 from datetime import timedelta
+from .extensions import db, init_extensions
 
 def create_app(config_class=Config):
     # Initialize Flask app
@@ -27,7 +29,6 @@ def create_app(config_class=Config):
             app.logger.error(f'Error setting up logging: {e}')
 
     # Initialize extensions
-    from .extensions import init_extensions, db
     init_extensions(app)
 
     # Initialize database and create default users

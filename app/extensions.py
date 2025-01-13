@@ -30,7 +30,7 @@ __all__ = [
 ]
 
 def init_extensions(app):
-    """Initialize Flask extensions"""
+    """Initialize Flask extensions."""
     # Initialize SQLAlchemy and Migrate
     db.init_app(app)
     migrate.init_app(app, db)
@@ -53,20 +53,5 @@ def init_extensions(app):
     
     @login_manager.user_loader
     def load_user(user_id):
-        from app.models.user import User
+        from app.models import User
         return User.query.get(int(user_id))
-        
-    # Ensure all models are registered
-    with app.app_context():
-        from app.models.user import User
-        from app.models.department import Department
-        from app.models.course import Course
-        from app.models.lecture import Lecture
-        from app.models.attendance import Attendance
-        from app.models.activity_log import ActivityLog
-        from app.models.login_log import LoginLog
-        from app.models.notification import Notification
-        from app.models.course_student import CourseStudent
-        
-        # Create tables
-        db.create_all()
