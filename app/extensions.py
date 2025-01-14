@@ -24,23 +24,22 @@ def init_extensions(app):
         
         # Import models to ensure they are registered with SQLAlchemy
         with app.app_context():
-            from .models.user import metadata as user_metadata
             from .models import (
                 User, Course, Department, Attendance, CourseStudent,
                 LoginLog, ActivityLog, Notification, Lecture
             )
             
-            # Create all tables from metadata
-            user_metadata.create_all(bind=db.engine)
-            
-            # Initialize other extensions
-            migrate.init_app(app, db)
-            login_manager.init_app(app)
-            limiter.init_app(app)
-            csrf.init_app(app)
+            # Create all tables
+            db.create_all()
             
             # Create default users if they don't exist
             User.create_default_users()
+        
+        # Initialize other extensions
+        migrate.init_app(app, db)
+        login_manager.init_app(app)
+        limiter.init_app(app)
+        csrf.init_app(app)
         
         # Configure login
         login_manager.login_view = 'auth.login'

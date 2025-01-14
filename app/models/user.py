@@ -4,35 +4,76 @@ from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.extensions import db
 import logging
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, LargeBinary, ForeignKey, MetaData, Table
-from sqlalchemy.orm import relationship, registry
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, LargeBinary, ForeignKey
 
 logger = logging.getLogger(__name__)
 
-# Create registry for mapping
-mapper_registry = registry()
-
-# Create users table
-metadata = MetaData()
-users = Table(
-    'users',
-    metadata,
-    Column('id', Integer, primary_key=True),
-    Column('login_id', String(20), unique=True, nullable=False, index=True),
-    Column('email', String(120), unique=True, nullable=True),
-    Column('password_hash', String(128)),
-    Column('first_name', String(64)),
-    Column('last_name', String(64)),
-    Column('role', String(20), nullable=False),  # admin, lecturer, student
-    Column('department_id', Integer, ForeignKey('departments.id')),
-    Column('is_active', Boolean, default=True),
-    Column('created_at', DateTime, default=datetime.utcnow),
-    Column('last_login', DateTime),
-    Column('fingerprint_data', LargeBinary, nullable=True)
-)
-
-class User(UserMixin):
+class User(UserMixin, db.Model):
     """User model for storing user related details."""
+    __tablename__ = 'users'
+
+    id = Column(Integer, primary_key=True)
+    login_id = Column(String(20), unique=True, nullable=False, index=True)
+    email = Column(String(120), unique=True, nullable=True)
+    password_hash = Column(String(128))
+    first_name = Column(String(64))
+    last_name = Column(String(64))
+    role = Column(String(20), nullable=False)  # admin, lecturer, student
+    department_id = Column(Integer, ForeignKey('departments.id'))
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    last_login = Column(DateTime)
+    fingerprint_data = Column(LargeBinary, nullable=True)
+
+    # Relationships
+    department = db.relationship('Department', back_populates='department_users')
+    enrolled_courses = db.relationship(
+        'Course', 
+        secondary='course_students',
+        back_populates='enrolled_students',
+        lazy='dynamic',
+        overlaps="course_enrollments,course_students"
+    )
+    course_enrollments = db.relationship(
+        'CourseStudent',
+        back_populates='student',
+        overlaps="enrolled_courses,enrolled_students"
+    )
+    taught_courses = db.relationship(
+        'Course',
+        foreign_keys='Course.lecturer_id',
+        back_populates='lecturer',
+        lazy='dynamic'
+    )
+    attendances = db.relationship(
+        'Attendance',
+        foreign_keys='Attendance.user_id',
+        back_populates='user',
+        lazy='dynamic'
+    )
+    marked_attendances = db.relationship(
+        'Attendance',
+        foreign_keys='Attendance.marked_by_id',
+        back_populates='marked_by',
+        lazy='dynamic'
+    )
+    activity_logs = db.relationship(
+        'ActivityLog',
+        back_populates='user',
+        lazy='dynamic'
+    )
+    login_logs = db.relationship(
+        'LoginLog',
+        back_populates='user',
+        lazy='dynamic'
+    )
+    notifications = db.relationship(
+        'Notification',
+        back_populates='user',
+        lazy='dynamic',
+        cascade='all, delete-orphan'
+    )
+
     def __init__(self, login_id, email=None, first_name=None, last_name=None, role='student'):
         """Initialize a new user."""
         self.login_id = login_id
@@ -129,54 +170,3 @@ class User(UserMixin):
     def __repr__(self):
         """String representation of the User model."""
         return f'<User {self.login_id}>'
-
-# Map the User class to the users table using SQLAlchemy 2.0 API
-mapper_registry.map_imperatively(User, users, properties={
-    'department': relationship('Department', back_populates='department_users'),
-    'enrolled_courses': relationship(
-        'Course', 
-        secondary='course_students',
-        back_populates='enrolled_students',
-        lazy='dynamic',
-        overlaps="course_enrollments,course_students"
-    ),
-    'course_enrollments': relationship(
-        'CourseStudent',
-        back_populates='student',
-        overlaps="enrolled_courses,enrolled_students"
-    ),
-    'taught_courses': relationship(
-        'Course',
-        foreign_keys='Course.lecturer_id',
-        back_populates='lecturer',
-        lazy='dynamic'
-    ),
-    'attendances': relationship(
-        'Attendance',
-        foreign_keys='Attendance.user_id',
-        back_populates='user',
-        lazy='dynamic'
-    ),
-    'marked_attendances': relationship(
-        'Attendance',
-        foreign_keys='Attendance.marked_by_id',
-        back_populates='marked_by',
-        lazy='dynamic'
-    ),
-    'activity_logs': relationship(
-        'ActivityLog',
-        back_populates='user',
-        lazy='dynamic'
-    ),
-    'login_logs': relationship(
-        'LoginLog',
-        back_populates='user',
-        lazy='dynamic'
-    ),
-    'notifications': relationship(
-        'Notification',
-        back_populates='user',
-        lazy='dynamic',
-        cascade='all, delete-orphan'
-    )
-})
