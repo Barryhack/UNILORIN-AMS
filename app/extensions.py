@@ -6,7 +6,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_wtf.csrf import CSRFProtect
 import logging
-from sqlalchemy import text
+from sqlalchemy import text, event
 import os
 
 logger = logging.getLogger(__name__)
@@ -17,6 +17,12 @@ migrate = Migrate()
 login_manager = LoginManager()
 limiter = Limiter(key_func=get_remote_address)
 csrf = CSRFProtect()
+
+# Configure SQLAlchemy to always commit
+@event.listens_for(db.session, 'after_flush')
+def receive_after_flush(session, flush_context):
+    """Automatically commit after flush."""
+    session.commit()
 
 def init_extensions(app):
     """Initialize Flask extensions."""
@@ -53,14 +59,13 @@ def init_extensions(app):
             try:
                 # Drop all tables with CASCADE
                 logger.info("Dropping all tables with CASCADE")
-                with db.engine.connect() as conn:
-                    conn.execute(text('''
+                with db.session.begin():
+                    db.session.execute(text('''
                         DROP SCHEMA public CASCADE;
                         CREATE SCHEMA public;
                         GRANT ALL ON SCHEMA public TO postgres;
                         GRANT ALL ON SCHEMA public TO public;
                     '''))
-                    conn.commit()
                 
                 # Create all tables based on migrations
                 logger.info("Running database migrations")
@@ -68,19 +73,10 @@ def init_extensions(app):
                 upgrade()
                 logger.info("Database migrations completed successfully")
                 
-                # Create default users
-                User.create_default_users()
-                logger.info("Default users created successfully")
-                
             except Exception as e:
-                logger.error(f"Error during database initialization: {str(e)}")
-                db.session.rollback()
+                logger.error(f"Error during database initialization: {e}")
                 raise
-        
-        logger.info('All extensions initialized successfully')
-        
+                
     except Exception as e:
-        logger.error(f'Error initializing extensions: {str(e)}')
+        logger.error(f"Error initializing extensions: {e}")
         raise
-    
-    return None

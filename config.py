@@ -7,7 +7,7 @@ def get_database_url():
     uri = os.environ.get('DATABASE_URL')
     if uri and uri.startswith('postgres://'):
         uri = uri.replace('postgres://', 'postgresql://', 1)
-    return uri or 'sqlite:///' + os.path.join(os.path.abspath(os.path.dirname(__file__)), 'instance', 'attendance.db')
+    return uri or 'postgresql://postgres:postgres@localhost:5432/attendance'
 
 class Config:
     # Basic Flask config
