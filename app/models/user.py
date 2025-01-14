@@ -4,6 +4,8 @@ from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.extensions import db
 import logging
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, LargeBinary, ForeignKey
+from sqlalchemy.orm import relationship
 
 logger = logging.getLogger(__name__)
 
@@ -11,62 +13,62 @@ class User(UserMixin, db.Model):
     """User model for storing user related details."""
     __tablename__ = 'users'
 
-    id = db.Column(db.Integer, primary_key=True)
-    login_id = db.Column(db.String(20), unique=True, nullable=False, index=True)
-    email = db.Column(db.String(120), unique=True, nullable=True)
-    password_hash = db.Column(db.String(128))
-    first_name = db.Column(db.String(64))
-    last_name = db.Column(db.String(64))
-    role = db.Column(db.String(20), nullable=False)  # admin, lecturer, student
-    department_id = db.Column(db.Integer, db.ForeignKey('departments.id'))
-    is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    last_login = db.Column(db.DateTime)
-    fingerprint_data = db.Column(db.LargeBinary, nullable=True)
+    id = Column(Integer, primary_key=True)
+    login_id = Column(String(20), unique=True, nullable=False, index=True)
+    email = Column(String(120), unique=True, nullable=True)
+    password_hash = Column(String(128))
+    first_name = Column(String(64))
+    last_name = Column(String(64))
+    role = Column(String(20), nullable=False)  # admin, lecturer, student
+    department_id = Column(Integer, ForeignKey('departments.id'))
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    last_login = Column(DateTime)
+    fingerprint_data = Column(LargeBinary, nullable=True)
 
     # Relationships with proper overlaps configuration
-    department = db.relationship('Department', back_populates='department_users')
-    enrolled_courses = db.relationship(
+    department = relationship('Department', back_populates='department_users')
+    enrolled_courses = relationship(
         'Course', 
         secondary='course_students',
         back_populates='enrolled_students',
         lazy='dynamic',
         overlaps="course_enrollments,course_students"
     )
-    course_enrollments = db.relationship(
+    course_enrollments = relationship(
         'CourseStudent',
         back_populates='student',
         overlaps="enrolled_courses,enrolled_students"
     )
-    taught_courses = db.relationship(
+    taught_courses = relationship(
         'Course',
         foreign_keys='Course.lecturer_id',
         back_populates='lecturer',
         lazy='dynamic'
     )
-    attendances = db.relationship(
+    attendances = relationship(
         'Attendance',
         foreign_keys='Attendance.user_id',
         back_populates='user',
         lazy='dynamic'
     )
-    marked_attendances = db.relationship(
+    marked_attendances = relationship(
         'Attendance',
         foreign_keys='Attendance.marked_by_id',
         back_populates='marked_by',
         lazy='dynamic'
     )
-    activity_logs = db.relationship(
+    activity_logs = relationship(
         'ActivityLog',
         back_populates='user',
         lazy='dynamic'
     )
-    login_logs = db.relationship(
+    login_logs = relationship(
         'LoginLog',
         back_populates='user',
         lazy='dynamic'
     )
-    notifications = db.relationship(
+    notifications = relationship(
         'Notification',
         back_populates='user',
         lazy='dynamic',

@@ -14,10 +14,29 @@ services:
       
       app = create_app(ProductionConfig)
       with app.app_context():
-          # Drop all tables and recreate them
+          # Drop all tables
+          print('Dropping all tables...')
           db.drop_all()
+          db.session.commit()
+          
+          # Create all tables
+          print('Creating all tables...')
           db.create_all()
+          db.session.commit()
           print('Database tables created successfully')
+          
+          # Verify tables were created
+          from sqlalchemy import inspect
+          inspector = inspect(db.engine)
+          tables = inspector.get_table_names()
+          print(f'Created tables: {tables}')
+          
+          # Verify users table columns
+          columns = [col['name'] for col in inspector.get_columns('users')]
+          print(f'Users table columns: {columns}')
+          
+          if 'login_id' not in columns:
+              raise Exception('login_id column is missing from users table')
           
           # Create default department
           dept = Department(name='Computer Science', code='CSC')
@@ -38,6 +57,12 @@ services:
           db.session.add(admin)
           db.session.commit()
           print('Default admin user created')
+          
+          # Verify admin user was created
+          admin_check = User.query.filter_by(login_id='ADMIN001').first()
+          if not admin_check:
+              raise Exception('Failed to create admin user')
+          print('Admin user verified')
       "
     startCommand: gunicorn wsgi:app --config gunicorn_config.py
     healthCheckPath: /health
@@ -63,7 +88,7 @@ services:
       - key: SERVER_NAME
         value: unilorin-ams-vf9i.onrender.com
       - key: LOG_LEVEL
-        value: ERROR
+        value: INFO
       - key: RATELIMIT_STORAGE_URL
         fromService:
           name: redis
