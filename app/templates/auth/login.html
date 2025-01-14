@@ -1,309 +1,295 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Attendance Management System</title>
+    
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Styles -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-{% block content %}
-<style>
-    /* Override base template styles */
-    body {
-        padding: 0 !important;
-        margin: 0 !important;
-        overflow: hidden !important;
-    }
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            position: fixed;
+            font-family: 'Inter', sans-serif;
+        }
 
-    /* Remove any padding from base template */
-    .p-4 {
-        padding: 0 !important;
-    }
-
-    .lg\:ml-64 {
-        margin-left: 0 !important;
-    }
-
-    .pt-20 {
-        padding-top: 0 !important;
-    }
-
-    main {
-        padding: 0 !important;
-        margin: 0 !important;
-    }
-
-    /* Rest of the styles */
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-
-    html, body {
-        margin: 0;
-        padding: 0;
-        height: 100vh;
-        width: 100vw;
-        overflow: hidden;
-        position: fixed;
-    }
-
-    .auth-container {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        display: flex;
-        width: 100vw;
-        height: 100vh;
-        margin: 0;
-        padding: 0;
-    }
-
-    .left-side {
-        flex: 1;
-        background: linear-gradient(135deg, rgba(30, 27, 75, 0.95), rgba(42, 82, 152, 0.95)), url("{{ url_for('static', filename='images/campus.jpg') }}");
-        background-size: cover;
-        background-position: center;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        padding: 2rem;
-        position: relative;
-    }
-
-    .university-logo {
-        width: 140px;
-        height: auto;
-        margin-bottom: 2rem;
-        filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
-    }
-
-    .welcome-content {
-        text-align: center;
-        max-width: 600px;
-    }
-
-    .welcome-content h1 {
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-    }
-
-    .subtitle {
-        font-size: 1.5rem;
-        font-style: italic;
-        margin-bottom: 1rem;
-        color: #ffd700;
-    }
-
-    .system-name {
-        font-size: 1.8rem;
-        font-weight: 600;
-        text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
-    }
-
-    .right-side {
-        flex: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: white;
-        padding: 2rem;
-    }
-
-    .login-form-container {
-        width: 100%;
-        max-width: 400px;
-    }
-
-    .login-form-container h2 {
-        font-size: 2rem;
-        font-weight: 700;
-        color: #1e1b4b;
-        margin-bottom: 0.5rem;
-        text-align: center;
-    }
-
-    .form-group {
-        margin-bottom: 1.5rem;
-    }
-
-    .form-group label {
-        display: block;
-        margin-bottom: 0.5rem;
-        font-weight: 500;
-        color: #374151;
-    }
-
-    .form-control {
-        width: 100%;
-        padding: 0.75rem 1rem;
-        border: 2px solid #e5e7eb;
-        border-radius: 0.5rem;
-        font-size: 1rem;
-        transition: all 0.3s ease;
-    }
-
-    .form-control:focus {
-        border-color: #1e1b4b;
-        outline: none;
-        box-shadow: 0 0 0 3px rgba(30, 27, 75, 0.1);
-    }
-
-    .remember-me {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        margin-bottom: 1.5rem;
-        color: #4b5563;
-    }
-
-    .btn-primary {
-        width: 100%;
-        padding: 0.75rem 1.5rem;
-        background: #1e1b4b;
-        color: white;
-        border: none;
-        border-radius: 0.5rem;
-        font-size: 1rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-
-    .btn-primary:hover {
-        background: #2d2a5d;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    .error-message {
-        color: #dc2626;
-        font-size: 0.875rem;
-        margin-top: 0.25rem;
-        display: block;
-    }
-
-    .alert {
-        padding: 1rem;
-        border-radius: 0.5rem;
-        margin-top: 1rem;
-        text-align: center;
-        font-weight: 500;
-    }
-
-    .alert-error {
-        background: #fee2e2;
-        color: #dc2626;
-    }
-
-    .alert-success {
-        background: #ecfdf5;
-        color: #059669;
-    }
-
-    @media (max-width: 768px) {
         .auth-container {
-            flex-direction: column;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
         }
 
         .left-side {
-            flex: none;
-            height: 40vh;
-            padding: 1.5rem;
-        }
-
-        .right-side {
-            flex: none;
-            height: 60vh;
-            padding: 1.5rem;
+            flex: 1;
+            background: linear-gradient(135deg, rgba(30, 27, 75, 0.95), rgba(42, 82, 152, 0.95)), url("{{ url_for('static', filename='images/campus.jpg') }}");
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            padding: 2rem;
+            position: relative;
         }
 
         .university-logo {
-            width: 100px;
-            margin-bottom: 1rem;
+            width: 140px;
+            height: auto;
+            margin-bottom: 2rem;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+        }
+
+        .welcome-content {
+            text-align: center;
+            max-width: 600px;
         }
 
         .welcome-content h1 {
-            font-size: 2rem;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
         }
 
         .subtitle {
-            font-size: 1.2rem;
+            font-size: 1.5rem;
+            font-style: italic;
+            margin-bottom: 1rem;
+            color: #ffd700;
         }
 
         .system-name {
-            font-size: 1.5rem;
+            font-size: 1.8rem;
+            font-weight: 600;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
         }
-    }
-</style>
 
-<div class="auth-container">
-    <!-- Left side with background and branding -->
-    <div class="left-side">
-        <img src="{{ url_for('static', filename='images/unilorin-logo.png') }}" alt="University of Ilorin Logo" class="university-logo">
-        <div class="welcome-content">
-            <h1>UNIVERSITY OF ILORIN</h1>
-            <p class="subtitle">Better By Far...</p>
-            <h2 class="system-name">ATTENDANCE MANAGEMENT SYSTEM</h2>
+        .right-side {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            padding: 2rem;
+        }
+
+        .login-form-container {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-form-container h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e1b4b;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: #1e1b4b;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(30, 27, 75, 0.1);
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            color: #4b5563;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 0.75rem 1.5rem;
+            background: #1e1b4b;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: #2d2a5d;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .error-message {
+            color: #dc2626;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            display: block;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .alert-success {
+            background: #ecfdf5;
+            color: #059669;
+        }
+
+        @media (max-width: 768px) {
+            .auth-container {
+                flex-direction: column;
+            }
+
+            .left-side {
+                flex: none;
+                height: 40vh;
+                padding: 1.5rem;
+            }
+
+            .right-side {
+                flex: none;
+                height: 60vh;
+                padding: 1.5rem;
+            }
+
+            .university-logo {
+                width: 100px;
+                margin-bottom: 1rem;
+            }
+
+            .welcome-content h1 {
+                font-size: 2rem;
+            }
+
+            .subtitle {
+                font-size: 1.2rem;
+            }
+
+            .system-name {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <!-- Left side with background and branding -->
+        <div class="left-side">
+            <img src="{{ url_for('static', filename='images/unilorin-logo.png') }}" alt="University of Ilorin Logo" class="university-logo">
+            <div class="welcome-content">
+                <h1>UNIVERSITY OF ILORIN</h1>
+                <p class="subtitle">Better By Far...</p>
+                <h2 class="system-name">ATTENDANCE MANAGEMENT SYSTEM</h2>
+            </div>
         </div>
-    </div>
 
-    <!-- Right side with login form -->
-    <div class="right-side">
-        <div class="login-form-container">
-            <h2>Welcome Back</h2>
-            <p class="text-gray-600 mb-8">Sign in to continue to AMS</p>
+        <!-- Right side with login form -->
+        <div class="right-side">
+            <div class="login-form-container">
+                <h2>Welcome Back</h2>
+                <p class="text-gray-600 mb-8">Sign in to continue to AMS</p>
 
-            <form method="POST" action="{{ url_for('auth.login', next=request.args.get('next'), _external=True) }}" class="space-y-6" novalidate>
-                {{ form.csrf_token }}
-                
-                <!-- ID Number Field -->
-                <div class="form-group">
-                    <label>ID Number</label>
-                    {{ form.login(class="form-control", placeholder="e.g., LECT/CSC/001 or 19/30qc012") }}
-                    {% if form.login.errors %}
-                        {% for error in form.login.errors %}
-                            <span class="error-message">{{ error }}</span>
+                <form method="POST" action="{{ url_for('auth.login', next=request.args.get('next'), _external=True) }}" class="space-y-6" novalidate>
+                    {{ form.csrf_token }}
+                    
+                    <!-- ID Number Field -->
+                    <div class="form-group">
+                        <label>ID Number</label>
+                        {{ form.login(class="form-control", placeholder="e.g., LECT/CSC/001 or 19/30qc012") }}
+                        {% if form.login.errors %}
+                            {% for error in form.login.errors %}
+                                <span class="error-message">{{ error }}</span>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    <!-- Password Field -->
+                    <div class="form-group">
+                        <label>Password</label>
+                        {{ form.password(class="form-control", placeholder="Enter your password") }}
+                        {% if form.password.errors %}
+                            {% for error in form.password.errors %}
+                                <span class="error-message">{{ error }}</span>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    <!-- Remember Me -->
+                    <div class="remember-me">
+                        {{ form.remember }}
+                        <label for="remember">Remember me</label>
+                    </div>
+
+                    <!-- Sign In Button -->
+                    {{ form.submit(class="btn-primary") }}
+                </form>
+
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert {% if category == 'error' %}alert-error{% else %}alert-success{% endif %}">
+                                {{ message }}
+                            </div>
                         {% endfor %}
                     {% endif %}
-                </div>
-
-                <!-- Password Field -->
-                <div class="form-group">
-                    <label>Password</label>
-                    {{ form.password(class="form-control", placeholder="Enter your password") }}
-                    {% if form.password.errors %}
-                        {% for error in form.password.errors %}
-                            <span class="error-message">{{ error }}</span>
-                        {% endfor %}
-                    {% endif %}
-                </div>
-
-                <!-- Remember Me -->
-                <div class="remember-me">
-                    {{ form.remember }}
-                    <label for="remember">Remember me</label>
-                </div>
-
-                <!-- Sign In Button -->
-                {{ form.submit(class="btn-primary") }}
-            </form>
-
-            <!-- Flash Messages -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="alert {% if category == 'error' %}alert-error{% else %}alert-success{% endif %}">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
+                {% endwith %}
+            </div>
         </div>
     </div>
-</div>
-{% endblock %}
-
-{% block navbar %}{% endblock %}
-{% block sidebar %}{% endblock %}
+</body>
+</html>
