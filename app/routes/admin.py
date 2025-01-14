@@ -1,7 +1,8 @@
-from flask import Blueprint, render_template, jsonify, request, current_app, redirect, url_for, make_response
+from flask import Blueprint, render_template, jsonify, request, current_app, redirect, url_for, make_response, flash
 from flask_login import login_required, current_user
-from datetime import datetime
-from ..models import User, Course, Department, Attendance, LoginLog, ActivityLog
+from datetime import datetime, timedelta
+from sqlalchemy import func, desc, and_
+from ..models import User, Course, Department, Attendance, LoginLog, ActivityLog, CourseStudent, Lecture
 from ..extensions import db
 from ..hardware.controller import HardwareMode
 from ..auth.decorators import admin_required, roles_required
@@ -31,7 +32,7 @@ def dashboard():
             'last_update': datetime.now()
         }
 
-    # Get statistics
+    # Get basic statistics
     stats = {
         'total_users': User.query.count(),
         'total_students': User.query.filter_by(role='student').count(),
@@ -43,22 +44,91 @@ def dashboard():
         ).count()
     }
     
-    # Get recent activity logs
-    recent_logs = ActivityLog.query.order_by(ActivityLog.timestamp.desc()).limit(10).all()
+    # Get attendance trends (last 7 days)
+    today = datetime.now().date()
+    attendance_trends = []
+    for i in range(7):
+        date = today - timedelta(days=i)
+        count = Attendance.query.filter(
+            func.date(Attendance.timestamp) == date
+        ).count()
+        attendance_trends.append({
+            'date': date.strftime('%Y-%m-%d'),
+            'count': count
+        })
+    attendance_trends.reverse()
     
-    # Get recent attendance records
-    recent_attendance = Attendance.query.order_by(Attendance.timestamp.desc()).limit(10).all()
-
-    # Get recent logins
-    recent_logins = LoginLog.query.order_by(LoginLog.timestamp.desc()).limit(5).all()
-
+    # Get department statistics
+    dept_stats = db.session.query(
+        Department.name,
+        func.count(User.id).label('student_count')
+    ).join(User, User.department_id == Department.id
+    ).filter(User.role == 'student'
+    ).group_by(Department.name
+    ).all()
+    
+    # Get recent activities
+    recent_activities = ActivityLog.query.order_by(
+        ActivityLog.timestamp.desc()
+    ).limit(10).all()
+    
+    # Get recent attendance records with student and course info
+    recent_attendance = db.session.query(
+        Attendance, User, Course
+    ).join(User, Attendance.student_id == User.id
+    ).join(Course, Attendance.course_id == Course.id
+    ).order_by(Attendance.timestamp.desc()
+    ).limit(10).all()
+    
+    # Get active courses (courses with attendance in last 24 hours)
+    active_courses = db.session.query(
+        Course.name,
+        func.count(Attendance.id).label('attendance_count')
+    ).join(Attendance, Attendance.course_id == Course.id
+    ).filter(Attendance.timestamp >= datetime.now() - timedelta(hours=24)
+    ).group_by(Course.name
+    ).order_by(desc('attendance_count')
+    ).limit(5).all()
+    
+    # Get system health
+    system_health = {
+        'database_connection': True,
+        'hardware_connection': hardware_status['status'] == 'Connected',
+        'fingerprint_status': hardware_status.get('fingerprint_ready', False),
+        'rfid_status': hardware_status.get('rfid_ready', False),
+        'last_backup': 'Not configured'  # You can implement backup tracking later
+    }
+    
     return render_template('admin/dashboard.html',
-                         hardware_status=hardware_status,
                          stats=stats,
-                         recent_logs=recent_logs,
+                         attendance_trends=attendance_trends,
+                         dept_stats=dept_stats,
+                         recent_activities=recent_activities,
                          recent_attendance=recent_attendance,
-                         recent_logins=recent_logins,
-                         datetime=datetime)
+                         active_courses=active_courses,
+                         system_health=system_health,
+                         hardware_status=hardware_status)
+
+@admin_bp.route('/api/dashboard/stats')
+@login_required
+@admin_required
+def get_dashboard_stats():
+    """Get real-time dashboard statistics."""
+    try:
+        stats = {
+            'total_users': User.query.count(),
+            'total_students': User.query.filter_by(role='student').count(),
+            'total_lecturers': User.query.filter_by(role='lecturer').count(),
+            'total_courses': Course.query.count(),
+            'total_departments': Department.query.count(),
+            'today_attendance': Attendance.query.filter(
+                Attendance.timestamp >= datetime.now().replace(hour=0, minute=0, second=0)
+            ).count()
+        }
+        return jsonify({'success': True, 'data': stats})
+    except Exception as e:
+        current_app.logger.error(f"Error fetching dashboard stats: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @admin_bp.route('/manage-users')
 @login_required
