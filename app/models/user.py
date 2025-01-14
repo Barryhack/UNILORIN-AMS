@@ -5,9 +5,12 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from app.extensions import db
 import logging
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, LargeBinary, ForeignKey, MetaData, Table
-from sqlalchemy.orm import relationship, mapper
+from sqlalchemy.orm import relationship, registry
 
 logger = logging.getLogger(__name__)
+
+# Create registry for mapping
+mapper_registry = registry()
 
 # Create users table
 metadata = MetaData()
@@ -127,8 +130,8 @@ class User(UserMixin):
         """String representation of the User model."""
         return f'<User {self.login_id}>'
 
-# Map the User class to the users table
-mapper(User, users, properties={
+# Map the User class to the users table using SQLAlchemy 2.0 API
+mapper_registry.map_imperatively(User, users, properties={
     'department': relationship('Department', back_populates='department_users'),
     'enrolled_courses': relationship(
         'Course', 
