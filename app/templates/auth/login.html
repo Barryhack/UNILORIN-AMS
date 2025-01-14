@@ -1,402 +1,75 @@
 {% extends "base.html" %}
 
-{% block title %}Login - Attendance System{% endblock %}
-
 {% block content %}
-<div class="auth-wrapper">
-    <div class="split-container">
-        <div class="left-side">
-            <img src="{{ url_for('static', filename='images/unilorin-logo.png') }}" 
-                 alt="University of Ilorin Logo" 
-                 class="university-logo">
-            <div class="welcome-content">
-                <h1>University of Ilorin</h1>
-                <p class="subtitle">Better By Far...</p>
-                <p class="system-name">Attendance Management System</p>
-                <div class="features-list">
-                    <div class="feature-item">
-                        <i class="fas fa-check-circle"></i>
-                        <span>Effortless attendance tracking</span>
-                    </div>
-                    <div class="feature-item">
-                        <i class="fas fa-chart-bar"></i>
-                        <span>Real-time analytics & reporting</span>
-                    </div>
-                    <div class="feature-item">
-                        <i class="fas fa-shield-alt"></i>
-                        <span>Secure and reliable system</span>
-                    </div>
-                </div>
+<div class="min-h-screen flex">
+    <!-- Left side with background and branding -->
+    <div class="hidden lg:flex lg:w-1/2 bg-[#1e1b4b] items-center justify-center flex-col text-white p-12">
+        <img src="{{ url_for('static', filename='images/unilorin-logo.png') }}" alt="University of Ilorin Logo" class="w-32 h-32 mb-8">
+        <h1 class="text-4xl font-bold text-center mb-2">UNIVERSITY OF ILORIN</h1>
+        <p class="text-xl italic text-center mb-8">Better By Far...</p>
+        <h2 class="text-2xl font-semibold text-center">ATTENDANCE MANAGEMENT SYSTEM</h2>
+    </div>
+
+    <!-- Right side with login form -->
+    <div class="w-full lg:w-1/2 flex items-center justify-center bg-white p-8">
+        <div class="max-w-md w-full">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-bold text-[#1e1b4b] mb-2">Welcome Back</h2>
+                <p class="text-gray-600">Sign in to continue to AMS</p>
             </div>
-        </div>
-        <div class="right-side">
-            <div class="login-form-container">
-                <h2>Welcome Back</h2>
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, message in messages %}
-                            <div class="alert alert-{{ category }}">{{ message }}</div>
+
+            <form method="POST" action="{{ url_for('auth.login', next=request.args.get('next'), _external=True) }}" class="space-y-6" novalidate>
+                {{ form.csrf_token }}
+                
+                <!-- ID Number Field -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">ID Number</label>
+                    {{ form.login(class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#1e1b4b] focus:border-transparent", placeholder="e.g., LECT/CSC/001 or 19/30qc012") }}
+                    {% if form.login.errors %}
+                        {% for error in form.login.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ error }}</p>
                         {% endfor %}
                     {% endif %}
-                {% endwith %}
-                <form method="POST" action="{{ url_for('auth.login', next=request.args.get('next'), _external=True) }}" novalidate>
-                    {{ form.csrf_token }}
-                    <div class="form-group">
-                        <label for="login">ID Number</label>
-                        {{ form.login(class="form-control", placeholder="Enter your ID number") }}
-                        {% if form.login.errors %}
-                            {% for error in form.login.errors %}
-                                <span class="error-message">{{ error }}</span>
-                            {% endfor %}
-                        {% endif %}
+                </div>
+
+                <!-- Password Field -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    {{ form.password(class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#1e1b4b] focus:border-transparent", placeholder="Enter your password") }}
+                    {% if form.password.errors %}
+                        {% for error in form.password.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+
+                <!-- Remember Me -->
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        {{ form.remember(class="h-4 w-4 text-[#1e1b4b] focus:ring-[#1e1b4b] border-gray-300 rounded") }}
+                        <label for="remember" class="ml-2 block text-sm text-gray-700">
+                            Remember me
+                        </label>
                     </div>
-                    <div class="form-group">
-                        <label for="password">Password</label>
-                        {{ form.password(class="form-control", placeholder="Enter your password") }}
-                        {% if form.password.errors %}
-                            {% for error in form.password.errors %}
-                                <span class="error-message">{{ error }}</span>
-                            {% endfor %}
-                        {% endif %}
-                    </div>
-                    <div class="form-group remember-me">
-                        {{ form.remember(class="form-check-input") }}
-                        <label for="remember">Remember me</label>
-                    </div>
-                    <div class="form-group">
-                        {{ form.submit(class="btn btn-primary btn-block") }}
-                    </div>
-                </form>
-            </div>
+                </div>
+
+                <!-- Sign In Button -->
+                <div>
+                    {{ form.submit(class="w-full flex justify-center py-2 px-4 rounded-lg text-white bg-[#1e1b4b] hover:bg-[#2d2a5d] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1e1b4b] transition-colors duration-200") }}
+                </div>
+            </form>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="mt-4 p-4 rounded-lg {% if category == 'error' %}bg-red-50 text-red-700{% else %}bg-green-50 text-green-700{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
         </div>
     </div>
 </div>
-
-<style>
-    /* Reset and base styles */
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-
-    html, body {
-        margin: 0;
-        padding: 0;
-        height: 100vh;
-        width: 100vw;
-        overflow: hidden;
-        position: fixed;
-    }
-
-    .auth-wrapper {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        display: flex;
-        background: none;
-    }
-
-    .split-container {
-        display: flex;
-        width: 100%;
-        height: 100%;
-        margin: 0;
-        padding: 0;
-        background: none;
-    }
-
-    .left-side {
-        flex: 1;
-        background: linear-gradient(135deg, rgba(30, 60, 114, 0.95) 0%, rgba(42, 82, 152, 0.95) 100%),
-                    url("{{ url_for('static', filename='images/campus.jpg') }}");
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-        padding: 3rem;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        text-align: center;
-        overflow-y: auto;
-        position: relative;
-        margin: 0;
-    }
-
-    .left-side::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: radial-gradient(circle at center, rgba(0,0,0,0) 0%, rgba(0,0,0,0.3) 100%);
-        pointer-events: none;
-    }
-
-    .left-side > * {
-        position: relative;
-        z-index: 1;
-    }
-
-    .right-side {
-        flex: 1;
-        padding: 3rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow-y: auto;
-        background: white;
-        margin: 0;
-    }
-
-    .university-logo {
-        width: 150px;
-        height: auto;
-        margin-bottom: 2rem;
-        animation: float 6s ease-in-out infinite;
-    }
-
-    @keyframes float {
-        0% {
-            transform: translateY(0px);
-        }
-        50% {
-            transform: translateY(-10px);
-        }
-        100% {
-            transform: translateY(0px);
-        }
-    }
-
-    .welcome-content {
-        margin-top: 2rem;
-        max-width: 500px;
-    }
-
-    .welcome-content h1 {
-        font-size: clamp(2rem, 4vw, 2.5rem);
-        margin-bottom: 1rem;
-        font-weight: 700;
-        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
-    }
-
-    .subtitle {
-        font-size: clamp(1.2rem, 2.5vw, 1.5rem);
-        opacity: 0.9;
-        margin-bottom: 0.5rem;
-        font-style: italic;
-    }
-
-    .system-name {
-        font-size: clamp(1.5rem, 3vw, 1.8rem);
-        font-weight: bold;
-        margin-bottom: 2rem;
-        text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
-    }
-
-    .features-list {
-        text-align: left;
-        margin-top: 2rem;
-    }
-
-    .feature-item {
-        display: flex;
-        align-items: center;
-        margin-bottom: 1.5rem;
-        font-size: clamp(1rem, 2vw, 1.2rem);
-        transition: transform 0.3s ease;
-    }
-
-    .feature-item:hover {
-        transform: translateX(10px);
-    }
-
-    .feature-item i {
-        margin-right: 1rem;
-        font-size: 1.4em;
-        color: #4CAF50;
-    }
-
-    .login-form-container {
-        width: 100%;
-        max-width: 400px;
-        padding: 2rem;
-        background: white;
-        border-radius: 15px;
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-    }
-
-    .login-form-container h2 {
-        text-align: center;
-        margin-bottom: 2rem;
-        color: #1e3c72;
-        font-size: clamp(1.8rem, 3.5vw, 2.2rem);
-        font-weight: 700;
-    }
-
-    .form-group {
-        margin-bottom: 1.5rem;
-    }
-
-    .form-group label {
-        display: block;
-        margin-bottom: 0.5rem;
-        color: #333;
-        font-size: clamp(1rem, 2vw, 1.1rem);
-        font-weight: 500;
-    }
-
-    .form-control {
-        width: 100%;
-        padding: 1rem;
-        border: 2px solid #e0e0e0;
-        border-radius: 10px;
-        font-size: 1rem;
-        transition: all 0.3s ease;
-        background: #f8f9fa;
-    }
-
-    .form-control:focus {
-        border-color: #1e3c72;
-        background: white;
-        box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.1);
-        outline: none;
-    }
-
-    .remember-me {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-size: 0.95rem;
-        color: #666;
-    }
-
-    .btn {
-        width: 100%;
-        padding: 1rem;
-        border: none;
-        border-radius: 10px;
-        font-size: 1.1rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-
-    .btn-primary {
-        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-        color: white;
-        box-shadow: 0 4px 6px rgba(30, 60, 114, 0.2);
-    }
-
-    .btn-primary:hover {
-        background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 6px 8px rgba(30, 60, 114, 0.3);
-    }
-
-    .alert {
-        padding: 1rem;
-        margin-bottom: 1.5rem;
-        border-radius: 10px;
-        text-align: center;
-        font-weight: 500;
-    }
-
-    .alert-error {
-        background-color: #fee2e2;
-        color: #dc2626;
-        border: 1px solid #fecaca;
-    }
-
-    .alert-success {
-        background-color: #dcfce7;
-        color: #16a34a;
-        border: 1px solid #bbf7d0;
-    }
-
-    .error-message {
-        color: #dc2626;
-        font-size: 0.875rem;
-        margin-top: 0.5rem;
-        display: block;
-    }
-
-    @media (max-width: 768px) {
-        html, body {
-            overflow-y: auto;
-        }
-
-        .auth-wrapper {
-            min-height: 100vh;
-            height: auto;
-        }
-
-        .split-container {
-            flex-direction: column;
-            height: auto;
-        }
-
-        .left-side, .right-side {
-            flex: none;
-            width: 100%;
-            padding: 2rem 1rem;
-            margin: 0;
-        }
-
-        .left-side {
-            min-height: 400px;
-        }
-
-        .login-form-container {
-            margin: 1rem 0;
-        }
-
-        .welcome-content {
-            padding: 1rem 0;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .left-side {
-            min-height: 350px;
-            padding: 1.5rem;
-        }
-
-        .university-logo {
-            width: 100px;
-        }
-
-        .feature-item {
-            font-size: 0.9rem;
-        }
-
-        .login-form-container {
-            padding: 1.5rem;
-        }
-
-        .right-side {
-            padding: 1.5rem;
-        }
-    }
-
-    @media (max-height: 600px) and (orientation: landscape) {
-        html, body {
-            overflow-y: auto;
-        }
-
-        .auth-wrapper {
-            height: auto;
-            min-height: 100vh;
-        }
-
-        .split-container {
-            height: auto;
-        }
-    }
-</style>
 {% endblock %}
