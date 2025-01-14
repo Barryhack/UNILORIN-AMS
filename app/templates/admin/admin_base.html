@@ -1,76 +1,149 @@
-{% extends "base.html" %}
-
-{% block content %}
-<div class="min-h-screen bg-gray-50 dark:bg-gray-900">
-    <!-- Admin Navigation -->
-    <nav class="bg-[#1e1b4b] dark:bg-gray-800 shadow-lg">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex">
-                    <!-- Navigation Links -->
-                    <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
-                        <a href="{{ url_for('admin.dashboard') }}" 
-                           class="{% if request.endpoint == 'admin.dashboard' %}border-[#ffd700] text-white{% else %}border-transparent text-gray-300 hover:border-gray-300 hover:text-white{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-all duration-200">
-                            Dashboard
-                        </a>
-                        <a href="{{ url_for('admin.manage_users') }}"
-                           class="{% if request.endpoint == 'admin.manage_users' %}border-[#ffd700] text-white{% else %}border-transparent text-gray-300 hover:border-gray-300 hover:text-white{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-all duration-200">
-                            Users
-                        </a>
-                        <a href="{{ url_for('admin.manage_departments') }}"
-                           class="{% if request.endpoint == 'admin.manage_departments' %}border-[#ffd700] text-white{% else %}border-transparent text-gray-300 hover:border-gray-300 hover:text-white{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-all duration-200">
-                            Departments
-                        </a>
-                        <a href="{{ url_for('admin.manage_courses') }}"
-                           class="{% if request.endpoint == 'admin.manage_courses' %}border-[#ffd700] text-white{% else %}border-transparent text-gray-300 hover:border-gray-300 hover:text-white{% endif %} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-all duration-200">
-                            Courses
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Mobile menu button -->
-                <div class="-mr-2 flex items-center sm:hidden">
-                    <button type="button" 
-                            class="inline-flex items-center justify-center p-2 rounded-md text-gray-300 hover:text-white hover:bg-[#2d2a5d] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#ffd700]"
-                            aria-controls="mobile-menu"
-                            aria-expanded="false"
-                            onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
-                        <span class="sr-only">Open main menu</span>
-                        <!-- Icon when menu is closed -->
-                        <svg class="block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                        </svg>
-                    </button>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %} - UNILORIN AMS Admin</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .sidebar {
+            width: 250px;
+            transition: all 0.3s ease;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                margin-left: -250px;
+            }
+            
+            .sidebar.active {
+                margin-left: 0;
+            }
+            
+            .content {
+                margin-left: 0 !important;
+            }
+        }
+        
+        .nav-link {
+            transition: all 0.2s ease;
+        }
+        
+        .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left: 4px solid #ffd700;
+        }
+    </style>
+    {% block extra_styles %}{% endblock %}
+</head>
+<body class="bg-gray-100">
+    <!-- Sidebar -->
+    <aside class="sidebar fixed top-0 left-0 h-screen bg-[#1e1b4b] text-white p-4 z-50">
+        <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center space-x-3">
+                <img src="{{ url_for('static', filename='images/unilorin-logo.png') }}" alt="Logo" class="w-8 h-8">
+                <span class="text-lg font-semibold">UNILORIN AMS</span>
+            </div>
+            <button id="sidebar-toggle" class="md:hidden text-white">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+        
+        <nav class="space-y-2">
+            <a href="{{ url_for('admin.dashboard') }}" 
+               class="nav-link flex items-center space-x-3 px-4 py-3 rounded-lg {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="{{ url_for('admin.manage_users') }}"
+               class="nav-link flex items-center space-x-3 px-4 py-3 rounded-lg {% if request.endpoint == 'admin.manage_users' %}active{% endif %}">
+                <i class="fas fa-users"></i>
+                <span>Users</span>
+            </a>
+            <a href="{{ url_for('admin.manage_departments') }}"
+               class="nav-link flex items-center space-x-3 px-4 py-3 rounded-lg {% if request.endpoint == 'admin.manage_departments' %}active{% endif %}">
+                <i class="fas fa-building"></i>
+                <span>Departments</span>
+            </a>
+            <a href="{{ url_for('admin.manage_courses') }}"
+               class="nav-link flex items-center space-x-3 px-4 py-3 rounded-lg {% if request.endpoint == 'admin.manage_courses' %}active{% endif %}">
+                <i class="fas fa-book"></i>
+                <span>Courses</span>
+            </a>
+        </nav>
+        
+        <div class="absolute bottom-4 left-4 right-4">
+            <div class="flex items-center space-x-3 px-4 py-3 bg-black bg-opacity-20 rounded-lg">
+                <img src="{{ url_for('static', filename='images/default-avatar.png') }}" alt="Profile" class="w-8 h-8 rounded-full">
+                <div class="flex-1">
+                    <p class="text-sm font-medium truncate">{{ current_user.full_name }}</p>
+                    <p class="text-xs text-gray-300 truncate">{{ current_user.email }}</p>
                 </div>
             </div>
         </div>
-
-        <!-- Mobile menu -->
-        <div class="sm:hidden hidden" id="mobile-menu">
-            <div class="pt-2 pb-3 space-y-1">
-                <a href="{{ url_for('admin.dashboard') }}"
-                   class="{% if request.endpoint == 'admin.dashboard' %}bg-[#2d2a5d] border-[#ffd700] text-white{% else %}border-transparent text-gray-300 hover:bg-[#2d2a5d] hover:border-gray-300 hover:text-white{% endif %} block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-all duration-200">
-                    Dashboard
-                </a>
-                <a href="{{ url_for('admin.manage_users') }}"
-                   class="{% if request.endpoint == 'admin.manage_users' %}bg-[#2d2a5d] border-[#ffd700] text-white{% else %}border-transparent text-gray-300 hover:bg-[#2d2a5d] hover:border-gray-300 hover:text-white{% endif %} block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-all duration-200">
-                    Users
-                </a>
-                <a href="{{ url_for('admin.manage_departments') }}"
-                   class="{% if request.endpoint == 'admin.manage_departments' %}bg-[#2d2a5d] border-[#ffd700] text-white{% else %}border-transparent text-gray-300 hover:bg-[#2d2a5d] hover:border-gray-300 hover:text-white{% endif %} block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-all duration-200">
-                    Departments
-                </a>
-                <a href="{{ url_for('admin.manage_courses') }}"
-                   class="{% if request.endpoint == 'admin.manage_courses' %}bg-[#2d2a5d] border-[#ffd700] text-white{% else %}border-transparent text-gray-300 hover:bg-[#2d2a5d] hover:border-gray-300 hover:text-white{% endif %} block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-all duration-200">
-                    Courses
-                </a>
-            </div>
-        </div>
-    </nav>
+    </aside>
 
     <!-- Main Content -->
-    <main class="py-6">
-        {% block main %}{% endblock %}
+    <main class="content ml-64 p-8">
+        <!-- Top Navigation -->
+        <header class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">{% block page_title %}{% endblock %}</h1>
+                <p class="text-sm text-gray-500">{% block page_subtitle %}{% endblock %}</p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-bell"></i>
+                </button>
+                <form action="{{ url_for('auth.logout') }}" method="POST" class="inline">
+                    <button type="submit" class="flex items-center space-x-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </button>
+                </form>
+            </div>
+        </header>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="mb-6 p-4 rounded-lg {{ 'bg-red-100 text-red-700' if category == 'error' else 'bg-green-100 text-green-700' }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Main Content Area -->
+        {% block content %}{% endblock %}
     </main>
-</div>
-{% endblock %}
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        // Mobile sidebar toggle
+        document.getElementById('sidebar-toggle').addEventListener('click', function() {
+            document.querySelector('.sidebar').classList.toggle('active');
+        });
+    </script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

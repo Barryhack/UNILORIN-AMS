@@ -1,280 +1,141 @@
 {% extends 'admin/admin_base.html' %}
 
-{% block title %}Admin Dashboard{% endblock %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}Overview of your system{% endblock %}
 
-{% block styles %}
-{{ super() }}
+{% block extra_styles %}
 <style>
-    .dashboard-container {
-        @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6;
-    }
-    
-    .welcome-banner {
-        @apply bg-gradient-to-r from-[#1e1b4b] to-[#2d2a5d] text-white p-8 rounded-xl shadow-lg relative overflow-hidden;
-    }
-    
-    .welcome-banner::before {
-        content: '';
-        @apply absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-[#ffd700] to-transparent opacity-10;
-    }
-    
-    .quick-actions-grid {
-        @apply grid grid-cols-1 md:grid-cols-3 gap-6;
-    }
-    
-    .quick-action-card {
-        @apply flex items-center space-x-4 p-6 bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer border border-gray-100 dark:border-gray-700;
-    }
-    
-    .icon-wrapper {
-        @apply p-3 rounded-full bg-[#1e1b4b] text-white;
-    }
-    
-    .stats-grid {
-        @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6;
-    }
-    
     .stat-card {
-        @apply bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 flex flex-col space-y-2 border border-gray-100 dark:border-gray-700;
+        @apply bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow;
     }
     
     .stat-icon {
-        @apply p-3 rounded-full bg-[#1e1b4b] text-white mb-2;
+        @apply w-12 h-12 rounded-full flex items-center justify-center text-xl mb-4;
     }
     
-    .chart-container {
-        @apply bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 dark:border-gray-700;
-    }
-    
-    .recent-activity {
-        @apply bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 dark:border-gray-700;
-    }
-    
-    .activity-item {
-        @apply flex items-center space-x-4 py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0;
-    }
-    
-    .activity-icon {
-        @apply p-2 rounded-full bg-[#1e1b4b] text-white;
-    }
-    
-    .system-health {
-        @apply bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 dark:border-gray-700;
-    }
-    
-    .health-indicator {
-        @apply flex items-center space-x-3 py-2;
-    }
-    
-    .status-dot {
-        @apply w-3 h-3 rounded-full shadow-sm;
-    }
-    
-    .status-dot.healthy {
-        @apply bg-green-500;
-    }
-    
-    .status-dot.warning {
-        @apply bg-[#ffd700];
-    }
-    
-    .status-dot.error {
-        @apply bg-red-500;
-    }
-
     .stat-value {
-        @apply text-2xl font-bold text-[#1e1b4b] dark:text-white;
+        @apply text-2xl font-bold text-gray-800 mb-1;
     }
-
+    
     .stat-label {
-        @apply text-sm text-gray-500 dark:text-gray-400;
+        @apply text-sm text-gray-500;
     }
-
-    .section-title {
-        @apply text-lg font-semibold text-[#1e1b4b] dark:text-white mb-4 flex items-center space-x-2;
-    }
-
-    .section-title i {
-        @apply text-[#ffd700];
+    
+    .chart-card {
+        @apply bg-white p-6 rounded-xl shadow-sm;
     }
 </style>
 {% endblock %}
 
-{% block main %}
-<div class="dashboard-container">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="mb-4 p-4 rounded-xl {{ 'bg-red-100 text-red-700' if category == 'error' else 'bg-blue-100 text-blue-700' }} shadow-md">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-
-    <!-- Welcome Banner -->
-    <div class="welcome-banner">
-        <div class="flex flex-col lg:flex-row justify-between items-center relative z-10">
-            <div>
-                <h1 class="text-3xl font-bold mb-2">Welcome back, {{ current_user.first_name or current_user.login_id }}!</h1>
-                <p class="text-gray-100 text-lg">Here's what's happening in your system today.</p>
-            </div>
-            <div class="mt-4 lg:mt-0 bg-black bg-opacity-20 p-4 rounded-lg backdrop-blur-sm">
-                <div class="text-sm space-y-1">
-                    <p class="flex items-center space-x-2">
-                        <i class="fas fa-clock text-[#ffd700]"></i>
-                        <span>Last login: {{ current_user.last_login.strftime('%Y-%m-%d %H:%M:%S') if current_user.last_login else 'Never' }}</span>
-                    </p>
-                    <p class="flex items-center space-x-2">
-                        <i class="fas fa-calendar text-[#ffd700]"></i>
-                        <span>Current time: {{ datetime.now().strftime('%Y-%m-%d %H:%M:%S') }}</span>
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Quick Stats -->
-    <div class="stats-grid">
+{% block content %}
+<div class="space-y-8">
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Total Users -->
         <div class="stat-card">
-            <div class="stat-icon">
+            <div class="stat-icon bg-blue-100 text-blue-600">
                 <i class="fas fa-users"></i>
             </div>
-            <span class="stat-value" id="totalUsers">-</span>
-            <span class="stat-label">Total Users</span>
+            <div class="stat-value" id="totalUsers">-</div>
+            <div class="stat-label">Total Users</div>
         </div>
+        
+        <!-- Total Students -->
         <div class="stat-card">
-            <div class="stat-icon">
+            <div class="stat-icon bg-green-100 text-green-600">
                 <i class="fas fa-user-graduate"></i>
             </div>
-            <span class="stat-value" id="totalStudents">-</span>
-            <span class="stat-label">Total Students</span>
+            <div class="stat-value" id="totalStudents">-</div>
+            <div class="stat-label">Total Students</div>
         </div>
+        
+        <!-- Total Lecturers -->
         <div class="stat-card">
-            <div class="stat-icon">
+            <div class="stat-icon bg-purple-100 text-purple-600">
                 <i class="fas fa-chalkboard-teacher"></i>
             </div>
-            <span class="stat-value" id="totalLecturers">-</span>
-            <span class="stat-label">Total Lecturers</span>
+            <div class="stat-value" id="totalLecturers">-</div>
+            <div class="stat-label">Total Lecturers</div>
         </div>
+        
+        <!-- Total Courses -->
         <div class="stat-card">
-            <div class="stat-icon">
+            <div class="stat-icon bg-yellow-100 text-yellow-600">
                 <i class="fas fa-book"></i>
             </div>
-            <span class="stat-value" id="totalCourses">-</span>
-            <span class="stat-label">Total Courses</span>
+            <div class="stat-value" id="totalCourses">-</div>
+            <div class="stat-label">Total Courses</div>
         </div>
     </div>
 
-    <!-- Charts and Activity -->
+    <!-- Charts Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Attendance Trends -->
-        <div class="chart-container">
-            <h2 class="section-title"><i class="fas fa-chart-line"></i><span>Attendance Trends</span></h2>
-            <canvas id="attendanceChart" height="300"></canvas>
+        <!-- Attendance Chart -->
+        <div class="chart-card">
+            <h3 class="text-lg font-semibold mb-4">Attendance Overview</h3>
+            <canvas id="attendanceChart"></canvas>
         </div>
-
+        
         <!-- Recent Activity -->
-        <div class="recent-activity">
-            <h2 class="section-title"><i class="fas fa-history"></i><span>Recent Activity</span></h2>
+        <div class="chart-card">
+            <h3 class="text-lg font-semibold mb-4">Recent Activity</h3>
             <div class="space-y-4">
-                <div class="activity-item">
-                    <div class="activity-icon">
-                        <i class="fas fa-user-plus"></i>
-                    </div>
-                    <div class="flex-1">
-                        <p class="font-medium">New student registered</p>
-                        <p class="text-sm text-gray-500">2 minutes ago</p>
+                <div class="flex items-center space-x-4">
+                    <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <div>
+                        <p class="text-sm font-medium">New student registered</p>
+                        <p class="text-xs text-gray-500">2 minutes ago</p>
                     </div>
                 </div>
-                <div class="activity-item">
-                    <div class="activity-icon">
-                        <i class="fas fa-clipboard-check"></i>
-                    </div>
-                    <div class="flex-1">
-                        <p class="font-medium">Attendance marked for CSC 401</p>
-                        <p class="text-sm text-gray-500">10 minutes ago</p>
+                <div class="flex items-center space-x-4">
+                    <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <div>
+                        <p class="text-sm font-medium">Attendance marked for CSC 401</p>
+                        <p class="text-xs text-gray-500">10 minutes ago</p>
                     </div>
                 </div>
-                <div class="activity-item">
-                    <div class="activity-icon">
-                        <i class="fas fa-book"></i>
-                    </div>
-                    <div class="flex-1">
-                        <p class="font-medium">New course added: CSC 405</p>
-                        <p class="text-sm text-gray-500">1 hour ago</p>
+                <div class="flex items-center space-x-4">
+                    <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                    <div>
+                        <p class="text-sm font-medium">New course added: CSC 405</p>
+                        <p class="text-xs text-gray-500">1 hour ago</p>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- System Health -->
-        <div class="system-health">
-            <h2 class="section-title"><i class="fas fa-heartbeat"></i><span>System Health</span></h2>
-            <div class="space-y-4">
-                <div class="health-indicator">
-                    <span class="status-dot healthy"></span>
-                    <div class="flex-1">
-                        <p class="font-medium">Database Connection</p>
-                        <p class="text-sm text-gray-500">Operating normally</p>
-                    </div>
-                </div>
-                <div class="health-indicator">
-                    <span class="status-dot healthy"></span>
-                    <div class="flex-1">
-                        <p class="font-medium">API Services</p>
-                        <p class="text-sm text-gray-500">All services up</p>
-                    </div>
-                </div>
-                <div class="health-indicator">
-                    <span class="status-dot warning"></span>
-                    <div class="flex-1">
-                        <p class="font-medium">Storage Space</p>
-                        <p class="text-sm text-gray-500">75% utilized</p>
-                    </div>
-                </div>
+    <!-- Quick Actions -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <a href="{{ url_for('admin.manage_users') }}" class="block p-6 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow">
+            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xl mb-4">
+                <i class="fas fa-user-plus"></i>
             </div>
-        </div>
-
-        <!-- Quick Actions -->
-        <div class="quick-actions">
-            <h2 class="section-title"><i class="fas fa-bolt"></i><span>Quick Actions</span></h2>
-            <div class="quick-actions-grid">
-                <div class="quick-action-card">
-                    <div class="icon-wrapper">
-                        <i class="fas fa-user-plus"></i>
-                    </div>
-                    <div>
-                        <h3 class="font-semibold">Add User</h3>
-                        <p class="text-sm text-gray-500">Create new user account</p>
-                    </div>
-                </div>
-                <div class="quick-action-card">
-                    <div class="icon-wrapper">
-                        <i class="fas fa-book-medical"></i>
-                    </div>
-                    <div>
-                        <h3 class="font-semibold">Add Course</h3>
-                        <p class="text-sm text-gray-500">Create new course</p>
-                    </div>
-                </div>
-                <div class="quick-action-card">
-                    <div class="icon-wrapper">
-                        <i class="fas fa-download"></i>
-                    </div>
-                    <div>
-                        <h3 class="font-semibold">Export Data</h3>
-                        <p class="text-sm text-gray-500">Download reports</p>
-                    </div>
-                </div>
+            <h3 class="font-semibold mb-2">Add User</h3>
+            <p class="text-sm text-gray-500">Create new user accounts</p>
+        </a>
+        
+        <a href="{{ url_for('admin.manage_courses') }}" class="block p-6 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow">
+            <div class="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xl mb-4">
+                <i class="fas fa-book-medical"></i>
             </div>
-        </div>
+            <h3 class="font-semibold mb-2">Add Course</h3>
+            <p class="text-sm text-gray-500">Create new courses</p>
+        </a>
+        
+        <a href="#" class="block p-6 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow">
+            <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-xl mb-4">
+                <i class="fas fa-download"></i>
+            </div>
+            <h3 class="font-semibold mb-2">Export Data</h3>
+            <p class="text-sm text-gray-500">Download reports and data</p>
+        </a>
     </div>
 </div>
 {% endblock %}
 
-{% block scripts %}
-{{ super() }}
+{% block extra_scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     // Initialize attendance chart
