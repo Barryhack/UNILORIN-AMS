@@ -6,6 +6,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_wtf.csrf import CSRFProtect
 import logging
+from sqlalchemy import text
 
 logger = logging.getLogger(__name__)
 
@@ -22,21 +23,10 @@ def init_extensions(app):
         # Initialize SQLAlchemy first
         db.init_app(app)
         
-        # Import models to ensure they are registered with SQLAlchemy
-        with app.app_context():
-            from .models import (
-                User, Course, Department, Attendance, CourseStudent,
-                LoginLog, ActivityLog, Notification, Lecture
-            )
-            
-            # Create all tables
-            db.create_all()
-            
-            # Create default users if they don't exist
-            User.create_default_users()
+        # Initialize Flask-Migrate
+        migrate.init_app(app, db)
         
         # Initialize other extensions
-        migrate.init_app(app, db)
         login_manager.init_app(app)
         limiter.init_app(app)
         csrf.init_app(app)
@@ -51,6 +41,33 @@ def init_extensions(app):
             """Load user by ID."""
             from .models import User
             return User.query.get(int(user_id))
+        
+        # Import models to ensure they are registered with SQLAlchemy
+        with app.app_context():
+            from .models import (
+                User, Course, Department, Attendance, CourseStudent,
+                LoginLog, ActivityLog, Notification, Lecture
+            )
+            
+            # Check if database tables exist
+            try:
+                # Try to query the users table
+                db.session.execute(text('SELECT 1 FROM users')).fetchone()
+                logger.info("Database tables already exist")
+            except Exception as e:
+                logger.info("Creating database tables")
+                # Create all tables
+                db.create_all()
+                logger.info("Database tables created successfully")
+            
+            try:
+                # Create default users if they don't exist
+                User.create_default_users()
+                logger.info("Default users created successfully")
+            except Exception as e:
+                logger.error(f"Error creating default users: {str(e)}")
+                db.session.rollback()
+                raise
         
         logger.info('All extensions initialized successfully')
         

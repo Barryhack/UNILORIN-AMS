@@ -102,7 +102,7 @@ services:
       - key: FLASK_ENV
         value: production
       - key: PYTHON_VERSION
-        value: 3.9.12
+        value: 3.11.0
       - key: SECRET_KEY
         generateValue: true
       - key: DATABASE_URL
@@ -137,8 +137,10 @@ services:
 
 databases:
   - name: attendance_db
-    databaseName: attendance
+    databaseName: attendance_db
     plan: free
     ipAllowList:
       - source: 0.0.0.0/0
         description: everywhere
+    postDeploy: |
+      flask db upgrade
