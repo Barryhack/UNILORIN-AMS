@@ -1,11 +1,10 @@
-from flask import Blueprint, render_template, jsonify, request, current_app, redirect, url_for, make_response, flash
-from flask_login import login_required, current_user
 from datetime import datetime, timedelta
-from sqlalchemy import func, desc, and_
-from ..models import User, Course, Department, Attendance, LoginLog, ActivityLog, CourseStudent, Lecture
-from ..extensions import db
-from ..hardware.controller import HardwareMode
-from ..auth.decorators import admin_required, roles_required
+from flask import Blueprint, render_template, jsonify, current_app, flash
+from flask_login import login_required, current_user
+from sqlalchemy import func, desc
+from app.models import User, Course, Department, Attendance, ActivityLog
+from app.decorators import admin_required
+from app.extensions import db
 
 admin_bp = Blueprint('admin', __name__)
 
