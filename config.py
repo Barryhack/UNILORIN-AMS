@@ -76,36 +76,27 @@ class ProductionConfig(Config):
     SQLALCHEMY_ECHO = False
     SESSION_COOKIE_SECURE = True
     WTF_CSRF_SSL_STRICT = True
-    PERMANENT_SESSION_LIFETIME = timedelta(minutes=30)  # Reduced from 1 hour for security
-    
-    # Enhanced security headers
+    PERMANENT_SESSION_LIFETIME = timedelta(minutes=30)
     SECURITY_HEADERS = {
         **Config.SECURITY_HEADERS,
-        'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self';",
+        'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self'",
         'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
         'Cross-Origin-Embedder-Policy': 'require-corp',
         'Cross-Origin-Opener-Policy': 'same-origin',
         'Cross-Origin-Resource-Policy': 'same-origin'
     }
-    
-    # Logging and error handling
     LOG_LEVEL = 'ERROR'
-    PROPAGATE_EXCEPTIONS = False
-    
-    # Rate limiting
+    PROPAGATE_EXCEPTIONS = True
     RATELIMIT_ENABLED = True
     RATELIMIT_STORAGE_URL = os.environ.get('REDIS_URL', 'memory://')
     RATELIMIT_STRATEGY = 'fixed-window'
     RATELIMIT_DEFAULT = "100 per hour"
-    
-    # Server and SSL
     SERVER_NAME = os.environ.get('SERVER_NAME', 'unilorin-ams-vf9i.onrender.com')
     PREFERRED_URL_SCHEME = 'https'
-    
-    # Database optimizations
-    SQLALCHEMY_POOL_SIZE = 10
-    SQLALCHEMY_MAX_OVERFLOW = 20
+    SQLALCHEMY_POOL_SIZE = 20
+    SQLALCHEMY_MAX_OVERFLOW = 5
     SQLALCHEMY_POOL_TIMEOUT = 30
+    SQLALCHEMY_POOL_RECYCLE = 1800
 
 class TestingConfig(Config):
     TESTING = True

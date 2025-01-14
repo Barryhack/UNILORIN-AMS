@@ -23,91 +23,131 @@ hardware_state = {
 def dashboard():
     """Admin dashboard view."""
     try:
-        hardware_status = current_app.hardware_controller.get_status()
-    except Exception as e:
-        current_app.logger.error(f"Error getting hardware status: {e}")
-        hardware_status = {
-            'status': 'Error',
-            'mode': 'Unknown',
-            'last_update': datetime.now()
+        # Get hardware status with error handling
+        try:
+            hardware_status = current_app.hardware_controller.get_status()
+        except Exception as e:
+            current_app.logger.error(f"Error getting hardware status: {e}")
+            hardware_status = {
+                'status': 'Error',
+                'mode': 'Unknown',
+                'last_update': datetime.now(),
+                'fingerprint_ready': False,
+                'rfid_ready': False
+            }
+
+        # Get basic statistics with error handling
+        try:
+            stats = {
+                'total_users': User.query.count(),
+                'total_students': User.query.filter_by(role='student').count(),
+                'total_lecturers': User.query.filter_by(role='lecturer').count(),
+                'total_courses': Course.query.count(),
+                'total_departments': Department.query.count(),
+                'today_attendance': Attendance.query.filter(
+                    Attendance.timestamp >= datetime.now().replace(hour=0, minute=0, second=0)
+                ).count()
+            }
+        except Exception as e:
+            current_app.logger.error(f"Error getting basic statistics: {e}")
+            stats = {
+                'total_users': 0,
+                'total_students': 0,
+                'total_lecturers': 0,
+                'total_courses': 0,
+                'total_departments': 0,
+                'today_attendance': 0
+            }
+
+        # Get attendance trends with error handling
+        try:
+            today = datetime.now().date()
+            attendance_trends = []
+            for i in range(7):
+                date = today - timedelta(days=i)
+                count = Attendance.query.filter(
+                    func.date(Attendance.timestamp) == date
+                ).count()
+                attendance_trends.append({
+                    'date': date.strftime('%Y-%m-%d'),
+                    'count': count
+                })
+            attendance_trends.reverse()
+        except Exception as e:
+            current_app.logger.error(f"Error getting attendance trends: {e}")
+            attendance_trends = [{'date': today.strftime('%Y-%m-%d'), 'count': 0}]
+
+        # Get department statistics with error handling
+        try:
+            dept_stats = db.session.query(
+                Department.name,
+                func.count(User.id).label('student_count')
+            ).join(User, User.department_id == Department.id
+            ).filter(User.role == 'student'
+            ).group_by(Department.name
+            ).all()
+        except Exception as e:
+            current_app.logger.error(f"Error getting department statistics: {e}")
+            dept_stats = []
+
+        # Get recent activities with error handling
+        try:
+            recent_activities = ActivityLog.query.order_by(
+                ActivityLog.timestamp.desc()
+            ).limit(10).all()
+        except Exception as e:
+            current_app.logger.error(f"Error getting recent activities: {e}")
+            recent_activities = []
+
+        # Get recent attendance records with error handling
+        try:
+            recent_attendance = db.session.query(
+                Attendance, User, Course
+            ).join(User, Attendance.student_id == User.id
+            ).join(Course, Attendance.course_id == Course.id
+            ).order_by(Attendance.timestamp.desc()
+            ).limit(10).all()
+        except Exception as e:
+            current_app.logger.error(f"Error getting recent attendance: {e}")
+            recent_attendance = []
+
+        # Get active courses with error handling
+        try:
+            active_courses = db.session.query(
+                Course.name,
+                func.count(Attendance.id).label('attendance_count')
+            ).join(Attendance, Attendance.course_id == Course.id
+            ).filter(Attendance.timestamp >= datetime.now() - timedelta(hours=24)
+            ).group_by(Course.name
+            ).order_by(desc('attendance_count')
+            ).limit(5).all()
+        except Exception as e:
+            current_app.logger.error(f"Error getting active courses: {e}")
+            active_courses = []
+
+        # Get system health
+        system_health = {
+            'database_connection': True,
+            'hardware_connection': hardware_status['status'] == 'Connected',
+            'fingerprint_status': hardware_status.get('fingerprint_ready', False),
+            'rfid_status': hardware_status.get('rfid_ready', False),
+            'last_backup': 'Not configured'
         }
 
-    # Get basic statistics
-    stats = {
-        'total_users': User.query.count(),
-        'total_students': User.query.filter_by(role='student').count(),
-        'total_lecturers': User.query.filter_by(role='lecturer').count(),
-        'total_courses': Course.query.count(),
-        'total_departments': Department.query.count(),
-        'today_attendance': Attendance.query.filter(
-            Attendance.timestamp >= datetime.now().replace(hour=0, minute=0, second=0)
-        ).count()
-    }
-    
-    # Get attendance trends (last 7 days)
-    today = datetime.now().date()
-    attendance_trends = []
-    for i in range(7):
-        date = today - timedelta(days=i)
-        count = Attendance.query.filter(
-            func.date(Attendance.timestamp) == date
-        ).count()
-        attendance_trends.append({
-            'date': date.strftime('%Y-%m-%d'),
-            'count': count
-        })
-    attendance_trends.reverse()
-    
-    # Get department statistics
-    dept_stats = db.session.query(
-        Department.name,
-        func.count(User.id).label('student_count')
-    ).join(User, User.department_id == Department.id
-    ).filter(User.role == 'student'
-    ).group_by(Department.name
-    ).all()
-    
-    # Get recent activities
-    recent_activities = ActivityLog.query.order_by(
-        ActivityLog.timestamp.desc()
-    ).limit(10).all()
-    
-    # Get recent attendance records with student and course info
-    recent_attendance = db.session.query(
-        Attendance, User, Course
-    ).join(User, Attendance.student_id == User.id
-    ).join(Course, Attendance.course_id == Course.id
-    ).order_by(Attendance.timestamp.desc()
-    ).limit(10).all()
-    
-    # Get active courses (courses with attendance in last 24 hours)
-    active_courses = db.session.query(
-        Course.name,
-        func.count(Attendance.id).label('attendance_count')
-    ).join(Attendance, Attendance.course_id == Course.id
-    ).filter(Attendance.timestamp >= datetime.now() - timedelta(hours=24)
-    ).group_by(Course.name
-    ).order_by(desc('attendance_count')
-    ).limit(5).all()
-    
-    # Get system health
-    system_health = {
-        'database_connection': True,
-        'hardware_connection': hardware_status['status'] == 'Connected',
-        'fingerprint_status': hardware_status.get('fingerprint_ready', False),
-        'rfid_status': hardware_status.get('rfid_ready', False),
-        'last_backup': 'Not configured'  # You can implement backup tracking later
-    }
-    
-    return render_template('admin/dashboard.html',
-                         stats=stats,
-                         attendance_trends=attendance_trends,
-                         dept_stats=dept_stats,
-                         recent_activities=recent_activities,
-                         recent_attendance=recent_attendance,
-                         active_courses=active_courses,
-                         system_health=system_health,
-                         hardware_status=hardware_status)
+        return render_template('admin/dashboard.html',
+                            stats=stats,
+                            attendance_trends=attendance_trends,
+                            dept_stats=dept_stats,
+                            recent_activities=recent_activities,
+                            recent_attendance=recent_attendance,
+                            active_courses=active_courses,
+                            system_health=system_health,
+                            hardware_status=hardware_status)
+
+    except Exception as e:
+        current_app.logger.error(f"Error in dashboard route: {e}")
+        flash('An error occurred while loading the dashboard. Please try again later.', 'error')
+        return render_template('error/500.html'), 500
 
 @admin_bp.route('/api/dashboard/stats')
 @login_required
