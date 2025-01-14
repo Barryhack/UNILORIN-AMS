@@ -25,44 +25,51 @@ services:
           db.session.commit()
           print('Database tables created successfully')
           
-          # Verify tables were created
-          from sqlalchemy import inspect
-          inspector = inspect(db.engine)
-          tables = inspector.get_table_names()
-          print(f'Created tables: {tables}')
-          
-          # Verify users table columns
-          columns = [col['name'] for col in inspector.get_columns('users')]
-          print(f'Users table columns: {columns}')
-          
-          if 'login_id' not in columns:
-              raise Exception('login_id column is missing from users table')
-          
           # Create default department
+          print('Creating default department...')
           dept = Department(name='Computer Science', code='CSC')
           db.session.add(dept)
           db.session.commit()
           print('Default department created')
           
           # Create default admin user
+          print('Creating default admin user...')
           admin = User(
               login_id='ADMIN001',
               email='admin@example.com',
               first_name='Admin',
               last_name='User',
-              role='admin'
+              role='admin',
+              department_id=dept.id
           )
           admin.password = 'admin123'
-          admin.department_id = dept.id
           db.session.add(admin)
           db.session.commit()
           print('Default admin user created')
           
-          # Verify admin user was created
+          # Verify database setup
+          print('Verifying database setup...')
+          from sqlalchemy import inspect
+          inspector = inspect(db.engine)
+          
+          # Check tables
+          tables = inspector.get_table_names()
+          print(f'Created tables: {tables}')
+          
+          # Check users table columns
+          if 'users' in tables:
+              columns = [col['name'] for col in inspector.get_columns('users')]
+              print(f'Users table columns: {columns}')
+              if 'login_id' not in columns:
+                  raise Exception('login_id column is missing from users table')
+          else:
+              raise Exception('users table was not created')
+          
+          # Verify admin user
           admin_check = User.query.filter_by(login_id='ADMIN001').first()
           if not admin_check:
               raise Exception('Failed to create admin user')
-          print('Admin user verified')
+          print('Database setup verified successfully')
       "
     startCommand: gunicorn wsgi:app --config gunicorn_config.py
     healthCheckPath: /health
