@@ -5,9 +5,10 @@ from flask_login import LoginManager
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_wtf.csrf import CSRFProtect
+from sqlalchemy.ext.declarative import declarative_base
 
-# Initialize extensions
-db = SQLAlchemy()
+# Initialize SQLAlchemy with custom model class
+db = SQLAlchemy(model_class=declarative_base())
 migrate = Migrate()
 login_manager = LoginManager()
 limiter = Limiter(key_func=get_remote_address)

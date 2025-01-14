@@ -1,6 +1,10 @@
 """Models package."""
 from app.extensions import db
 
+# Create a new MetaData instance
+metadata = db.MetaData()
+
+# Import all models to register them with MetaData
 from .user import User
 from .course import Course
 from .department import Department
@@ -11,6 +15,7 @@ from .activity_log import ActivityLog
 from .notification import Notification
 from .lecture import Lecture
 
+# List all models for easy access
 __all__ = [
     'User',
     'Course',
@@ -20,5 +25,6 @@ __all__ = [
     'LoginLog',
     'ActivityLog',
     'Notification',
-    'Lecture'
+    'Lecture',
+    'metadata'
 ]
