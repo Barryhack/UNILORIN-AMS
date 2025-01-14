@@ -7,6 +7,7 @@ from flask_limiter.util import get_remote_address
 from flask_wtf.csrf import CSRFProtect
 import logging
 from sqlalchemy import text
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -49,23 +50,24 @@ def init_extensions(app):
                 LoginLog, ActivityLog, Notification, Lecture
             )
             
-            # Check if database tables exist
             try:
-                # Try to query the users table
-                db.session.execute(text('SELECT 1 FROM users')).fetchone()
-                logger.info("Database tables already exist")
-            except Exception as e:
-                logger.info("Creating database tables")
-                # Create all tables
-                db.create_all()
-                logger.info("Database tables created successfully")
-            
-            try:
-                # Create default users if they don't exist
+                # Drop all tables
+                logger.info("Dropping all tables")
+                db.drop_all()
+                db.session.commit()
+                
+                # Create all tables based on migrations
+                logger.info("Running database migrations")
+                from flask_migrate import upgrade
+                upgrade()
+                logger.info("Database migrations completed successfully")
+                
+                # Create default users
                 User.create_default_users()
                 logger.info("Default users created successfully")
+                
             except Exception as e:
-                logger.error(f"Error creating default users: {str(e)}")
+                logger.error(f"Error during database initialization: {str(e)}")
                 db.session.rollback()
                 raise
         
