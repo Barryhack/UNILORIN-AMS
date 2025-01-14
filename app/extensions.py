@@ -5,10 +5,9 @@ from flask_login import LoginManager
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_wtf.csrf import CSRFProtect
-from sqlalchemy.ext.declarative import declarative_base
 
-# Initialize SQLAlchemy with custom model class
-db = SQLAlchemy(model_class=declarative_base())
+# Initialize extensions
+db = SQLAlchemy()
 migrate = Migrate()
 login_manager = LoginManager()
 limiter = Limiter(key_func=get_remote_address)
@@ -16,7 +15,17 @@ csrf = CSRFProtect()
 
 def init_extensions(app):
     """Initialize Flask extensions."""
+    # Initialize SQLAlchemy
     db.init_app(app)
+
+    # Import models to ensure they are registered with SQLAlchemy
+    with app.app_context():
+        from .models import (
+            User, Course, Department, Attendance, CourseStudent,
+            LoginLog, ActivityLog, Notification, Lecture
+        )
+
+    # Initialize other extensions
     migrate.init_app(app, db)
     login_manager.init_app(app)
     limiter.init_app(app)
