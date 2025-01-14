@@ -7,7 +7,7 @@ from app.models.course import Course
 from app.models.department import Department
 from app.models.attendance import Attendance
 from app.models.activity_log import ActivityLog
-from app.auth.decorators import admin_required
+from app.auth.decorators import admin_required, roles_required
 from app.extensions import db
 
 admin_bp = Blueprint('admin', __name__)
