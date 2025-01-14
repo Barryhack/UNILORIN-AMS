@@ -51,10 +51,16 @@ def init_extensions(app):
             )
             
             try:
-                # Drop all tables
-                logger.info("Dropping all tables")
-                db.drop_all()
-                db.session.commit()
+                # Drop all tables with CASCADE
+                logger.info("Dropping all tables with CASCADE")
+                with db.engine.connect() as conn:
+                    conn.execute(text('''
+                        DROP SCHEMA public CASCADE;
+                        CREATE SCHEMA public;
+                        GRANT ALL ON SCHEMA public TO postgres;
+                        GRANT ALL ON SCHEMA public TO public;
+                    '''))
+                    conn.commit()
                 
                 # Create all tables based on migrations
                 logger.info("Running database migrations")

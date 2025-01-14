@@ -48,6 +48,22 @@ def upgrade():
         sa.UniqueConstraint('login_id')
     )
 
+    # Create system_settings table
+    op.create_table('system_settings',
+        sa.Column('id', sa.Integer(), nullable=False),
+        sa.Column('key', sa.String(length=100), nullable=False),
+        sa.Column('value', sa.Text(), nullable=True),
+        sa.Column('description', sa.Text(), nullable=True),
+        sa.Column('created_at', sa.DateTime(), nullable=True),
+        sa.Column('updated_at', sa.DateTime(), nullable=True),
+        sa.Column('created_by_id', sa.Integer(), nullable=True),
+        sa.Column('updated_by_id', sa.Integer(), nullable=True),
+        sa.ForeignKeyConstraint(['created_by_id'], ['users.id'], ),
+        sa.ForeignKeyConstraint(['updated_by_id'], ['users.id'], ),
+        sa.PrimaryKeyConstraint('id'),
+        sa.UniqueConstraint('key')
+    )
+
     # Create courses table
     op.create_table('courses',
         sa.Column('id', sa.Integer(), nullable=False),
@@ -121,5 +137,6 @@ def downgrade():
     op.drop_table('course_students')
     op.drop_table('lectures')
     op.drop_table('courses')
+    op.drop_table('system_settings')
     op.drop_table('users')
     op.drop_table('departments')
