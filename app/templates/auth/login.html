@@ -1,73 +1,33 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="auth-container">
-    <!-- Left side with background and branding -->
-    <div class="left-side">
-        <img src="{{ url_for('static', filename='images/unilorin-logo.png') }}" alt="University of Ilorin Logo" class="university-logo">
-        <div class="welcome-content">
-            <h1>UNIVERSITY OF ILORIN</h1>
-            <p class="subtitle">Better By Far...</p>
-            <h2 class="system-name">ATTENDANCE MANAGEMENT SYSTEM</h2>
-        </div>
-    </div>
-
-    <!-- Right side with login form -->
-    <div class="right-side">
-        <div class="login-form-container">
-            <h2>Welcome Back</h2>
-            <p class="text-gray-600 mb-8">Sign in to continue to AMS</p>
-
-            <form method="POST" action="{{ url_for('auth.login', next=request.args.get('next'), _external=True) }}" class="space-y-6" novalidate>
-                {{ form.csrf_token }}
-                
-                <!-- ID Number Field -->
-                <div class="form-group">
-                    <label>ID Number</label>
-                    {{ form.login(class="form-control", placeholder="e.g., LECT/CSC/001 or 19/30qc012") }}
-                    {% if form.login.errors %}
-                        {% for error in form.login.errors %}
-                            <span class="error-message">{{ error }}</span>
-                        {% endfor %}
-                    {% endif %}
-                </div>
-
-                <!-- Password Field -->
-                <div class="form-group">
-                    <label>Password</label>
-                    {{ form.password(class="form-control", placeholder="Enter your password") }}
-                    {% if form.password.errors %}
-                        {% for error in form.password.errors %}
-                            <span class="error-message">{{ error }}</span>
-                        {% endfor %}
-                    {% endif %}
-                </div>
-
-                <!-- Remember Me -->
-                <div class="remember-me">
-                    {{ form.remember }}
-                    <label for="remember">Remember me</label>
-                </div>
-
-                <!-- Sign In Button -->
-                {{ form.submit(class="btn-primary") }}
-            </form>
-
-            <!-- Flash Messages -->
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="alert {% if category == 'error' %}alert-error{% else %}alert-success{% endif %}">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-        </div>
-    </div>
-</div>
-
 <style>
+    /* Override base template styles */
+    body {
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: hidden !important;
+    }
+
+    /* Remove any padding from base template */
+    .p-4 {
+        padding: 0 !important;
+    }
+
+    .lg\:ml-64 {
+        margin-left: 0 !important;
+    }
+
+    .pt-20 {
+        padding-top: 0 !important;
+    }
+
+    main {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    /* Rest of the styles */
     * {
         margin: 0;
         padding: 0;
@@ -84,13 +44,16 @@
     }
 
     .auth-container {
-        position: absolute;
+        position: fixed;
         top: 0;
         left: 0;
         right: 0;
         bottom: 0;
         display: flex;
-        background: none;
+        width: 100vw;
+        height: 100vh;
+        margin: 0;
+        padding: 0;
     }
 
     .left-side {
@@ -274,4 +237,73 @@
         }
     }
 </style>
+
+<div class="auth-container">
+    <!-- Left side with background and branding -->
+    <div class="left-side">
+        <img src="{{ url_for('static', filename='images/unilorin-logo.png') }}" alt="University of Ilorin Logo" class="university-logo">
+        <div class="welcome-content">
+            <h1>UNIVERSITY OF ILORIN</h1>
+            <p class="subtitle">Better By Far...</p>
+            <h2 class="system-name">ATTENDANCE MANAGEMENT SYSTEM</h2>
+        </div>
+    </div>
+
+    <!-- Right side with login form -->
+    <div class="right-side">
+        <div class="login-form-container">
+            <h2>Welcome Back</h2>
+            <p class="text-gray-600 mb-8">Sign in to continue to AMS</p>
+
+            <form method="POST" action="{{ url_for('auth.login', next=request.args.get('next'), _external=True) }}" class="space-y-6" novalidate>
+                {{ form.csrf_token }}
+                
+                <!-- ID Number Field -->
+                <div class="form-group">
+                    <label>ID Number</label>
+                    {{ form.login(class="form-control", placeholder="e.g., LECT/CSC/001 or 19/30qc012") }}
+                    {% if form.login.errors %}
+                        {% for error in form.login.errors %}
+                            <span class="error-message">{{ error }}</span>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+
+                <!-- Password Field -->
+                <div class="form-group">
+                    <label>Password</label>
+                    {{ form.password(class="form-control", placeholder="Enter your password") }}
+                    {% if form.password.errors %}
+                        {% for error in form.password.errors %}
+                            <span class="error-message">{{ error }}</span>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+
+                <!-- Remember Me -->
+                <div class="remember-me">
+                    {{ form.remember }}
+                    <label for="remember">Remember me</label>
+                </div>
+
+                <!-- Sign In Button -->
+                {{ form.submit(class="btn-primary") }}
+            </form>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert {% if category == 'error' %}alert-error{% else %}alert-success{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+    </div>
+</div>
 {% endblock %}
+
+{% block navbar %}{% endblock %}
+{% block sidebar %}{% endblock %}
