@@ -2,8 +2,12 @@ from datetime import datetime, timedelta
 from flask import Blueprint, render_template, jsonify, current_app, flash
 from flask_login import login_required, current_user
 from sqlalchemy import func, desc
-from app.models import User, Course, Department, Attendance, ActivityLog
-from app.decorators import admin_required
+from app.models.user import User
+from app.models.course import Course
+from app.models.department import Department
+from app.models.attendance import Attendance
+from app.models.activity_log import ActivityLog
+from app.auth.decorators import admin_required
 from app.extensions import db
 
 admin_bp = Blueprint('admin', __name__)
@@ -23,17 +27,19 @@ def dashboard():
     """Admin dashboard view."""
     try:
         # Get hardware status with error handling
-        try:
-            hardware_status = current_app.hardware_controller.get_status()
-        except Exception as e:
-            current_app.logger.error(f"Error getting hardware status: {e}")
-            hardware_status = {
-                'status': 'Error',
-                'mode': 'Unknown',
-                'last_update': datetime.now(),
-                'fingerprint_ready': False,
-                'rfid_ready': False
-            }
+        hardware_status = {
+            'status': 'Unknown',
+            'mode': 'Unknown',
+            'last_update': datetime.now(),
+            'fingerprint_ready': False,
+            'rfid_ready': False
+        }
+        
+        if hasattr(current_app, 'hardware_controller'):
+            try:
+                hardware_status = current_app.hardware_controller.get_status()
+            except Exception as e:
+                current_app.logger.error(f"Error getting hardware status: {e}")
 
         # Get basic statistics with error handling
         try:
