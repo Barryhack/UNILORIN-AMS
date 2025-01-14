@@ -1,3 +1,4 @@
+"""Authentication routes."""
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.urls import url_parse
@@ -30,30 +31,31 @@ def login():
             
             if user and user.verify_password(form.password.data):
                 try:
-                    # Start a new transaction
-                    with db.session.begin():
-                        # Update last login
-                        user.last_login = datetime.utcnow()
-                        
-                        # Create login log
-                        login_log = LoginLog(
-                            user_id=user.id,
-                            ip_address=request.remote_addr,
-                            user_agent=request.user_agent.string,
-                            action='login',
-                            status='success'
-                        )
-                        db.session.add(login_log)
-                        
-                        # Create activity log
-                        activity_log = ActivityLog(
-                            user_id=user.id,
-                            action='login',
-                            details=f'User logged in from {request.remote_addr}',
-                            ip_address=request.remote_addr,
-                            timestamp=datetime.utcnow()
-                        )
-                        db.session.add(activity_log)
+                    # Update last login
+                    user.last_login = datetime.utcnow()
+                    
+                    # Create login log
+                    login_log = LoginLog(
+                        user_id=user.id,
+                        ip_address=request.remote_addr,
+                        user_agent=request.user_agent.string,
+                        action='login',
+                        status='success'
+                    )
+                    db.session.add(login_log)
+                    
+                    # Create activity log
+                    activity_log = ActivityLog(
+                        user_id=user.id,
+                        action='login',
+                        details=f'User logged in from {request.remote_addr}',
+                        ip_address=request.remote_addr,
+                        timestamp=datetime.utcnow()
+                    )
+                    db.session.add(activity_log)
+                    
+                    # Commit the transaction
+                    db.session.commit()
                     
                     # Log in user after successful transaction
                     login_user(user, remember=form.remember.data)
@@ -71,9 +73,11 @@ def login():
                     return redirect(url_parse(next_page).path)
                     
                 except SQLAlchemyError as e:
+                    db.session.rollback()
                     logger.error(f"Database error during login: {str(e)}")
                     flash('An error occurred during login. Please try again.', 'error')
                 except Exception as e:
+                    db.session.rollback()
                     logger.error(f"Unexpected error during login: {str(e)}")
                     flash('An unexpected error occurred. Please try again.', 'error')
             else:
@@ -82,18 +86,20 @@ def login():
                 
                 # Log failed login attempt
                 try:
-                    with db.session.begin():
-                        login_log = LoginLog(
-                            user_id=user.id if user else None,
-                            ip_address=request.remote_addr,
-                            user_agent=request.user_agent.string,
-                            action='login',
-                            status='failed'
-                        )
-                        db.session.add(login_log)
+                    login_log = LoginLog(
+                        user_id=user.id if user else None,
+                        ip_address=request.remote_addr,
+                        user_agent=request.user_agent.string,
+                        action='login',
+                        status='failed'
+                    )
+                    db.session.add(login_log)
+                    db.session.commit()
                 except SQLAlchemyError as e:
+                    db.session.rollback()
                     logger.error(f"Database error logging failed login: {str(e)}")
                 except Exception as e:
+                    db.session.rollback()
                     logger.error(f"Error logging failed login attempt: {str(e)}")
         else:
             logger.warning("Form validation failed")
@@ -110,26 +116,29 @@ def login():
 def logout():
     """Handle user logout."""
     try:
-        # Start a new transaction
-        with db.session.begin():
-            # Create activity log
-            activity_log = ActivityLog(
-                user_id=current_user.id,
-                action='logout',
-                details=f'User logged out from {request.remote_addr}',
-                ip_address=request.remote_addr,
-                timestamp=datetime.utcnow()
-            )
-            db.session.add(activity_log)
+        # Create activity log
+        activity_log = ActivityLog(
+            user_id=current_user.id,
+            action='logout',
+            details=f'User logged out from {request.remote_addr}',
+            ip_address=request.remote_addr,
+            timestamp=datetime.utcnow()
+        )
+        db.session.add(activity_log)
+        db.session.commit()
         
         # Log out user after successful transaction
+        user_id = current_user.id
         logout_user()
+        logger.info(f"User {user_id} logged out successfully")
         flash('You have been logged out.', 'success')
         
     except SQLAlchemyError as e:
+        db.session.rollback()
         logger.error(f"Database error during logout: {str(e)}")
         flash('An error occurred during logout.', 'error')
     except Exception as e:
+        db.session.rollback()
         logger.error(f"Unexpected error during logout: {str(e)}")
         flash('An unexpected error occurred. Please try again.', 'error')
         

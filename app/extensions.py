@@ -18,12 +18,6 @@ login_manager = LoginManager()
 limiter = Limiter(key_func=get_remote_address)
 csrf = CSRFProtect()
 
-# Configure SQLAlchemy to always commit
-@event.listens_for(db.session, 'after_flush')
-def receive_after_flush(session, flush_context):
-    """Automatically commit after flush."""
-    session.commit()
-
 def init_extensions(app):
     """Initialize Flask extensions."""
     try:
@@ -59,13 +53,13 @@ def init_extensions(app):
             try:
                 # Drop all tables with CASCADE
                 logger.info("Dropping all tables with CASCADE")
-                with db.session.begin():
-                    db.session.execute(text('''
-                        DROP SCHEMA public CASCADE;
-                        CREATE SCHEMA public;
-                        GRANT ALL ON SCHEMA public TO postgres;
-                        GRANT ALL ON SCHEMA public TO public;
-                    '''))
+                db.session.execute(text('''
+                    DROP SCHEMA public CASCADE;
+                    CREATE SCHEMA public;
+                    GRANT ALL ON SCHEMA public TO postgres;
+                    GRANT ALL ON SCHEMA public TO public;
+                '''))
+                db.session.commit()
                 
                 # Create all tables based on migrations
                 logger.info("Running database migrations")
@@ -75,6 +69,7 @@ def init_extensions(app):
                 
             except Exception as e:
                 logger.error(f"Error during database initialization: {e}")
+                db.session.rollback()
                 raise
                 
     except Exception as e:
