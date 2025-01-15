@@ -37,9 +37,12 @@ def dashboard():
         now = datetime.now()
         
         # Get basic statistics
+        total_students = User.query.filter_by(role='student').count()
+        total_lecturers = User.query.filter_by(role='lecturer').count()
         stats = {
-            'total_students': User.query.filter_by(role='student').count(),
-            'total_lecturers': User.query.filter_by(role='lecturer').count(),
+            'total_users': total_students + total_lecturers,
+            'total_students': total_students,
+            'total_lecturers': total_lecturers,
             'total_departments': Department.query.count(),
             'total_courses': Course.query.count(),
             'today_attendance': Attendance.query.filter(
@@ -49,32 +52,56 @@ def dashboard():
         
         # Get department statistics with lecturer count
         departments = []
-        for dept in Department.query.all():
-            student_count = User.query.filter_by(department_id=dept.id, role='student').count()
-            lecturer_count = User.query.filter_by(department_id=dept.id, role='lecturer').count()
-            departments.append({
-                'name': dept.name,
-                'student_count': student_count,
-                'lecturer_count': lecturer_count
-            })
+        try:
+            for dept in Department.query.all():
+                student_count = User.query.filter_by(department_id=dept.id, role='student').count()
+                lecturer_count = User.query.filter_by(department_id=dept.id, role='lecturer').count()
+                departments.append({
+                    'name': dept.name,
+                    'student_count': student_count,
+                    'lecturer_count': lecturer_count
+                })
+        except Exception as dept_error:
+            current_app.logger.error(f"Error getting department statistics: {dept_error}")
+            departments = []
 
-        # Get hardware status
-        hardware_status = {
-            'controller': hardware_controller.is_connected(),
-            'fingerprint': hardware_controller.fingerprint_status(),
-            'rfid': hardware_controller.rfid_status(),
-            'last_updated': datetime.now().strftime('%H:%M:%S')
-        }
+        # Get hardware status with error handling
+        try:
+            hardware_status = {
+                'connected': hardware_controller.is_connected(),
+                'controller': hardware_controller.is_connected(),
+                'fingerprint': hardware_controller.fingerprint_status(),
+                'rfid': hardware_controller.rfid_status(),
+                'last_updated': datetime.now().strftime('%H:%M:%S')
+            }
+        except Exception as hw_error:
+            current_app.logger.error(f"Hardware status error: {hw_error}")
+            hardware_status = {
+                'connected': False,
+                'controller': False,
+                'fingerprint': False,
+                'rfid': False,
+                'last_updated': datetime.now().strftime('%H:%M:%S'),
+                'error': 'Hardware communication error'
+            }
 
-        # Get recent activities
-        recent_activities = ActivityLog.query.order_by(
-            ActivityLog.timestamp.desc()
-        ).limit(5).all()
+        # Get recent activities with error handling
+        try:
+            recent_activities = ActivityLog.query.order_by(
+                ActivityLog.timestamp.desc()
+            ).limit(5).all()
+        except Exception as act_error:
+            current_app.logger.error(f"Error getting recent activities: {act_error}")
+            recent_activities = []
 
-        # Get recent registrations
-        recent_registrations = User.query.order_by(
-            User.created_at.desc()
-        ).limit(5).all()
+        # Get recent registrations with error handling
+        try:
+            recent_registrations = User.query.order_by(
+                User.created_at.desc()
+            ).limit(5).all()
+        except Exception as reg_error:
+            current_app.logger.error(f"Error getting recent registrations: {reg_error}")
+            recent_registrations = []
 
         return render_template('admin/dashboard.html',
                             now=now,
