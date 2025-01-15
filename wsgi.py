@@ -1,12 +1,16 @@
 """WSGI entry point for production."""
 from app import create_app
 from app.extensions import db
-from config import ProductionConfig
+from config import Config
 import logging
 import sys
 import os
 from sqlalchemy import text
 import traceback
+
+# Force development mode
+os.environ['FLASK_ENV'] = 'development'
+os.environ['FLASK_DEBUG'] = '1'
 
 # Configure logging
 logging.basicConfig(
@@ -18,15 +22,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Create the application
-try:
-    logger.info("Creating Flask application...")
-    app = create_app(ProductionConfig)
-    logger.info("Flask application created successfully")
-except Exception as e:
-    logger.error(f"Failed to create Flask application: {str(e)}")
-    logger.error(traceback.format_exc())
-    raise
+# Create the application with development config
+app = create_app(Config)
+app.config['TEMPLATES_AUTO_RELOAD'] = True
+app.jinja_env.auto_reload = True
 
 @app.route('/health')
 def health_check():

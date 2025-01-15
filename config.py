@@ -12,6 +12,16 @@ def get_database_url():
 class Config:
     # Basic Flask config
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
+    FLASK_ENV = 'development'
+    TEMPLATES_AUTO_RELOAD = True
+    SEND_FILE_MAX_AGE_DEFAULT = 0
+    
+    # Disable all caching
+    CACHE_TYPE = "null"
+    CACHE_NO_NULL_WARNING = True
+    
+    # Template settings
+    EXPLAIN_TEMPLATE_LOADING = True
     
     # Database
     SQLALCHEMY_DATABASE_URI = get_database_url()
@@ -40,7 +50,6 @@ class Config:
     # Development specific
     DEBUG = False
     TESTING = False
-    TEMPLATES_AUTO_RELOAD = True
     
     # Server name for URL generation
     SERVER_NAME = os.environ.get('SERVER_NAME', 'localhost:5000')

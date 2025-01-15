@@ -4,13 +4,19 @@ from config import Config
 from .hardware.controller import HardwareController
 import logging
 import os
-from datetime import timedelta
+from datetime import datetime, timedelta
 from .extensions import db, init_extensions, migrate
 
 def create_app(config_class=Config):
     # Initialize Flask app
     app = Flask(__name__)
     app.config.from_object(config_class)
+    
+    # Force disable template caching
+    app.config['TEMPLATES_AUTO_RELOAD'] = True
+    app.jinja_env.cache = {}
+    app.jinja_env.auto_reload = True
+    app.jinja_env.globals.update(now=datetime.now)
 
     # Configure logging
     if not app.debug:
