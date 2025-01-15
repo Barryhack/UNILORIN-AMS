@@ -8,6 +8,7 @@ from flask_wtf.csrf import CSRFProtect
 import logging
 from sqlalchemy import text, event
 import os
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +18,56 @@ migrate = Migrate()
 login_manager = LoginManager()
 limiter = Limiter(key_func=get_remote_address)
 csrf = CSRFProtect()
+
+def init_db_schema(app):
+    """Initialize database schema with retries."""
+    max_retries = 3
+    retry_delay = 2  # seconds
+    
+    for attempt in range(max_retries):
+        try:
+            with app.app_context():
+                # First terminate all existing connections
+                db.session.execute(text('''
+                    SELECT pg_terminate_backend(pid)
+                    FROM pg_stat_activity
+                    WHERE datname = current_database()
+                    AND pid <> pg_backend_pid()
+                    AND state in ('idle', 'idle in transaction', 'idle in transaction (aborted)', 'disabled')
+                '''))
+                db.session.commit()
+                
+                # Set statement timeout to avoid indefinite locks
+                db.session.execute(text('SET statement_timeout = 30000'))  # 30 seconds
+                
+                # Drop and recreate schema
+                db.session.execute(text('''
+                    DROP SCHEMA IF EXISTS public CASCADE;
+                    CREATE SCHEMA public;
+                    GRANT ALL ON SCHEMA public TO postgres;
+                    GRANT ALL ON SCHEMA public TO public;
+                '''))
+                db.session.commit()
+                
+                # Run migrations
+                from flask_migrate import upgrade
+                upgrade()
+                
+                logger.info("Database schema initialized successfully")
+                return True
+                
+        except Exception as e:
+            logger.error(f"Attempt {attempt + 1} failed: {e}")
+            db.session.rollback()
+            
+            if attempt < max_retries - 1:
+                logger.info(f"Retrying in {retry_delay} seconds...")
+                time.sleep(retry_delay)
+            else:
+                logger.error("Max retries reached. Database initialization failed.")
+                raise
+    
+    return False
 
 def init_extensions(app):
     """Initialize Flask extensions."""
@@ -47,29 +98,17 @@ def init_extensions(app):
         with app.app_context():
             from .models import (
                 User, Course, Department, Attendance, CourseStudent,
-                LoginLog, ActivityLog, Notification, Lecture
+                LoginLog, ActivityLog, Notification, Lecture, HardwareStatus
             )
             
             try:
-                # Drop all tables with CASCADE
-                logger.info("Dropping all tables with CASCADE")
-                db.session.execute(text('''
-                    DROP SCHEMA public CASCADE;
-                    CREATE SCHEMA public;
-                    GRANT ALL ON SCHEMA public TO postgres;
-                    GRANT ALL ON SCHEMA public TO public;
-                '''))
-                db.session.commit()
-                
-                # Create all tables based on migrations
-                logger.info("Running database migrations")
-                from flask_migrate import upgrade
-                upgrade()
-                logger.info("Database migrations completed successfully")
+                # Initialize database schema
+                logger.info("Initializing database schema")
+                init_db_schema(app)
+                logger.info("Database initialization completed successfully")
                 
             except Exception as e:
                 logger.error(f"Error during database initialization: {e}")
-                db.session.rollback()
                 raise
                 
     except Exception as e:
