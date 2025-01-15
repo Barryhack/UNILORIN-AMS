@@ -1,3 +1,4 @@
+"""Admin routes and views."""
 from datetime import datetime, timedelta
 from flask import Blueprint, render_template, jsonify, current_app, flash, request, redirect, url_for
 from flask_login import login_required, current_user
@@ -13,19 +14,17 @@ from app.extensions import db
 from app.utils.hardware import HardwareController
 import serial.tools.list_ports
 import json
+import logging
 
 admin_bp = Blueprint('admin', __name__)
+logger = logging.getLogger(__name__)
 
 # Initialize hardware controller
-hardware_controller = HardwareController()
-
-# Global variables for hardware state
-hardware_state = {
-    'controller_connected': False,
-    'fingerprint_ready': False,
-    'rfid_ready': False,
-    'serial_port': None
-}
+try:
+    hardware_controller = HardwareController()
+except Exception as e:
+    logger.error(f"Failed to initialize hardware controller: {e}")
+    hardware_controller = None
 
 @admin_bp.route('/dashboard')
 @login_required
@@ -62,28 +61,29 @@ def dashboard():
                     'lecturer_count': lecturer_count
                 })
         except Exception as dept_error:
-            current_app.logger.error(f"Error getting department statistics: {dept_error}")
+            logger.error(f"Error getting department statistics: {dept_error}")
             departments = []
 
         # Get hardware status with error handling
-        try:
-            hardware_status = {
-                'connected': hardware_controller.is_connected(),
-                'controller': hardware_controller.is_connected(),
-                'fingerprint': hardware_controller.fingerprint_status(),
-                'rfid': hardware_controller.rfid_status(),
-                'last_updated': datetime.now().strftime('%H:%M:%S')
-            }
-        except Exception as hw_error:
-            current_app.logger.error(f"Hardware status error: {hw_error}")
-            hardware_status = {
-                'connected': False,
-                'controller': False,
-                'fingerprint': False,
-                'rfid': False,
-                'last_updated': datetime.now().strftime('%H:%M:%S'),
-                'error': 'Hardware communication error'
-            }
+        hardware_status = {
+            'connected': False,
+            'controller': False,
+            'fingerprint': False,
+            'rfid': False,
+            'last_updated': datetime.now().strftime('%H:%M:%S')
+        }
+        
+        if hardware_controller is not None:
+            try:
+                hardware_status.update({
+                    'connected': hardware_controller.is_connected(),
+                    'controller': hardware_controller.is_connected(),
+                    'fingerprint': hardware_controller.fingerprint_status(),
+                    'rfid': hardware_controller.rfid_status(),
+                })
+            except Exception as hw_error:
+                logger.error(f"Hardware status error: {hw_error}")
+                hardware_status['error'] = 'Hardware communication error'
 
         # Get recent activities with error handling
         try:
@@ -91,7 +91,7 @@ def dashboard():
                 ActivityLog.timestamp.desc()
             ).limit(5).all()
         except Exception as act_error:
-            current_app.logger.error(f"Error getting recent activities: {act_error}")
+            logger.error(f"Error getting recent activities: {act_error}")
             recent_activities = []
 
         # Get recent registrations with error handling
@@ -100,7 +100,7 @@ def dashboard():
                 User.created_at.desc()
             ).limit(5).all()
         except Exception as reg_error:
-            current_app.logger.error(f"Error getting recent registrations: {reg_error}")
+            logger.error(f"Error getting recent registrations: {reg_error}")
             recent_registrations = []
 
         return render_template('admin/dashboard.html',
@@ -112,7 +112,7 @@ def dashboard():
                             recent_registrations=recent_registrations)
 
     except Exception as e:
-        current_app.logger.error(f"Error in dashboard route: {e}")
+        logger.error(f"Error in dashboard route: {e}")
         flash('An error occurred while loading the dashboard. Please try again later.', 'error')
         return render_template('error/500.html'), 500
 
@@ -167,7 +167,7 @@ def register_user():
 
         except Exception as e:
             db.session.rollback()
-            current_app.logger.error(f"Error registering user: {e}")
+            logger.error(f"Error registering user: {e}")
             flash('An error occurred while registering user', 'error')
             return redirect(url_for('admin.register_user'))
 
@@ -185,13 +185,25 @@ def hardware():
     
     # Get hardware status
     status = {
-        'controller': hardware_controller.is_connected(),
-        'fingerprint': hardware_controller.fingerprint_status(),
-        'rfid': hardware_controller.rfid_status(),
-        'current_port': hardware_controller.get_port(),
+        'controller': False,
+        'fingerprint': False,
+        'rfid': False,
+        'current_port': None,
         'available_ports': ports
     }
     
+    if hardware_controller is not None:
+        try:
+            status.update({
+                'controller': hardware_controller.is_connected(),
+                'fingerprint': hardware_controller.fingerprint_status(),
+                'rfid': hardware_controller.rfid_status(),
+                'current_port': hardware_controller.get_port(),
+            })
+        except Exception as hw_error:
+            logger.error(f"Hardware status error: {hw_error}")
+            status['error'] = 'Hardware communication error'
+
     return render_template('admin/hardware.html', status=status)
 
 @admin_bp.route('/hardware/connect', methods=['POST'])
@@ -201,14 +213,14 @@ def connect_hardware():
     """Connect to hardware device."""
     try:
         port = request.form.get('port')
-        if hardware_controller.connect(port):
+        if hardware_controller is not None and hardware_controller.connect(port):
             flash('Successfully connected to hardware device.', 'success')
             return jsonify({'status': 'success', 'message': 'Connected successfully'})
         else:
             flash('Failed to connect to hardware device.', 'error')
             return jsonify({'status': 'error', 'message': 'Connection failed'})
     except Exception as e:
-        current_app.logger.error(f"Error connecting to hardware: {e}")
+        logger.error(f"Error connecting to hardware: {e}")
         return jsonify({'status': 'error', 'message': str(e)})
 
 @admin_bp.route('/hardware/disconnect', methods=['POST'])
@@ -217,11 +229,12 @@ def connect_hardware():
 def disconnect_hardware():
     """Disconnect from hardware device."""
     try:
-        hardware_controller.disconnect()
+        if hardware_controller is not None:
+            hardware_controller.disconnect()
         flash('Successfully disconnected from hardware device.', 'success')
         return jsonify({'status': 'success', 'message': 'Disconnected successfully'})
     except Exception as e:
-        current_app.logger.error(f"Error disconnecting hardware: {e}")
+        logger.error(f"Error disconnecting hardware: {e}")
         return jsonify({'status': 'error', 'message': str(e)})
 
 @admin_bp.route('/hardware/status', methods=['GET'])
@@ -230,10 +243,13 @@ def disconnect_hardware():
 def get_hardware_status():
     """Get hardware status."""
     try:
-        status = hardware_controller.get_status()
-        return jsonify(status)
+        if hardware_controller is not None:
+            status = hardware_controller.get_status()
+            return jsonify(status)
+        else:
+            return jsonify({'status': 'error', 'message': 'Hardware controller not initialized'})
     except Exception as e:
-        current_app.logger.error(f"Error getting hardware status: {e}")
+        logger.error(f"Error getting hardware status: {e}")
         return jsonify({'status': 'error', 'message': str(e)})
 
 @admin_bp.route('/manage-users')
@@ -289,6 +305,7 @@ def update_user(user_id):
         })
     except Exception as e:
         db.session.rollback()
+        logger.error(f"Error updating user: {e}")
         return jsonify({
             'success': False,
             'message': str(e)
@@ -312,7 +329,7 @@ def get_dashboard_stats():
         }
         return jsonify({'success': True, 'data': stats})
     except Exception as e:
-        current_app.logger.error(f"Error fetching dashboard stats: {e}")
+        logger.error(f"Error fetching dashboard stats: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @admin_bp.route('/manage-courses')
@@ -399,7 +416,7 @@ def delete_user(user_id):
         username = user.username
         
         # Delete user's fingerprint and RFID data if hardware is connected
-        if hardware_controller.is_connected():
+        if hardware_controller is not None and hardware_controller.is_connected():
             hardware_controller.delete_user_data(user_id)
         
         # Delete user from database
@@ -420,7 +437,7 @@ def delete_user(user_id):
         
     except Exception as e:
         db.session.rollback()
-        current_app.logger.error(f"Error deleting user: {e}")
+        logger.error(f"Error deleting user: {e}")
         return jsonify({'success': False, 'message': str(e)})
 
 @admin_bp.route('/departments')
@@ -676,6 +693,7 @@ def enroll_in_course():
         })
     except Exception as e:
         db.session.rollback()
+        logger.error(f"Error enrolling user: {e}")
         return jsonify({
             'success': False,
             'message': f'Error enrolling user: {str(e)}'
@@ -710,6 +728,7 @@ def unenroll_from_course():
         })
     except Exception as e:
         db.session.rollback()
+        logger.error(f"Error unenrolling user: {e}")
         return jsonify({
             'success': False,
             'message': f'Error unenrolling user: {str(e)}'

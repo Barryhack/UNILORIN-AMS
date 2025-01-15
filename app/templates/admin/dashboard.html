@@ -4,7 +4,7 @@
 <div class="dashboard-container">
     <!-- Welcome Banner -->
     <div class="welcome-banner">
-        <h1>Welcome, {{ current_user.username }}</h1>
+        <h1>Welcome, {{ current_user.first_name }} {{ current_user.last_name }}</h1>
         <p class="text-gold">{{ current_user.role.title() }} Dashboard</p>
     </div>
 
@@ -109,7 +109,7 @@
                                         <img class="h-10 w-10 rounded-full" src="{{ url_for('static', filename='images/default-avatar.png') }}" alt="">
                                     </div>
                                     <div class="ml-4">
-                                        <div class="text-sm leading-5 font-medium text-gray-900">{{ user.username }}</div>
+                                        <div class="text-sm leading-5 font-medium text-gray-900">{{ user.first_name }} {{ user.last_name }}</div>
                                         <div class="text-sm leading-5 text-gray-500">{{ user.email }}</div>
                                     </div>
                                 </div>
