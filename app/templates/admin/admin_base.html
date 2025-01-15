@@ -100,24 +100,20 @@
                     <div class="relative ml-3">
                         <button id="profile-button" class="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300">
                             <span class="sr-only">Open user menu</span>
-                            <div class="w-8 h-8 rounded-full bg-[#002147] flex items-center justify-center">
-                                <i class="fas fa-user text-[#FFD700]"></i>
+                            <div class="w-8 h-8 rounded-full bg-[#002147] flex items-center justify-center text-white">
+                                {{ current_user.first_name[0].upper() }}
                             </div>
                         </button>
                         <!-- Dropdown menu -->
-                        <div id="profile-dropdown" class="hidden absolute right-0 z-50 my-4 w-56 text-base list-none bg-white rounded divide-y divide-gray-100 shadow">
-                            <div class="py-3 px-4">
-                                <span class="block text-sm font-semibold text-gray-900">{{ current_user.full_name }}</span>
-                                <span class="block text-sm text-gray-500">{{ current_user.email }}</span>
+                        <div id="profile-dropdown" class="hidden absolute right-0 z-50 mt-2 w-48 bg-white rounded-lg shadow-lg">
+                            <div class="px-4 py-3">
+                                <p class="text-sm text-gray-900">{{ current_user.first_name }} {{ current_user.last_name }}</p>
+                                <p class="text-sm font-medium text-gray-500 truncate">{{ current_user.email }}</p>
                             </div>
-                            <ul class="py-1 text-gray-700" aria-labelledby="dropdown">
-                                <li>
-                                    <a href="/profile" class="block py-2 px-4 text-sm hover:bg-gray-100">Profile</a>
-                                </li>
-                                <li>
-                                    <a href="/auth/logout" class="block py-2 px-4 text-sm hover:bg-gray-100">Sign out</a>
-                                </li>
-                            </ul>
+                            <div class="py-1">
+                                <a href="/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</a>
+                                <a href="/auth/logout" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -149,11 +145,11 @@
         <div class="flex flex-col h-full">
             <div class="flex items-center justify-center p-6 border-b border-gray-200">
                 <div class="flex flex-col items-center">
-                    <div class="w-16 h-16 rounded-full bg-[#002147] flex items-center justify-center mb-2">
-                        <i class="fas fa-user text-[#FFD700] text-2xl"></i>
+                    <div class="w-16 h-16 rounded-full bg-[#002147] flex items-center justify-center text-white text-2xl">
+                        {{ current_user.first_name[0].upper() }}
                     </div>
-                    <h5 class="mb-1 text-xl font-medium text-gray-900">{{ current_user.full_name }}</h5>
-                    <span class="text-sm text-gray-500">Administrator</span>
+                    <h5 class="mt-2 text-xl font-medium text-gray-900">{{ current_user.first_name }} {{ current_user.last_name }}</h5>
+                    <span class="text-sm text-gray-500">{{ current_user.role.title() }}</span>
                 </div>
             </div>
 
