@@ -1,225 +1,238 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}{% endblock %} - UNILORIN AMS</title>
+    <title>{% block title %}{% endblock %} - Attendance System</title>
     
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
     
-    <!-- Material Icons -->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
-    
-    <!-- Inter Font -->
+    <!-- Styles -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="/static/css/dashboard.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    {% block extra_styles %}{% endblock %}
     
     <style>
-        :root {
-            --primary-bg: #0f172a;  /* Dark blue background */
-            --sidebar-bg: #1e1b4b;  /* Navy blue sidebar */
-            --card-bg: rgba(255, 255, 255, 0.05);  /* Semi-transparent white */
-            --text-primary: #ffffff;
-            --text-secondary: #94a3b8;
-            --accent-blue: #3b82f6;
-            --accent-green: #22c55e;
-            --accent-purple: #8b5cf6;
-            --accent-orange: #f97316;
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
         }
-
+        
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--primary-bg);
-            color: var(--text-primary);
-        }
-
-        .sidebar {
-            background-color: var(--sidebar-bg);
-            width: 280px;
-            height: 100vh;
-            position: fixed;
-            left: 0;
-            top: 0;
-            z-index: 40;
-            transition: all 0.3s ease;
-        }
-
-        .main-content {
-            margin-left: 280px;
+            display: flex;
+            flex-direction: column;
             min-height: 100vh;
-            padding: 2rem;
-            transition: all 0.3s ease;
+            background-color: #f9fafb;
         }
 
-        @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%);
-            }
-            
-            .sidebar.active {
-                transform: translateX(0);
-            }
-            
-            .main-content {
-                margin-left: 0;
-            }
+        .scroll-container {
+            overflow-y: auto;
+            overflow-x: hidden;
+            height: 100%;
+            width: 100%;
+        }
+
+        .scroll-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .scroll-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .scroll-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
+        }
+
+        .scroll-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
         }
 
         .nav-link {
-            display: flex;
-            align-items: center;
-            padding: 0.875rem 1.5rem;
-            color: var(--text-secondary);
-            border-radius: 0.5rem;
-            margin: 0.25rem 1rem;
-            transition: all 0.2s ease;
+            position: relative;
+            transition: all 0.3s ease;
         }
 
-        .nav-link:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-            color: var(--text-primary);
+        .nav-link::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background-color: #002147;
+            transform: scaleY(0);
+            transition: transform 0.2s;
         }
 
-        .nav-link.active {
-            background-color: rgba(255, 255, 255, 0.1);
-            color: var(--text-primary);
-            border-left: 3px solid #ffd700;
-        }
-
-        .nav-link .material-icons-round {
-            margin-right: 1rem;
-            font-size: 1.5rem;
-        }
-
-        .card {
-            background-color: var(--card-bg);
-            border-radius: 1rem;
-            backdrop-filter: blur(10px);
-        }
-
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.3);
+        .nav-link:hover::before,
+        .nav-link.active::before {
+            transform: scaleY(1);
         }
     </style>
-    {% block extra_styles %}{% endblock %}
 </head>
-<body>
-    <!-- Mobile Menu Button -->
-    <button id="mobile-menu-button" class="md:hidden fixed top-4 right-4 z-50 bg-white/10 p-2 rounded-lg">
-        <span class="material-icons-round">menu</span>
-    </button>
 
-    <!-- Sidebar -->
-    <aside class="sidebar">
-        <!-- Logo -->
-        <div class="flex items-center space-x-3 px-6 py-5 mb-6">
-            <img src="{{ url_for('static', filename='images/unilorin-logo.png') }}" alt="Logo" class="w-10 h-10">
-            <div class="flex flex-col">
-                <span class="text-lg font-bold">UNILORIN</span>
-                <span class="text-sm text-gray-400">Attendance System</span>
+<body class="h-full font-sans antialiased">
+    <!-- Top Navigation -->
+    <nav class="fixed top-0 z-50 w-full bg-white border-b border-gray-200">
+        <div class="px-3 py-3 lg:px-5 lg:pl-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center justify-start">
+                    <button id="sidebar-toggle" class="inline-flex items-center p-2 text-sm text-gray-500 rounded-lg lg:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200">
+                        <i class="fas fa-bars w-6 h-6"></i>
+                    </button>
+                    <a href="/" class="flex ml-2 md:mr-24">
+                        <img src="/static/images/unilorin-logo.png" class="h-8 mr-3" alt="Logo" />
+                        <span class="self-center text-xl font-semibold sm:text-2xl whitespace-nowrap">UNILORIN AMS</span>
+                    </a>
+                </div>
+                <div class="flex items-center">
+                    <!-- Profile dropdown -->
+                    <div class="relative ml-3">
+                        <button id="profile-button" class="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300">
+                            <span class="sr-only">Open user menu</span>
+                            <div class="w-8 h-8 rounded-full bg-[#002147] flex items-center justify-center">
+                                <i class="fas fa-user text-[#FFD700]"></i>
+                            </div>
+                        </button>
+                        <!-- Dropdown menu -->
+                        <div id="profile-dropdown" class="hidden absolute right-0 z-50 my-4 w-56 text-base list-none bg-white rounded divide-y divide-gray-100 shadow">
+                            <div class="py-3 px-4">
+                                <span class="block text-sm font-semibold text-gray-900">{{ current_user.full_name }}</span>
+                                <span class="block text-sm text-gray-500">{{ current_user.email }}</span>
+                            </div>
+                            <ul class="py-1 text-gray-700" aria-labelledby="dropdown">
+                                <li>
+                                    <a href="/profile" class="block py-2 px-4 text-sm hover:bg-gray-100">Profile</a>
+                                </li>
+                                <li>
+                                    <a href="/auth/logout" class="block py-2 px-4 text-sm hover:bg-gray-100">Sign out</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
+    </nav>
 
-        <!-- Navigation -->
-        <nav class="space-y-1">
-            <a href="{{ url_for('admin.dashboard') }}" 
-               class="nav-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
-                <span class="material-icons-round">dashboard</span>
-                <span>Dashboard</span>
-            </a>
-            
-            <a href="{{ url_for('admin.manage_users') }}"
-               class="nav-link {% if request.endpoint == 'admin.manage_users' %}active{% endif %}">
-                <span class="material-icons-round">group</span>
-                <span>Users</span>
-            </a>
-            
-            <a href="{{ url_for('admin.manage_departments') }}"
-               class="nav-link {% if request.endpoint == 'admin.manage_departments' %}active{% endif %}">
-                <span class="material-icons-round">business</span>
-                <span>Departments</span>
-            </a>
-            
-            <a href="{{ url_for('admin.manage_courses') }}"
-               class="nav-link {% if request.endpoint == 'admin.manage_courses' %}active{% endif %}">
-                <span class="material-icons-round">school</span>
-                <span>Courses</span>
-            </a>
+    <!-- Error Container -->
+    <div id="error-container" class="fixed top-16 left-1/2 transform -translate-x-1/2 z-50 hidden w-96">
+        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md" role="alert">
+            <div class="flex items-center">
+                <div class="py-1">
+                    <i class="fas fa-exclamation-circle"></i>
+                </div>
+                <div class="ml-3">
+                    <p id="error-message" class="text-sm"></p>
+                </div>
+                <button type="button" class="ml-auto -mx-1.5 -my-1.5 bg-red-100 text-red-500 rounded-lg focus:ring-2 focus:ring-red-400 p-1.5 hover:bg-red-200 inline-flex h-8 w-8">
+                    <span class="sr-only">Close</span>
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    </div>
 
-            <a href="#"
-               class="nav-link">
-                <span class="material-icons-round">settings</span>
-                <span>Settings</span>
-            </a>
-        </nav>
-
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed top-0 left-0 z-40 w-64 h-screen pt-20 transition-transform -translate-x-full bg-white border-r border-gray-200 lg:translate-x-0">
         <!-- User Profile -->
-        <div class="absolute bottom-0 left-0 right-0 p-4">
-            <div class="flex items-center space-x-3 bg-white/5 rounded-lg p-3">
-                <div class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center">
-                    <span class="material-icons-round">person</span>
+        <div class="flex flex-col h-full">
+            <div class="flex items-center justify-center p-6 border-b border-gray-200">
+                <div class="flex flex-col items-center">
+                    <div class="w-16 h-16 rounded-full bg-[#002147] flex items-center justify-center mb-2">
+                        <i class="fas fa-user text-[#FFD700] text-2xl"></i>
+                    </div>
+                    <h5 class="mb-1 text-xl font-medium text-gray-900">{{ current_user.full_name }}</h5>
+                    <span class="text-sm text-gray-500">Administrator</span>
                 </div>
-                <div class="flex-1 min-w-0">
-                    <p class="text-sm font-medium truncate">{{ current_user.full_name }}</p>
-                    <p class="text-xs text-gray-400 truncate">{{ current_user.email }}</p>
-                </div>
-                <form action="{{ url_for('auth.logout') }}" method="POST" class="flex-shrink-0">
-                    <button type="submit" class="p-1 hover:bg-white/10 rounded-lg" title="Logout">
-                        <span class="material-icons-round text-gray-400">logout</span>
-                    </button>
-                </form>
+            </div>
+
+            <!-- Navigation -->
+            <div class="py-4 px-3 scroll-container">
+                <ul class="space-y-2">
+                    <li>
+                        <a href="{{ url_for('admin.dashboard') }}" class="nav-link flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+                            <i class="fas fa-home w-6 h-6 text-gray-500 transition duration-75"></i>
+                            <span class="ml-3">Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('admin.manage_users') }}" class="nav-link flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 {% if request.endpoint == 'admin.manage_users' %}active{% endif %}">
+                            <i class="fas fa-users w-6 h-6 text-gray-500 transition duration-75"></i>
+                            <span class="ml-3">Users</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('admin.manage_departments') }}" class="nav-link flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 {% if request.endpoint == 'admin.manage_departments' %}active{% endif %}">
+                            <i class="fas fa-building w-6 h-6 text-gray-500 transition duration-75"></i>
+                            <span class="ml-3">Departments</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('admin.manage_courses') }}" class="nav-link flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 {% if request.endpoint == 'admin.manage_courses' %}active{% endif %}">
+                            <i class="fas fa-book w-6 h-6 text-gray-500 transition duration-75"></i>
+                            <span class="ml-3">Courses</span>
+                        </a>
+                    </li>
+                </ul>
             </div>
         </div>
     </aside>
 
     <!-- Main Content -->
-    <main class="main-content">
+    <div class="p-4 lg:ml-64 pt-20">
         <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="mb-6 p-4 rounded-lg {{ 'bg-red-500/20 text-red-200' if category == 'error' else 'bg-green-500/20 text-green-200' }}">
+                    <div class="mb-4 p-4 rounded-lg {% if category == 'error' %}bg-red-100 text-red-700 border-red-400{% else %}bg-green-100 text-green-700 border-green-400{% endif %}">
                         {{ message }}
                     </div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
 
-        <!-- Main Content Area -->
         {% block content %}{% endblock %}
-    </main>
+    </div>
 
     <!-- Scripts -->
     <script>
-        // Mobile menu toggle
-        const mobileMenuButton = document.getElementById('mobile-menu-button');
-        const sidebar = document.querySelector('.sidebar');
-        
-        mobileMenuButton.addEventListener('click', () => {
-            sidebar.classList.toggle('active');
-        });
+        document.addEventListener('DOMContentLoaded', function() {
+            // Toggle sidebar on mobile
+            const sidebarToggle = document.getElementById('sidebar-toggle');
+            const sidebar = document.getElementById('sidebar');
+            
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('-translate-x-full');
+                });
+            }
 
-        // Close sidebar when clicking outside on mobile
-        document.addEventListener('click', (e) => {
-            if (window.innerWidth <= 768) {
-                if (!sidebar.contains(e.target) && !mobileMenuButton.contains(e.target)) {
-                    sidebar.classList.remove('active');
-                }
+            // Toggle profile dropdown
+            const profileButton = document.getElementById('profile-button');
+            const profileDropdown = document.getElementById('profile-dropdown');
+            
+            if (profileButton && profileDropdown) {
+                profileButton.addEventListener('click', function() {
+                    profileDropdown.classList.toggle('hidden');
+                });
+
+                // Close dropdown when clicking outside
+                document.addEventListener('click', function(event) {
+                    if (!profileButton.contains(event.target) && !profileDropdown.contains(event.target)) {
+                        profileDropdown.classList.add('hidden');
+                    }
+                });
             }
         });
     </script>
