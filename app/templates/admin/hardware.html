@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-2xl font-bold mb-6 text-gray-800">Hardware Management</h2>
+
+        <!-- Connection Settings -->
+        <div class="mb-8">
+            <h3 class="text-lg font-semibold text-gray-700 mb-4">Connection Settings</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Serial Port</label>
+                    <select id="port-select" class="form-select block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                        <option value="">Select Port</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Baud Rate</label>
+                    <select id="baud-rate" class="form-select block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                        <option value="9600">9600</option>
+                        <option value="19200">19200</option>
+                        <option value="38400">38400</option>
+                        <option value="57600">57600</option>
+                        <option value="115200" selected>115200</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mt-4 flex space-x-2">
+                <button id="connect-btn" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                    Connect
+                </button>
+                <button id="disconnect-btn" class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                    Disconnect
+                </button>
+            </div>
+        </div>
+
+        <!-- Device Status -->
+        <div class="mb-8">
+            <h3 class="text-lg font-semibold text-gray-700 mb-4">Device Status</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-gray-600">Fingerprint Sensor</span>
+                        <span id="fp-status" class="status-indicator"></span>
+                    </div>
+                    <button id="test-fp" class="w-full mt-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                        Test Sensor
+                    </button>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-gray-600">RFID Reader</span>
+                        <span id="rfid-status" class="status-indicator"></span>
+                    </div>
+                    <button id="test-rfid" class="w-full mt-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                        Test Reader
+                    </button>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-gray-600">OLED Display</span>
+                        <span id="display-status" class="status-indicator"></span>
+                    </div>
+                    <button id="test-display" class="w-full mt-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                        Test Display
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Battery Status -->
+        <div class="mb-8">
+            <h3 class="text-lg font-semibold text-gray-700 mb-4">Battery Status</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-600">Battery Level</span>
+                        <div class="relative w-48 h-6 bg-gray-200 rounded-full overflow-hidden">
+                            <div id="battery-level-bar" class="absolute h-full bg-green-500 transition-all duration-500"></div>
+                            <span id="battery-level-text" class="absolute inset-0 text-center text-sm leading-6 text-white font-medium"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-600">Charging Status</span>
+                        <span id="charging-status" class="status-indicator"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Device Log -->
+        <div>
+            <h3 class="text-lg font-semibold text-gray-700 mb-4">Device Log</h3>
+            <div class="bg-gray-50 p-4 rounded-lg">
+                <div id="device-log" class="h-48 overflow-y-auto font-mono text-sm bg-gray-900 text-gray-100 p-4 rounded">
+                    <div class="log-entry">System initialized...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let deviceLog = document.getElementById('device-log');
+    
+    function logMessage(message) {
+        const entry = document.createElement('div');
+        entry.className = 'log-entry';
+        entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+        deviceLog.appendChild(entry);
+        deviceLog.scrollTop = deviceLog.scrollHeight;
+    }
+
+    function updateHardwareStatus() {
+        fetch('/admin/hardware/status')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const status = data.status;
+                    updateStatusIndicator('fp-status', status.fingerprint);
+                    updateStatusIndicator('rfid-status', status.rfid);
+                    updateStatusIndicator('display-status', status.display);
+                    updateStatusIndicator('charging-status', status.charging);
+                    
+                    // Update battery level
+                    const batteryBar = document.getElementById('battery-level-bar');
+                    const batteryText = document.getElementById('battery-level-text');
+                    batteryBar.style.width = `${status.battery}%`;
+                    batteryText.textContent = `${status.battery}%`;
+                    
+                    // Log status update
+                    logMessage('Status updated successfully');
+                }
+            })
+            .catch(error => {
+                logMessage(`Error updating status: ${error}`);
+            });
+    }
+
+    function updateStatusIndicator(id, status) {
+        const element = document.getElementById(id);
+        element.className = `status-indicator ${status ? 'bg-green-500' : 'bg-red-500'} w-3 h-3 rounded-full`;
+    }
+
+    // Connection handling
+    document.getElementById('connect-btn').addEventListener('click', function() {
+        const port = document.getElementById('port-select').value;
+        if (!port) {
+            alert('Please select a port');
+            return;
+        }
+
+        fetch('/admin/hardware/connect', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `port=${port}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                logMessage('Connected successfully');
+                updateHardwareStatus();
+            } else {
+                logMessage(`Connection failed: ${data.message}`);
+            }
+        })
+        .catch(error => {
+            logMessage(`Connection error: ${error}`);
+        });
+    });
+
+    document.getElementById('disconnect-btn').addEventListener('click', function() {
+        fetch('/admin/hardware/disconnect', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                logMessage('Disconnected successfully');
+                updateHardwareStatus();
+            } else {
+                logMessage(`Disconnect failed: ${data.message}`);
+            }
+        })
+        .catch(error => {
+            logMessage(`Disconnect error: ${error}`);
+        });
+    });
+
+    // Device testing
+    document.getElementById('test-fp').addEventListener('click', function() {
+        logMessage('Testing fingerprint sensor...');
+        // Add fingerprint test implementation
+    });
+
+    document.getElementById('test-rfid').addEventListener('click', function() {
+        logMessage('Testing RFID reader...');
+        // Add RFID test implementation
+    });
+
+    document.getElementById('test-display').addEventListener('click', function() {
+        logMessage('Testing OLED display...');
+        // Add display test implementation
+    });
+
+    // Initial status update and periodic refresh
+    updateHardwareStatus();
+    setInterval(updateHardwareStatus, 5000);
+});
+</script>
+
+<style>
+.status-indicator {
+    display: inline-block;
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 9999px;
+}
+
+.log-entry {
+    margin-bottom: 0.5rem;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+</style>
+{% endblock %}
