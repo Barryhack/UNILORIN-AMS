@@ -16,150 +16,46 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     {% block styles %}{% endblock %}
-    
-    <style>
-        html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-        }
-        
-        body {
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            background-color: #f9fafb;
-        }
-
-        .scroll-container {
-            overflow-y: auto;
-            overflow-x: hidden;
-            height: 100%;
-            width: 100%;
-        }
-
-        .scroll-container::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .scroll-container::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-
-        .scroll-container::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 3px;
-        }
-
-        .scroll-container::-webkit-scrollbar-thumb:hover {
-            background: #555;
-        }
-
-        .nav-link {
-            position: relative;
-            transition: all 0.3s ease;
-        }
-
-        .nav-link::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            height: 100%;
-            width: 3px;
-            background-color: #002147;
-            transform: scaleY(0);
-            transition: transform 0.2s;
-        }
-
-        .nav-link:hover::before,
-        .nav-link.active::before {
-            transform: scaleY(1);
-        }
-
-        /* Tailwind CSS Custom Colors */
-        :root {
-            --color-primary-50: #f0f9ff;
-            --color-primary-100: #e0f2fe;
-            --color-primary-200: #bae6fd;
-            --color-primary-300: #7dd3fc;
-            --color-primary-400: #38bdf8;
-            --color-primary-500: #0ea5e9;
-            --color-primary-600: #0284c7;
-            --color-primary-700: #0369a1;
-            --color-primary-800: #075985;
-            --color-primary-900: #0c4a6e;
-        }
-
-        /* Dark mode colors */
-        .dark {
-            --color-primary-50: #f8fafc;
-            --color-primary-100: #f1f5f9;
-            --color-primary-200: #e2e8f0;
-            --color-primary-300: #cbd5e1;
-            --color-primary-400: #94a3b8;
-            --color-primary-500: #64748b;
-            --color-primary-600: #475569;
-            --color-primary-700: #334155;
-            --color-primary-800: #1e293b;
-            --color-primary-900: #0f172a;
-        }
-    </style>
 </head>
 
-<body class="h-full font-sans antialiased">
+<body class="h-full font-sans antialiased bg-gray-50">
     <!-- Top Navigation -->
     <nav class="fixed top-0 z-50 w-full bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
         <div class="px-3 py-3 lg:px-5 lg:pl-3">
             <div class="flex items-center justify-between">
-                <div class="flex items-center justify-start">
-                    <button id="sidebar-toggle" class="inline-flex items-center p-2 text-sm text-gray-500 rounded-lg lg:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600">
-                        <i class="fas fa-bars w-6 h-6"></i>
+                <div class="flex items-center">
+                    <button id="sidebar-toggle" class="p-2 text-gray-600 rounded-lg lg:hidden hover:bg-gray-100 focus:ring-2 focus:ring-gray-100 dark:text-gray-400 dark:hover:bg-gray-700">
+                        <i class="fas fa-bars"></i>
                     </button>
                     <a href="{{ url_for('main.index') }}" class="flex ml-2 md:mr-24">
-                        <img src="{{ url_for('static', filename='images/unilorin-logo.png') }}" class="h-8 mr-3" alt="Logo" />
-                        <span class="self-center text-xl font-semibold sm:text-2xl whitespace-nowrap dark:text-white">UNILORIN AMS</span>
+                        <span class="self-center text-xl font-semibold sm:text-2xl whitespace-nowrap dark:text-white">AMS</span>
                     </a>
                 </div>
                 <div class="flex items-center">
-                    <!-- Theme Toggle -->
-                    <button id="theme-toggle" class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5 mr-2">
-                        <i class="fas fa-sun w-5 h-5" id="theme-toggle-light-icon"></i>
-                        <i class="fas fa-moon w-5 h-5 hidden" id="theme-toggle-dark-icon"></i>
-                    </button>
-
-                    <!-- Profile dropdown -->
                     {% if current_user.is_authenticated %}
-                    <div class="relative ml-3">
-                        <button id="profile-button" class="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600">
-                            <span class="sr-only">Open user menu</span>
-                            <div class="w-8 h-8 rounded-full bg-[#002147] flex items-center justify-center">
-                                <i class="fas fa-user text-[#FFD700]"></i>
+                    <div class="flex items-center ml-3">
+                        <div class="relative">
+                            <button type="button" class="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600" id="user-menu-button">
+                                <span class="sr-only">Open user menu</span>
+                                <div class="w-8 h-8 rounded-full bg-[#002147] flex items-center justify-center text-white">
+                                    {{ current_user.username[0].upper() }}
+                                </div>
+                            </button>
+                            <div class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-50" id="user-dropdown">
+                                <div class="px-4 py-3">
+                                    <p class="text-sm text-gray-900 dark:text-white">{{ current_user.username }}</p>
+                                    <p class="text-sm font-medium text-gray-900 truncate dark:text-gray-300">{{ current_user.email }}</p>
+                                </div>
+                                <ul class="py-2">
+                                    <li>
+                                        <a href="{{ url_for('main.profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Profile</a>
+                                    </li>
+                                    <li>
+                                        <a href="{{ url_for('auth.logout') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Logout</a>
+                                    </li>
+                                </ul>
                             </div>
-                        </button>
-                        <!-- Dropdown menu -->
-                        <div id="profile-dropdown" class="hidden absolute right-0 z-50 my-4 w-56 text-base list-none bg-white rounded divide-y divide-gray-100 shadow dark:bg-gray-700 dark:divide-gray-600">
-                            <div class="py-3 px-4">
-                                <span class="block text-sm font-semibold text-gray-900 dark:text-white">{{ current_user.full_name }}</span>
-                                <span class="block text-sm text-gray-500 dark:text-gray-400">{{ current_user.email }}</span>
-                            </div>
-                            <ul class="py-1 text-gray-700 dark:text-gray-300" aria-labelledby="dropdown">
-                                <li>
-                                    <a href="{{ url_for('main.profile') }}" class="block py-2 px-4 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Profile</a>
-                                </li>
-                                <li>
-                                    <a href="{{ url_for('auth.logout') }}" class="block py-2 px-4 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Sign out</a>
-                                </li>
-                            </ul>
                         </div>
-                    </div>
-                    {% else %}
-                    <div class="flex items-center space-x-4">
-                        <a href="{{ url_for('auth.login') }}" class="text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white">
-                            <i class="fas fa-sign-in-alt"></i> Login
-                        </a>
                     </div>
                     {% endif %}
                 </div>
@@ -177,8 +73,7 @@
                 <div class="ml-3">
                     <p id="error-message" class="text-sm"></p>
                 </div>
-                <button type="button" class="ml-auto -mx-1.5 -my-1.5 bg-red-100 text-red-500 rounded-lg focus:ring-2 focus:ring-red-400 p-1.5 hover:bg-red-200 inline-flex h-8 w-8">
-                    <span class="sr-only">Close</span>
+                <button class="ml-auto" onclick="closeError()">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -192,16 +87,16 @@
             <!-- User Profile -->
             <div class="flex items-center justify-center p-6 border-b border-gray-200 dark:border-gray-700">
                 <div class="flex flex-col items-center">
-                    <div class="w-16 h-16 rounded-full bg-[#002147] flex items-center justify-center mb-2">
-                        <i class="fas fa-user text-[#FFD700] text-2xl"></i>
+                    <div class="w-16 h-16 rounded-full bg-[#002147] flex items-center justify-center text-white text-2xl">
+                        {{ current_user.username[0].upper() }}
                     </div>
-                    <h5 class="mb-1 text-xl font-medium text-gray-900 dark:text-white">{{ current_user.full_name }}</h5>
+                    <h5 class="mt-2 text-xl font-medium text-gray-900 dark:text-white">{{ current_user.username }}</h5>
                     <span class="text-sm text-gray-500 dark:text-gray-400">{{ current_user.role.title() }}</span>
                 </div>
             </div>
 
             <!-- Navigation -->
-            <div class="py-4 px-3 scroll-container">
+            <div class="py-4 px-3 overflow-y-auto">
                 <ul class="space-y-2">
                     <li>
                         <a href="{{ url_for('main.index') }}" class="nav-link flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 {% if request.endpoint == 'main.index' %}active{% endif %}">
@@ -209,47 +104,36 @@
                             <span class="ml-3">Dashboard</span>
                         </a>
                     </li>
-
                     {% if current_user.is_admin %}
                     <li>
-                        <a href="{{ url_for('admin.users') }}" class="nav-link flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 {% if request.endpoint == 'admin.users' %}active{% endif %}">
+                        <a href="{{ url_for('admin.hardware') }}" class="nav-link flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 {% if request.endpoint == 'admin.hardware' %}active{% endif %}">
+                            <i class="fas fa-microchip w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"></i>
+                            <span class="ml-3">Hardware</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('admin.manage_users') }}" class="nav-link flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 {% if request.endpoint == 'admin.manage_users' %}active{% endif %}">
                             <i class="fas fa-users w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"></i>
                             <span class="ml-3">Users</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{{ url_for('admin.departments') }}" class="nav-link flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 {% if request.endpoint == 'admin.departments' %}active{% endif %}">
-                            <i class="fas fa-building w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"></i>
-                            <span class="ml-3">Departments</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ url_for('admin.courses') }}" class="nav-link flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 {% if request.endpoint == 'admin.courses' %}active{% endif %}">
+                        <a href="{{ url_for('admin.manage_courses') }}" class="nav-link flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 {% if request.endpoint == 'admin.manage_courses' %}active{% endif %}">
                             <i class="fas fa-book w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"></i>
                             <span class="ml-3">Courses</span>
                         </a>
                     </li>
-                    {% endif %}
-
-                    {% if current_user.is_lecturer %}
                     <li>
-                        <a href="{{ url_for('lecturer.courses') }}" class="nav-link flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 {% if request.endpoint == 'lecturer.courses' %}active{% endif %}">
-                            <i class="fas fa-chalkboard-teacher w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"></i>
-                            <span class="ml-3">My Courses</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ url_for('lecturer.attendance') }}" class="nav-link flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 {% if request.endpoint == 'lecturer.attendance' %}active{% endif %}">
-                            <i class="fas fa-clipboard-check w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"></i>
-                            <span class="ml-3">Attendance</span>
+                        <a href="{{ url_for('admin.manage_departments') }}" class="nav-link flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 {% if request.endpoint == 'admin.manage_departments' %}active{% endif %}">
+                            <i class="fas fa-building w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"></i>
+                            <span class="ml-3">Departments</span>
                         </a>
                     </li>
                     {% endif %}
-
                     {% if current_user.is_student %}
                     <li>
                         <a href="{{ url_for('student.courses') }}" class="nav-link flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 {% if request.endpoint == 'student.courses' %}active{% endif %}">
-                            <i class="fas fa-graduation-cap w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"></i>
+                            <i class="fas fa-book w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"></i>
                             <span class="ml-3">My Courses</span>
                         </a>
                     </li>
@@ -271,62 +155,46 @@
         {% block content %}{% endblock %}
     </div>
 
-    <!-- Flash Messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="flash-message {{ category }}" onclick="this.remove()">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-
     <!-- Scripts -->
+    {% block scripts %}{% endblock %}
     <script>
         function showError(message) {
             const container = document.getElementById('error-container');
-            const messageElement = document.getElementById('error-message');
-            messageElement.textContent = message;
+            const messageEl = document.getElementById('error-message');
+            messageEl.textContent = message;
             container.classList.remove('hidden');
             setTimeout(() => {
                 container.classList.add('hidden');
             }, 5000);
         }
 
-        // Close error message
-        document.addEventListener('DOMContentLoaded', function() {
-            const closeBtn = document.querySelector('#error-container button');
-            if (closeBtn) {
-                closeBtn.addEventListener('click', function() {
-                    document.getElementById('error-container').classList.add('hidden');
-                });
-            }
+        function closeError() {
+            document.getElementById('error-container').classList.add('hidden');
+        }
 
-            // Toggle sidebar on mobile
+        // Toggle user dropdown
+        document.addEventListener('DOMContentLoaded', function() {
+            const userMenuButton = document.getElementById('user-menu-button');
+            const userDropdown = document.getElementById('user-dropdown');
             const sidebarToggle = document.getElementById('sidebar-toggle');
             const sidebar = document.getElementById('sidebar');
-            
-            if (sidebarToggle) {
-                sidebarToggle.addEventListener('click', function() {
-                    sidebar.classList.toggle('-translate-x-full');
-                });
-            }
 
-            // Toggle profile dropdown
-            const profileButton = document.getElementById('profile-button');
-            const profileDropdown = document.getElementById('profile-dropdown');
-            
-            if (profileButton && profileDropdown) {
-                profileButton.addEventListener('click', function() {
-                    profileDropdown.classList.toggle('hidden');
+            if (userMenuButton && userDropdown) {
+                userMenuButton.addEventListener('click', function() {
+                    userDropdown.classList.toggle('hidden');
                 });
 
                 // Close dropdown when clicking outside
                 document.addEventListener('click', function(event) {
-                    if (!profileButton.contains(event.target) && !profileDropdown.contains(event.target)) {
-                        profileDropdown.classList.add('hidden');
+                    if (!userMenuButton.contains(event.target) && !userDropdown.contains(event.target)) {
+                        userDropdown.classList.add('hidden');
                     }
+                });
+            }
+
+            if (sidebarToggle && sidebar) {
+                sidebarToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('-translate-x-full');
                 });
             }
         });
