@@ -86,26 +86,25 @@ class HardwareController:
         """Get current serial port name."""
         return self._port_name
     
+    def fingerprint_status(self):
+        """Get fingerprint sensor status."""
+        return self._last_status.get('fingerprint', False)
+    
+    def rfid_status(self):
+        """Get RFID reader status."""
+        return self._last_status.get('rfid', False)
+    
     def get_status(self):
-        """
-        Get current hardware status.
-        
-        Returns:
-            dict: Status of all components
-        """
-        if not self._connected:
-            return self._last_status
-            
-        try:
-            with self._lock:
-                self._serial_port.write(b'STATUS\n')
-                response = self._serial_port.readline().decode().strip()
-                if response.startswith('STATUS:'):
-                    self._parse_status(response)
-                return self._last_status
-        except Exception as e:
-            current_app.logger.error(f"Error getting hardware status: {e}")
-            return self._last_status
+        """Get complete hardware status."""
+        return {
+            'connected': self._connected,
+            'port': self._port_name,
+            'battery': self._last_status.get('battery', 0),
+            'charging': self._last_status.get('charging', False),
+            'fingerprint': self._last_status.get('fingerprint', False),
+            'rfid': self._last_status.get('rfid', False),
+            'display': self._last_status.get('display', False)
+        }
     
     def _parse_status(self, status_str):
         """Parse status string from NodeMCU."""

@@ -39,12 +39,12 @@
                             <button type="button" class="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600" id="user-menu-button">
                                 <span class="sr-only">Open user menu</span>
                                 <div class="w-8 h-8 rounded-full bg-[#002147] flex items-center justify-center text-white">
-                                    {{ current_user.username[0].upper() }}
+                                    {{ current_user.first_name[0].upper() }}
                                 </div>
                             </button>
                             <div class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-50" id="user-dropdown">
                                 <div class="px-4 py-3">
-                                    <p class="text-sm text-gray-900 dark:text-white">{{ current_user.username }}</p>
+                                    <p class="text-sm text-gray-900 dark:text-white">{{ current_user.first_name }} {{ current_user.last_name }}</p>
                                     <p class="text-sm font-medium text-gray-900 truncate dark:text-gray-300">{{ current_user.email }}</p>
                                 </div>
                                 <ul class="py-2">
@@ -88,10 +88,10 @@
             <!-- User Profile -->
             <div class="flex items-center justify-center p-6 border-b border-gray-200 dark:border-gray-700">
                 <div class="flex flex-col items-center">
-                    <div class="w-16 h-16 rounded-full bg-[#002147] flex items-center justify-center text-white text-2xl">
-                        {{ current_user.username[0].upper() }}
+                    <div class="w-10 h-10 rounded-full bg-[#002147] flex items-center justify-center text-white">
+                        {{ current_user.first_name[0].upper() }}
                     </div>
-                    <h5 class="mt-2 text-xl font-medium text-gray-900 dark:text-white">{{ current_user.username }}</h5>
+                    <h5 class="mt-2 text-xl font-medium text-gray-900 dark:text-white">{{ current_user.first_name }} {{ current_user.last_name }}</h5>
                     <span class="text-sm text-gray-500 dark:text-gray-400">{{ current_user.role.title() }}</span>
                 </div>
             </div>
