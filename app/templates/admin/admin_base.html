@@ -8,100 +8,221 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Google Material Icons -->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
         :root {
-            --sidebar-bg: #1a2f4b;
-            --main-bg: #0f172a;
+            --primary-bg: #0f172a;  /* Dark blue background */
+            --sidebar-bg: #1e1b4b;  /* Navy blue sidebar */
+            --card-bg: rgba(255, 255, 255, 0.05);  /* Semi-transparent white */
+            --text-primary: #ffffff;
+            --text-secondary: #94a3b8;
+            --accent-blue: #3b82f6;
+            --accent-green: #22c55e;
+            --accent-purple: #8b5cf6;
+            --accent-orange: #f97316;
         }
-        
+
         body {
-            background-color: var(--main-bg);
-            font-family: system-ui, -apple-system, sans-serif;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--primary-bg);
+            color: var(--text-primary);
         }
-        
+
         .sidebar {
             background-color: var(--sidebar-bg);
-            width: 250px;
+            width: 280px;
             height: 100vh;
             position: fixed;
             left: 0;
             top: 0;
+            z-index: 40;
+            transition: all 0.3s ease;
         }
-        
+
         .main-content {
-            margin-left: 250px;
+            margin-left: 280px;
             min-height: 100vh;
             padding: 2rem;
+            transition: all 0.3s ease;
         }
-        
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+        }
+
         .nav-link {
             display: flex;
             align-items: center;
-            padding: 0.75rem 1.5rem;
-            color: #94a3b8;
-            transition: all 0.2s;
+            padding: 0.875rem 1.5rem;
+            color: var(--text-secondary);
+            border-radius: 0.5rem;
+            margin: 0.25rem 1rem;
+            transition: all 0.2s ease;
         }
-        
-        .nav-link:hover, .nav-link.active {
+
+        .nav-link:hover {
             background-color: rgba(255, 255, 255, 0.1);
-            color: white;
+            color: var(--text-primary);
         }
-        
-        .nav-link i {
-            margin-right: 0.75rem;
+
+        .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            border-left: 3px solid #ffd700;
+        }
+
+        .nav-link .material-icons-round {
+            margin-right: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 1rem;
+            backdrop-filter: blur(10px);
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
         }
     </style>
     {% block extra_styles %}{% endblock %}
 </head>
 <body>
+    <!-- Mobile Menu Button -->
+    <button id="mobile-menu-button" class="md:hidden fixed top-4 right-4 z-50 bg-white/10 p-2 rounded-lg">
+        <span class="material-icons-round">menu</span>
+    </button>
+
     <!-- Sidebar -->
     <aside class="sidebar">
-        <div class="p-4 flex items-center space-x-3">
+        <!-- Logo -->
+        <div class="flex items-center space-x-3 px-6 py-5 mb-6">
             <img src="{{ url_for('static', filename='images/unilorin-logo.png') }}" alt="Logo" class="w-10 h-10">
-            <span class="text-white text-xl font-bold">AMS</span>
+            <div class="flex flex-col">
+                <span class="text-lg font-bold">UNILORIN</span>
+                <span class="text-sm text-gray-400">Attendance System</span>
+            </div>
         </div>
-        
-        <nav class="mt-8">
+
+        <!-- Navigation -->
+        <nav class="space-y-1">
             <a href="{{ url_for('admin.dashboard') }}" 
                class="nav-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
-                <i class="material-icons">dashboard</i>
+                <span class="material-icons-round">dashboard</span>
                 <span>Dashboard</span>
             </a>
+            
             <a href="{{ url_for('admin.manage_users') }}"
                class="nav-link {% if request.endpoint == 'admin.manage_users' %}active{% endif %}">
-                <i class="material-icons">people</i>
+                <span class="material-icons-round">group</span>
                 <span>Users</span>
             </a>
+            
             <a href="{{ url_for('admin.manage_departments') }}"
                class="nav-link {% if request.endpoint == 'admin.manage_departments' %}active{% endif %}">
-                <i class="material-icons">business</i>
+                <span class="material-icons-round">business</span>
                 <span>Departments</span>
             </a>
+            
             <a href="{{ url_for('admin.manage_courses') }}"
                class="nav-link {% if request.endpoint == 'admin.manage_courses' %}active{% endif %}">
-                <i class="material-icons">school</i>
+                <span class="material-icons-round">school</span>
+                <span>Courses</span>
+            </a>
+
+            <a href="#"
+               class="nav-link">
+                <span class="material-icons-round">settings</span>
                 <span>Settings</span>
             </a>
         </nav>
-        
-        <div class="absolute bottom-4 left-0 right-0 px-4">
-            <form action="{{ url_for('auth.logout') }}" method="POST">
-                <button type="submit" class="nav-link w-full">
-                    <i class="material-icons">logout</i>
-                    <span>Logout</span>
-                </button>
-            </form>
+
+        <!-- User Profile -->
+        <div class="absolute bottom-0 left-0 right-0 p-4">
+            <div class="flex items-center space-x-3 bg-white/5 rounded-lg p-3">
+                <div class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center">
+                    <span class="material-icons-round">person</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium truncate">{{ current_user.full_name }}</p>
+                    <p class="text-xs text-gray-400 truncate">{{ current_user.email }}</p>
+                </div>
+                <form action="{{ url_for('auth.logout') }}" method="POST" class="flex-shrink-0">
+                    <button type="submit" class="p-1 hover:bg-white/10 rounded-lg" title="Logout">
+                        <span class="material-icons-round text-gray-400">logout</span>
+                    </button>
+                </form>
+            </div>
         </div>
     </aside>
 
     <!-- Main Content -->
     <main class="main-content">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="mb-6 p-4 rounded-lg {{ 'bg-red-500/20 text-red-200' if category == 'error' else 'bg-green-500/20 text-green-200' }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Main Content Area -->
         {% block content %}{% endblock %}
     </main>
 
+    <!-- Scripts -->
+    <script>
+        // Mobile menu toggle
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const sidebar = document.querySelector('.sidebar');
+        
+        mobileMenuButton.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+        });
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 768) {
+                if (!sidebar.contains(e.target) && !mobileMenuButton.contains(e.target)) {
+                    sidebar.classList.remove('active');
+                }
+            }
+        });
+    </script>
     {% block extra_scripts %}{% endblock %}
 </body>
 </html>
