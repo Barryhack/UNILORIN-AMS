@@ -167,85 +167,47 @@ def hardware():
     
     return render_template('admin/hardware.html', status=status)
 
-@admin_bp.route('/api/hardware/connect', methods=['POST'])
+@admin_bp.route('/hardware/connect', methods=['POST'])
 @login_required
 @admin_required
 def connect_hardware():
-    """Connect to hardware devices."""
+    """Connect to hardware device."""
     try:
         port = request.form.get('port')
         if hardware_controller.connect(port):
-            return jsonify({
-                'success': True,
-                'message': 'Hardware connected successfully'
-            })
-        return jsonify({
-            'success': False,
-            'message': 'Failed to connect to hardware'
-        })
+            flash('Successfully connected to hardware device.', 'success')
+            return jsonify({'status': 'success', 'message': 'Connected successfully'})
+        else:
+            flash('Failed to connect to hardware device.', 'error')
+            return jsonify({'status': 'error', 'message': 'Connection failed'})
     except Exception as e:
-        return jsonify({
-            'success': False,
-            'message': str(e)
-        })
+        current_app.logger.error(f"Error connecting to hardware: {e}")
+        return jsonify({'status': 'error', 'message': str(e)})
 
-@admin_bp.route('/api/hardware/disconnect', methods=['POST'])
+@admin_bp.route('/hardware/disconnect', methods=['POST'])
 @login_required
 @admin_required
 def disconnect_hardware():
-    """Disconnect hardware devices."""
+    """Disconnect from hardware device."""
     try:
         hardware_controller.disconnect()
-        return jsonify({
-            'success': True,
-            'message': 'Hardware disconnected successfully'
-        })
+        flash('Successfully disconnected from hardware device.', 'success')
+        return jsonify({'status': 'success', 'message': 'Disconnected successfully'})
     except Exception as e:
-        return jsonify({
-            'success': False,
-            'message': str(e)
-        })
+        current_app.logger.error(f"Error disconnecting hardware: {e}")
+        return jsonify({'status': 'error', 'message': str(e)})
 
-@admin_bp.route('/api/hardware/test', methods=['POST'])
-@login_required
-@admin_required
-def test_hardware():
-    """Test hardware devices."""
-    try:
-        device = request.form.get('device')  # 'fingerprint' or 'rfid'
-        result = hardware_controller.test_device(device)
-        return jsonify({
-            'success': True,
-            'working': result,
-            'message': f'Device test {"successful" if result else "failed"}'
-        })
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'message': str(e)
-        })
-
-@admin_bp.route('/api/hardware/status')
+@admin_bp.route('/hardware/status', methods=['GET'])
 @login_required
 @admin_required
 def get_hardware_status():
-    """Get current hardware status."""
+    """Get hardware status."""
     try:
-        status = {
-            'controller': hardware_controller.is_connected(),
-            'fingerprint': hardware_controller.fingerprint_status(),
-            'rfid': hardware_controller.rfid_status(),
-            'last_updated': datetime.now().strftime('%H:%M:%S')
-        }
-        return jsonify({
-            'success': True,
-            'status': status
-        })
+        status = hardware_controller.get_status()
+        return jsonify(status)
     except Exception as e:
-        return jsonify({
-            'success': False,
-            'message': str(e)
-        })
+        current_app.logger.error(f"Error getting hardware status: {e}")
+        return jsonify({'status': 'error', 'message': str(e)})
 
 @admin_bp.route('/manage-users')
 @login_required
@@ -639,228 +601,6 @@ def attendance():
     """View and manage attendance records"""
     attendance_records = Attendance.query.order_by(Attendance.marked_at.desc()).all()
     return render_template('admin/attendance.html', attendance_records=attendance_records)
-
-@admin_bp.route('/hardware/status')
-@login_required
-@admin_required
-def hardware_status():
-    """Get hardware status."""
-    try:
-        status = current_app.hardware_controller.get_status()
-        return jsonify({'success': True, 'status': status})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-@admin_bp.route('/hardware/connect', methods=['POST'])
-@login_required
-@admin_required
-def hardware_connect():
-    """Connect to hardware."""
-    try:
-        current_app.hardware_controller.connect()
-        ActivityLog.create(
-            user_id=current_user.id,
-            action='Hardware Connection',
-            details='Successfully connected to hardware'
-        )
-        return jsonify({'success': True})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-@admin_bp.route('/hardware/disconnect', methods=['POST'])
-@login_required
-@admin_required
-def hardware_disconnect():
-    """Disconnect from hardware."""
-    try:
-        current_app.hardware_controller.disconnect()
-        ActivityLog.create(
-            user_id=current_user.id,
-            action='Hardware Connection',
-            details='Successfully disconnected from hardware'
-        )
-        return jsonify({'success': True})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-@admin_bp.route('/hardware/reset', methods=['POST'])
-@login_required
-@admin_required
-def hardware_reset():
-    """Reset hardware."""
-    try:
-        current_app.hardware_controller.reset()
-        ActivityLog.create(
-            user_id=current_user.id,
-            action='Hardware Reset',
-            details='Successfully reset hardware'
-        )
-        return jsonify({'success': True})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-@admin_bp.route('/hardware/test', methods=['POST'])
-@login_required
-@admin_required
-def hardware_test():
-    """Test hardware."""
-    try:
-        test_result = current_app.hardware_controller.test()
-        ActivityLog.create(
-            user_id=current_user.id,
-            action='Hardware Test',
-            details='Hardware test completed'
-        )
-        return jsonify({'success': True, 'test_result': test_result})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-
-@admin_bp.route('/hardware/connect', methods=['POST'])
-@login_required
-@admin_required
-def connect_hardware():
-    """Connect to hardware device."""
-    try:
-        port = request.form.get('port')
-        if not port:
-            return jsonify({'success': False, 'message': 'Port is required'})
-            
-        success = hardware_controller.connect(port)
-        return jsonify({'success': success, 'message': 'Connected successfully' if success else 'Connection failed'})
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)})
-
-@admin_bp.route('/hardware/disconnect', methods=['POST'])
-@login_required
-@admin_required
-def disconnect_hardware():
-    """Disconnect from hardware device."""
-    try:
-        hardware_controller.disconnect()
-        return jsonify({'success': True, 'message': 'Disconnected successfully'})
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)})
-
-@admin_bp.route('/hardware/status', methods=['GET'])
-@login_required
-@admin_required
-def get_hardware_status():
-    """Get hardware status."""
-    try:
-        status = hardware_controller.get_status()
-        return jsonify({'success': True, 'status': status})
-    except Exception as e:
-        return jsonify({'success': False, 'message': str(e)})
-
-@admin_bp.route('/register/start', methods=['POST'])
-@login_required
-@admin_required
-def start_registration():
-    """Start user registration process."""
-    try:
-        success, result = hardware_controller.start_registration()
-        if success:
-            return jsonify({
-                'success': True,
-                'user_id': result,
-                'message': 'Registration started successfully'
-            })
-        else:
-            return jsonify({
-                'success': False,
-                'message': f'Registration failed: {result}'
-            })
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'message': f'Error starting registration: {str(e)}'
-        })
-
-@admin_bp.route('/register/complete', methods=['POST'])
-@login_required
-@admin_required
-def complete_registration():
-    """Complete user registration with details."""
-    try:
-        data = request.get_json()
-        user_id = data.get('user_id')
-        user_details = {
-            'full_name': data.get('full_name'),
-            'matric_number': data.get('matric_number'),
-            'department': data.get('department'),
-            'level': data.get('level'),
-            'email': data.get('email')
-        }
-        
-        # Create new user in database
-        new_user = User(
-            id=user_id,
-            full_name=user_details['full_name'],
-            matric_number=user_details['matric_number'],
-            department=user_details['department'],
-            level=user_details['level'],
-            email=user_details['email']
-        )
-        
-        db.session.add(new_user)
-        db.session.commit()
-        
-        return jsonify({
-            'success': True,
-            'message': 'User registered successfully',
-            'user': {
-                'id': new_user.id,
-                'full_name': new_user.full_name,
-                'matric_number': new_user.matric_number
-            }
-        })
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({
-            'success': False,
-            'message': f'Error completing registration: {str(e)}'
-        })
-
-@admin_bp.route('/verify/start', methods=['POST'])
-@login_required
-@admin_required
-def start_verification():
-    """Start user verification process."""
-    try:
-        course_id = request.form.get('course_id')
-        if not course_id:
-            return jsonify({'success': False, 'message': 'Course ID is required'})
-            
-        success, result = hardware_controller.verify_user()
-        if not success:
-            return jsonify({'success': False, 'message': result})
-            
-        # Record attendance
-        success, message = hardware_controller.record_attendance(result, course_id)
-        if success:
-            # Create attendance record in database
-            attendance = Attendance(
-                user_id=result['id'],
-                course_id=course_id,
-                timestamp=datetime.now()
-            )
-            db.session.add(attendance)
-            db.session.commit()
-            
-            return jsonify({
-                'success': True,
-                'message': 'Attendance recorded successfully',
-                'user': result
-            })
-        else:
-            return jsonify({'success': False, 'message': message})
-            
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({
-            'success': False,
-            'message': f'Error during verification: {str(e)}'
-        })
 
 @admin_bp.route('/user/delete/<user_id>', methods=['POST'])
 @login_required
