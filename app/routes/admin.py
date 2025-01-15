@@ -360,23 +360,41 @@ def edit_user(user_id):
 @login_required
 @roles_required('admin')
 def delete_user(user_id):
-    user = User.query.get_or_404(user_id)
-    if user.id == current_user.id:
-        return jsonify({'success': False, 'error': 'You cannot delete your own account'})
-    
-    username = user.username
-    db.session.delete(user)
-    db.session.commit()
-    
-    ActivityLog.log_activity(
-        current_user.id,
-        'delete_user',
-        f'Deleted user {username}',
-        'user',
-        user_id
-    )
-    
-    return jsonify({'success': True, 'message': 'User deleted successfully'})
+    """Delete user from system."""
+    try:
+        user = User.query.get_or_404(user_id)
+        
+        # Prevent self-deletion
+        if user.id == current_user.id:
+            return jsonify({'success': False, 'message': 'You cannot delete your own account'})
+        
+        # Store user info for logging
+        username = user.username
+        
+        # Delete user's fingerprint and RFID data if hardware is connected
+        if hardware_controller.is_connected():
+            hardware_controller.delete_user_data(user_id)
+        
+        # Delete user from database
+        db.session.delete(user)
+        db.session.commit()
+        
+        # Log the activity
+        ActivityLog.log_activity(
+            current_user.id,
+            'delete_user',
+            f'Deleted user {username}',
+            'user',
+            user_id
+        )
+        
+        flash(f'User {username} has been deleted successfully.', 'success')
+        return jsonify({'success': True, 'message': 'User deleted successfully'})
+        
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error deleting user: {e}")
+        return jsonify({'success': False, 'message': str(e)})
 
 @admin_bp.route('/departments')
 @login_required
@@ -601,44 +619,6 @@ def attendance():
     """View and manage attendance records"""
     attendance_records = Attendance.query.order_by(Attendance.marked_at.desc()).all()
     return render_template('admin/attendance.html', attendance_records=attendance_records)
-
-@admin_bp.route('/user/delete/<user_id>', methods=['POST'])
-@login_required
-@admin_required
-def delete_user(user_id):
-    """Delete user from system."""
-    try:
-        # Delete from hardware first
-        success, message = hardware_controller.delete_user(user_id)
-        if not success:
-            return jsonify({'success': False, 'message': message})
-            
-        # Delete from database
-        user = User.query.get(user_id)
-        if user:
-            # Remove from all courses
-            user.courses = []
-            # Delete attendance records
-            Attendance.query.filter_by(user_id=user_id).delete()
-            # Delete user
-            db.session.delete(user)
-            db.session.commit()
-            
-            return jsonify({
-                'success': True,
-                'message': 'User deleted successfully'
-            })
-        else:
-            return jsonify({
-                'success': False,
-                'message': 'User not found'
-            })
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({
-            'success': False,
-            'message': f'Error deleting user: {str(e)}'
-        })
 
 @admin_bp.route('/course/enroll', methods=['POST'])
 @login_required
