@@ -32,6 +32,10 @@ except Exception as e:
 def dashboard():
     """Admin dashboard view."""
     try:
+        # Debug logging
+        template_path = current_app.jinja_loader.get_source(current_app.jinja_env, 'admin/dashboard_new.html')[1]
+        current_app.logger.info(f'Loading template from: {template_path}')
+        
         # Disable template caching
         current_app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
         current_app.config['TEMPLATES_AUTO_RELOAD'] = True
@@ -107,7 +111,7 @@ def dashboard():
             logger.error(f"Error getting recent registrations: {reg_error}")
             recent_registrations = []
 
-        return render_template('admin/dashboard.html',
+        return render_template('admin/dashboard_new.html',
                             now=now,
                             stats=stats,
                             departments=departments,
