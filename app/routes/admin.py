@@ -32,6 +32,10 @@ except Exception as e:
 def dashboard():
     """Admin dashboard view."""
     try:
+        # Disable template caching
+        current_app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
+        current_app.config['TEMPLATES_AUTO_RELOAD'] = True
+        
         # Get current time
         now = datetime.now()
         

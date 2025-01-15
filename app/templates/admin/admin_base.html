@@ -3,17 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>{% block title %}{% endblock %} - Attendance System</title>
     
     <!-- Scripts -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js?v=1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js?v=1"></script>
     
     <!-- Styles -->
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link href="/static/css/dashboard.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css?v=1" rel="stylesheet">
+    <link href="/static/css/dashboard.css?v=1" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap?v=1" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css?v=1">
     
     {% block extra_styles %}{% endblock %}
     
@@ -203,6 +206,15 @@
 
     <!-- Scripts -->
     <script>
+        // Force reload if template version changes
+        const TEMPLATE_VERSION = '1.0.1';
+        if (localStorage.getItem('template_version') !== TEMPLATE_VERSION) {
+            localStorage.setItem('template_version', TEMPLATE_VERSION);
+            if (!window.location.hash) {
+                window.location.reload(true);
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             // Toggle sidebar on mobile
             const sidebarToggle = document.getElementById('sidebar-toggle');
