@@ -27,13 +27,6 @@ services:
                   LoginLog, ActivityLog, Notification, Lecture
               )
               
-              # Drop all tables
-              logger.info('Dropping all tables...')
-              db.session.execute(text('DROP SCHEMA public CASCADE'))
-              db.session.execute(text('CREATE SCHEMA public'))
-              db.session.commit()
-              logger.info('All tables dropped')
-              
               # Initialize migrations
               logger.info('Initializing migrations...')
               from flask_migrate import upgrade
@@ -57,40 +50,40 @@ services:
               else:
                   raise Exception('users table was not created')
               
-              # Create default department
+              # Create default department if it doesn't exist
               logger.info('Creating default department...')
-              dept = Department(name='Computer Science', code='CSC')
-              db.session.add(dept)
-              db.session.commit()
-              logger.info('Default department created')
+              dept = Department.query.filter_by(code='CSC').first()
+              if not dept:
+                  dept = Department(name='Computer Science', code='CSC')
+                  db.session.add(dept)
+                  db.session.commit()
+                  logger.info('Default department created')
+              else:
+                  logger.info('Default department already exists')
               
-              # Create default admin user
+              # Create default admin user if it doesn't exist
               logger.info('Creating default admin user...')
-              admin = User(
-                  login_id='ADMIN001',
-                  email='admin@example.com',
-                  first_name='Admin',
-                  last_name='User',
-                  role='admin'
-              )
-              admin.password = 'admin123'
-              admin.department_id = dept.id
-              db.session.add(admin)
-              db.session.commit()
-              logger.info('Default admin user created')
-              
-              # Verify admin user
-              logger.info('Verifying admin user...')
-              admin_check = User.query.filter_by(login_id='ADMIN001').first()
-              if not admin_check:
-                  raise Exception('Failed to create admin user')
-              logger.info(f'Admin user verified with ID: {admin_check.id}')
+              admin = User.query.filter_by(login_id='ADMIN001').first()
+              if not admin:
+                  admin = User(
+                      login_id='ADMIN001',
+                      email='admin@example.com',
+                      first_name='Admin',
+                      last_name='User',
+                      role='admin'
+                  )
+                  admin.password = 'admin123'
+                  admin.department_id = dept.id
+                  db.session.add(admin)
+                  db.session.commit()
+                  logger.info('Default admin user created')
+              else:
+                  logger.info('Default admin user already exists')
               
               logger.info('Database setup completed successfully')
               
           except Exception as e:
               logger.error(f'Error during database setup: {str(e)}')
-              db.session.rollback()
               raise
       "
     startCommand: gunicorn wsgi:app --config gunicorn_config.py
