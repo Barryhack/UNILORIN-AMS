@@ -14,6 +14,7 @@ from .login_log import LoginLog
 from .activity_log import ActivityLog
 from .notification import Notification
 from .lecture import Lecture
+from .hardware import HardwareStatus
 
 # List all models for easy access
 __all__ = [
@@ -26,5 +27,6 @@ __all__ = [
     'ActivityLog',
     'Notification',
     'Lecture',
+    'HardwareStatus',
     'metadata'
 ]
