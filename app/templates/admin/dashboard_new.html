@@ -2,253 +2,426 @@
 
 {% block title %}Dashboard{% endblock %}
 
+{% block extra_styles %}
+<style>
+    :root {
+        --unilorin-blue: #002147;
+        --unilorin-gold: #FFD700;
+        --white: #ffffff;
+    }
+
+    .bg-unilorin-blue {
+        background-color: var(--unilorin-blue);
+    }
+
+    .text-unilorin-blue {
+        color: var(--unilorin-blue);
+    }
+
+    .bg-unilorin-gold {
+        background-color: var(--unilorin-gold);
+    }
+
+    .text-unilorin-gold {
+        color: var(--unilorin-gold);
+    }
+
+    .border-unilorin-blue {
+        border-color: var(--unilorin-blue);
+    }
+
+    .border-unilorin-gold {
+        border-color: var(--unilorin-gold);
+    }
+
+    .hover-unilorin-blue:hover {
+        background-color: var(--unilorin-blue);
+        color: var(--white);
+    }
+
+    .hover-unilorin-gold:hover {
+        background-color: var(--unilorin-gold);
+        color: var(--unilorin-blue);
+    }
+
+    .card {
+        background: var(--white);
+        border-radius: 0.5rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s;
+    }
+
+    .card:hover {
+        transform: translateY(-2px);
+    }
+
+    .stat-card {
+        border-left: 4px solid var(--unilorin-blue);
+    }
+
+    .chart-container {
+        background: var(--white);
+        border-radius: 0.5rem;
+        padding: 1rem;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="p-4 sm:ml-64">
-    <div class="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700 mt-14">
-        <!-- Welcome Banner -->
-        <div class="p-4 bg-white rounded-lg shadow mb-4">
-            <div class="flex justify-between items-center">
-                <div>
-                    <h1 class="text-2xl font-semibold text-gray-900">Welcome, {{ current_user.first_name }} {{ current_user.last_name }}!</h1>
-                    <p class="mt-1 text-gray-600">
-                        {% if current_user.is_admin %}
-                        You are logged in as an administrator.
-                        {% else %}
-                        You are logged in as a {{ current_user.role }}.
-                        {% endif %}
-                    </p>
-                </div>
-                <div class="flex space-x-2">
-                    <a href="{{ url_for('admin.register_user') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                        <i class="fas fa-user-plus mr-2"></i>
-                        Add User
-                    </a>
-                    <a href="{{ url_for('admin.manage_courses') }}" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
-                        <i class="fas fa-book mr-2"></i>
-                        Manage Courses
-                    </a>
-                </div>
-            </div>
+<div class="container mx-auto px-4">
+    <!-- Quick Actions -->
+    <div class="mb-6">
+        <div class="flex flex-wrap gap-4">
+            <button onclick="openHardwareModal()" class="bg-unilorin-blue text-white px-6 py-3 rounded-lg hover-unilorin-gold transition-all duration-300 flex items-center">
+                <i class="fas fa-user-plus mr-2"></i>
+                Register New User
+            </button>
+            <button onclick="location.href='{{ url_for('admin.manage_courses') }}'" class="bg-unilorin-gold text-unilorin-blue px-6 py-3 rounded-lg hover-unilorin-blue transition-all duration-300 flex items-center">
+                <i class="fas fa-book mr-2"></i>
+                Manage Courses
+            </button>
         </div>
+    </div>
 
-        <!-- Hardware Status -->
-        <div class="mb-4 p-4 bg-white rounded-lg shadow">
+    <!-- Hardware Status -->
+    <div class="mb-6">
+        <div class="card p-4 border border-unilorin-blue">
             <div class="flex items-center justify-between">
-                <h2 class="text-xl font-semibold text-gray-900">Hardware Status</h2>
-                <span class="px-3 py-1 rounded-full text-sm font-medium 
-                    {% if hardware_status.status == 'Connected' %}
-                        bg-green-100 text-green-800
-                    {% elif hardware_status.status == 'Error' %}
-                        bg-red-100 text-red-800
-                    {% else %}
-                        bg-yellow-100 text-yellow-800
-                    {% endif %}">
-                    {{ hardware_status.status }}
-                </span>
+                <div>
+                    <h3 class="text-lg font-semibold text-unilorin-blue">Hardware Status</h3>
+                    <p id="hardware-status-message" class="text-gray-600">Checking status...</p>
+                </div>
+                <div id="hardware-status-indicator" class="w-4 h-4 rounded-full bg-gray-400"></div>
             </div>
-            <p class="mt-2 text-gray-600">{{ hardware_status.message }}</p>
         </div>
+    </div>
 
-        <!-- Stats Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-            <!-- Total Users -->
-            <div class="bg-white rounded-lg shadow p-4">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <i class="fas fa-users text-blue-500 text-3xl"></i>
-                    </div>
-                    <div class="ml-5">
-                        <h3 class="text-lg font-semibold text-gray-900">Total Users</h3>
-                        <p class="text-3xl font-bold text-gray-700">{{ stats.total_users|default(0) }}</p>
-                    </div>
+    <!-- Statistics Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="stat-card card p-4">
+            <div class="flex items-center">
+                <div class="rounded-full p-3 bg-unilorin-blue bg-opacity-10">
+                    <i class="fas fa-users text-unilorin-blue"></i>
                 </div>
-            </div>
-
-            <!-- Today's Attendance -->
-            <div class="bg-white rounded-lg shadow p-4">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <i class="fas fa-clock text-green-500 text-3xl"></i>
-                    </div>
-                    <div class="ml-5">
-                        <h3 class="text-lg font-semibold text-gray-900">Today's Attendance</h3>
-                        <p class="text-3xl font-bold text-gray-700">{{ stats.today_attendance|default(0) }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Active Courses -->
-            <div class="bg-white rounded-lg shadow p-4">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <i class="fas fa-book text-purple-500 text-3xl"></i>
-                    </div>
-                    <div class="ml-5">
-                        <h3 class="text-lg font-semibold text-gray-900">Active Courses</h3>
-                        <p class="text-3xl font-bold text-gray-700">{{ stats.total_courses|default(0) }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Total Departments -->
-            <div class="bg-white rounded-lg shadow p-4">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <i class="fas fa-building text-indigo-500 text-3xl"></i>
-                    </div>
-                    <div class="ml-5">
-                        <h3 class="text-lg font-semibold text-gray-900">Departments</h3>
-                        <p class="text-3xl font-bold text-gray-700">{{ stats.total_departments|default(0) }}</p>
-                    </div>
+                <div class="ml-4">
+                    <p class="text-gray-500">Total Users</p>
+                    <h3 class="text-2xl font-bold text-unilorin-blue">{{ stats.total_users }}</h3>
                 </div>
             </div>
         </div>
-
-        <!-- Charts Row -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-            <!-- Attendance Trends -->
-            <div class="bg-white rounded-lg shadow p-4">
-                <h2 class="text-xl font-semibold text-gray-900 mb-4">Attendance Trends</h2>
-                <canvas id="attendanceChart" class="w-full h-64"></canvas>
-            </div>
-
-            <!-- Department Statistics -->
-            <div class="bg-white rounded-lg shadow p-4">
-                <h2 class="text-xl font-semibold text-gray-900 mb-4">Department Statistics</h2>
-                <canvas id="departmentChart" class="w-full h-64"></canvas>
+        <div class="stat-card card p-4">
+            <div class="flex items-center">
+                <div class="rounded-full p-3 bg-unilorin-gold bg-opacity-10">
+                    <i class="fas fa-clock text-unilorin-gold"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-gray-500">Today's Attendance</p>
+                    <h3 class="text-2xl font-bold text-unilorin-gold">{{ stats.today_attendance }}</h3>
+                </div>
             </div>
         </div>
-
-        <!-- Activity and Registration Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <!-- Recent Activities -->
-            <div class="bg-white rounded-lg shadow p-4">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-semibold text-gray-900">Recent Activities</h2>
-                    <a href="{{ url_for('admin.activity_logs') }}" class="text-blue-600 hover:text-blue-800">View All</a>
+        <div class="stat-card card p-4">
+            <div class="flex items-center">
+                <div class="rounded-full p-3 bg-unilorin-blue bg-opacity-10">
+                    <i class="fas fa-book text-unilorin-blue"></i>
                 </div>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            {% for activity in recent_activities %}
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <div class="flex-shrink-0 h-10 w-10">
-                                            <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                                                {{ activity.user.first_name[0].upper() }}
-                                            </div>
-                                        </div>
-                                        <div class="ml-4">
-                                            <div class="text-sm font-medium text-gray-900">
-                                                {{ activity.user.first_name }} {{ activity.user.last_name }}
-                                            </div>
-                                            <div class="text-sm text-gray-500">{{ activity.user.email }}</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="text-sm text-gray-900">{{ activity.action }}</span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ activity.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
-                                </td>
-                            </tr>
+                <div class="ml-4">
+                    <p class="text-gray-500">Active Courses</p>
+                    <h3 class="text-2xl font-bold text-unilorin-blue">{{ stats.total_courses }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="stat-card card p-4">
+            <div class="flex items-center">
+                <div class="rounded-full p-3 bg-unilorin-gold bg-opacity-10">
+                    <i class="fas fa-building text-unilorin-gold"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-gray-500">Departments</p>
+                    <h3 class="text-2xl font-bold text-unilorin-gold">{{ stats.total_departments }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="chart-container">
+            <h3 class="text-lg font-semibold text-unilorin-blue mb-4">Attendance Trends</h3>
+            <canvas id="attendanceChart"></canvas>
+        </div>
+        <div class="chart-container">
+            <h3 class="text-lg font-semibold text-unilorin-blue mb-4">Department Statistics</h3>
+            <canvas id="departmentChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Recent Activities and Registrations -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="card p-4">
+            <h3 class="text-lg font-semibold text-unilorin-blue mb-4">Recent Activities</h3>
+            <div class="space-y-4">
+                {% for activity in recent_activities %}
+                <div class="flex items-center p-2 hover:bg-gray-50 rounded-lg">
+                    <div class="w-10 h-10 rounded-full bg-unilorin-blue flex items-center justify-center text-white">
+                        {{ activity.user.first_name[0].upper() }}
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm text-gray-600">{{ activity.description }}</p>
+                        <p class="text-xs text-gray-400">{{ activity.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <a href="{{ url_for('admin.activity_log') }}" class="mt-4 inline-block text-unilorin-blue hover:text-unilorin-gold">
+                View All Activities →
+            </a>
+        </div>
+
+        <div class="card p-4">
+            <h3 class="text-lg font-semibold text-unilorin-blue mb-4">Recent Registrations</h3>
+            <div class="space-y-4">
+                {% for user in recent_registrations %}
+                <div class="flex items-center p-2 hover:bg-gray-50 rounded-lg">
+                    <div class="w-10 h-10 rounded-full bg-unilorin-gold flex items-center justify-center text-unilorin-blue">
+                        {{ user.first_name[0].upper() }}
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium">{{ user.first_name }} {{ user.last_name }}</p>
+                        <p class="text-xs text-gray-500">{{ user.role.title() }} - {{ user.department.name }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <a href="{{ url_for('admin.manage_users') }}" class="mt-4 inline-block text-unilorin-blue hover:text-unilorin-gold">
+                View All Users →
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Hardware Registration Modal -->
+<div id="hardware-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold text-unilorin-blue">Register New User</h3>
+            <button onclick="closeHardwareModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div id="registration-steps" class="space-y-4">
+            <div id="step1" class="text-center">
+                <i class="fas fa-fingerprint text-5xl text-unilorin-blue mb-4"></i>
+                <p>Place your finger on the scanner</p>
+                <div class="mt-4">
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div id="fingerprint-progress" class="bg-unilorin-blue h-2.5 rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+            <div id="step2" class="hidden text-center">
+                <i class="fas fa-id-card text-5xl text-unilorin-blue mb-4"></i>
+                <p>Scan your RFID card</p>
+                <div class="mt-4">
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div id="rfid-progress" class="bg-unilorin-blue h-2.5 rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+            <div id="step3" class="hidden">
+                <form id="user-form" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">First Name</label>
+                        <input type="text" name="first_name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-unilorin-blue focus:ring-unilorin-blue">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Last Name</label>
+                        <input type="text" name="last_name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-unilorin-blue focus:ring-unilorin-blue">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Email</label>
+                        <input type="email" name="email" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-unilorin-blue focus:ring-unilorin-blue">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Role</label>
+                        <select name="role" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-unilorin-blue focus:ring-unilorin-blue">
+                            <option value="student">Student</option>
+                            <option value="lecturer">Lecturer</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Department</label>
+                        <select name="department_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-unilorin-blue focus:ring-unilorin-blue">
+                            {% for dept in departments %}
+                            <option value="{{ dept.id }}">{{ dept.name }}</option>
                             {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Recent Registrations -->
-            <div class="bg-white rounded-lg shadow p-4">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-semibold text-gray-900">Recent Registrations</h2>
-                    <a href="{{ url_for('admin.manage_users') }}" class="text-blue-600 hover:text-blue-800">View All</a>
-                </div>
-                <div class="space-y-4">
-                    {% for user in recent_registrations %}
-                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                        <div class="flex items-center">
-                            <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                                {{ user.first_name[0].upper() }}
-                            </div>
-                            <div class="ml-4">
-                                <div class="text-sm font-medium text-gray-900">
-                                    {{ user.first_name }} {{ user.last_name }}
-                                </div>
-                                <div class="text-sm text-gray-500">{{ user.email }}</div>
-                            </div>
-                        </div>
-                        <div class="text-sm text-gray-500">
-                            {{ user.created_at.strftime('%Y-%m-%d') }}
-                        </div>
+                        </select>
                     </div>
-                    {% endfor %}
-                </div>
+                    <button type="submit" class="w-full bg-unilorin-blue text-white px-4 py-2 rounded-md hover:bg-unilorin-gold hover:text-unilorin-blue transition-colors">
+                        Register User
+                    </button>
+                </form>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Charts JavaScript -->
+{% endblock %}
+
+{% block scripts %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Attendance Trends Chart
+    // Charts
     const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
-    new Chart(attendanceCtx, {
+    const departmentCtx = document.getElementById('departmentChart').getContext('2d');
+
+    const attendanceChart = new Chart(attendanceCtx, {
         type: 'line',
         data: {
-            labels: {{ stats.attendance_labels|tojson|safe }},
+            labels: {{ stats.attendance_labels | tojson }},
             datasets: [{
                 label: 'Daily Attendance',
-                data: {{ stats.attendance_data|tojson|safe }},
-                borderColor: 'rgb(59, 130, 246)',
-                tension: 0.1
+                data: {{ stats.attendance_data | tojson }},
+                borderColor: '#002147',
+                backgroundColor: 'rgba(0, 33, 71, 0.1)',
+                tension: 0.4
             }]
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true
+            plugins: {
+                legend: {
+                    position: 'top',
                 }
             }
         }
     });
 
-    // Department Statistics Chart
-    const deptCtx = document.getElementById('departmentChart').getContext('2d');
-    new Chart(deptCtx, {
+    const departmentChart = new Chart(departmentCtx, {
         type: 'bar',
         data: {
-            labels: {{ stats.department_labels|tojson|safe }},
+            labels: {{ stats.department_labels | tojson }},
             datasets: [{
                 label: 'Users per Department',
-                data: {{ stats.department_data|tojson|safe }},
-                backgroundColor: 'rgba(99, 102, 241, 0.5)',
-                borderColor: 'rgb(99, 102, 241)',
+                data: {{ stats.department_data | tojson }},
+                backgroundColor: '#FFD700',
+                borderColor: '#002147',
                 borderWidth: 1
             }]
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true
+            plugins: {
+                legend: {
+                    position: 'top',
                 }
             }
         }
     });
-});
+
+    // Hardware Status
+    function updateHardwareStatus() {
+        fetch('/api/hardware/status')
+            .then(response => response.json())
+            .then(data => {
+                const indicator = document.getElementById('hardware-status-indicator');
+                const message = document.getElementById('hardware-status-message');
+                
+                if (data.connected) {
+                    indicator.className = 'w-4 h-4 rounded-full bg-green-500';
+                    message.textContent = 'Hardware Connected';
+                } else {
+                    indicator.className = 'w-4 h-4 rounded-full bg-red-500';
+                    message.textContent = data.message || 'Hardware Disconnected';
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching hardware status:', error);
+                const indicator = document.getElementById('hardware-status-indicator');
+                const message = document.getElementById('hardware-status-message');
+                indicator.className = 'w-4 h-4 rounded-full bg-red-500';
+                message.textContent = 'Error checking hardware status';
+            });
+    }
+
+    // Update hardware status every 5 seconds
+    updateHardwareStatus();
+    setInterval(updateHardwareStatus, 5000);
+
+    // Hardware Registration Modal
+    function openHardwareModal() {
+        document.getElementById('hardware-modal').classList.remove('hidden');
+        document.getElementById('hardware-modal').classList.add('flex');
+        startRegistrationProcess();
+    }
+
+    function closeHardwareModal() {
+        document.getElementById('hardware-modal').classList.add('hidden');
+        document.getElementById('hardware-modal').classList.remove('flex');
+        resetRegistrationProcess();
+    }
+
+    function resetRegistrationProcess() {
+        document.getElementById('step1').classList.remove('hidden');
+        document.getElementById('step2').classList.add('hidden');
+        document.getElementById('step3').classList.add('hidden');
+        document.getElementById('fingerprint-progress').style.width = '0%';
+        document.getElementById('rfid-progress').style.width = '0%';
+    }
+
+    function startRegistrationProcess() {
+        // Start fingerprint scan
+        let progress = 0;
+        const fingerprintInterval = setInterval(() => {
+            progress += 10;
+            document.getElementById('fingerprint-progress').style.width = `${progress}%`;
+            if (progress >= 100) {
+                clearInterval(fingerprintInterval);
+                setTimeout(() => {
+                    document.getElementById('step1').classList.add('hidden');
+                    document.getElementById('step2').classList.remove('hidden');
+                    startRFIDScan();
+                }, 500);
+            }
+        }, 500);
+    }
+
+    function startRFIDScan() {
+        // Start RFID scan
+        let progress = 0;
+        const rfidInterval = setInterval(() => {
+            progress += 10;
+            document.getElementById('rfid-progress').style.width = `${progress}%`;
+            if (progress >= 100) {
+                clearInterval(rfidInterval);
+                setTimeout(() => {
+                    document.getElementById('step2').classList.add('hidden');
+                    document.getElementById('step3').classList.remove('hidden');
+                }, 500);
+            }
+        }, 500);
+    }
+
+    // Form submission
+    document.getElementById('user-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        fetch('/api/users/register', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                closeHardwareModal();
+                window.location.reload();
+            } else {
+                alert(data.message || 'Registration failed');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred during registration');
+        });
+    });
 </script>
 {% endblock %}

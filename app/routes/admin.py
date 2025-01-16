@@ -277,6 +277,71 @@ def get_hardware_status():
         logger.error(f"Error getting hardware status: {e}")
         return jsonify({'status': 'error', 'message': str(e)})
 
+@admin_bp.route('/api/hardware/status')
+@login_required
+@admin_required
+def hardware_status():
+    """Get hardware status."""
+    try:
+        hardware = get_hardware_controller()
+        status = hardware.get_status()
+        return jsonify(status)
+    except Exception as e:
+        logger.error(f"Error getting hardware status: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@admin_bp.route('/api/users/register', methods=['POST'])
+@login_required
+@admin_required
+def register_user_api():
+    """Register a new user with hardware verification."""
+    try:
+        hardware = get_hardware_controller()
+        
+        # Get hardware registration data
+        success, reg_data, message = hardware.register_user()
+        if not success:
+            return jsonify({'success': False, 'message': message}), 400
+        
+        # Get form data
+        form_data = request.form
+        
+        # Create new user
+        user = User(
+            first_name=form_data['first_name'],
+            last_name=form_data['last_name'],
+            email=form_data['email'],
+            role=form_data['role'],
+            department_id=form_data['department_id'],
+            fingerprint_template=reg_data['fingerprint_template'],
+            rfid_card_id=reg_data['rfid_card_id']
+        )
+        
+        # Generate default password
+        default_password = f"{user.first_name.lower()}{user.last_name.lower()}123"
+        user.set_password(default_password)
+        
+        # Save to database
+        db.session.add(user)
+        db.session.commit()
+        
+        # Log activity
+        log_activity(
+            user_id=current_user.id,
+            action=f"Registered new user: {user.first_name} {user.last_name}"
+        )
+        
+        return jsonify({
+            'success': True,
+            'message': 'User registered successfully',
+            'user_id': user.id
+        })
+        
+    except Exception as e:
+        logger.error(f"Error registering user: {e}")
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 @admin_bp.route('/manage-users')
 @login_required
 @admin_required
