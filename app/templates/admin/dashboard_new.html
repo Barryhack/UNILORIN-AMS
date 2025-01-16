@@ -3,23 +3,54 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-<!-- Template Version 2.0.0 -->
 <div class="p-4 sm:ml-64">
     <div class="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700 mt-14">
         <!-- Welcome Banner -->
         <div class="p-4 bg-white rounded-lg shadow mb-4">
-            <h1 class="text-2xl font-semibold text-gray-900">Welcome, {{ current_user.first_name }} {{ current_user.last_name }}!</h1>
-            <p class="mt-1 text-gray-600">
-                {% if current_user.is_admin %}
-                You are logged in as an administrator. (Template v2.0.0)
-                {% else %}
-                You are logged in as a {{ current_user.role }}. (Template v2.0.0)
-                {% endif %}
-            </p>
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-2xl font-semibold text-gray-900">Welcome, {{ current_user.first_name }} {{ current_user.last_name }}!</h1>
+                    <p class="mt-1 text-gray-600">
+                        {% if current_user.is_admin %}
+                        You are logged in as an administrator.
+                        {% else %}
+                        You are logged in as a {{ current_user.role }}.
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="flex space-x-2">
+                    <a href="{{ url_for('admin.register_user') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-user-plus mr-2"></i>
+                        Add User
+                    </a>
+                    <a href="{{ url_for('admin.manage_courses') }}" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                        <i class="fas fa-book mr-2"></i>
+                        Manage Courses
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hardware Status -->
+        <div class="mb-4 p-4 bg-white rounded-lg shadow">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl font-semibold text-gray-900">Hardware Status</h2>
+                <span class="px-3 py-1 rounded-full text-sm font-medium 
+                    {% if hardware_status.status == 'Connected' %}
+                        bg-green-100 text-green-800
+                    {% elif hardware_status.status == 'Error' %}
+                        bg-red-100 text-red-800
+                    {% else %}
+                        bg-yellow-100 text-yellow-800
+                    {% endif %}">
+                    {{ hardware_status.status }}
+                </span>
+            </div>
+            <p class="mt-2 text-gray-600">{{ hardware_status.message }}</p>
         </div>
 
         <!-- Stats Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
             <!-- Total Users -->
             <div class="bg-white rounded-lg shadow p-4">
                 <div class="flex items-center">
@@ -58,50 +89,166 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Total Departments -->
+            <div class="bg-white rounded-lg shadow p-4">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-building text-indigo-500 text-3xl"></i>
+                    </div>
+                    <div class="ml-5">
+                        <h3 class="text-lg font-semibold text-gray-900">Departments</h3>
+                        <p class="text-3xl font-bold text-gray-700">{{ stats.total_departments|default(0) }}</p>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Recent Activities -->
-        <div class="bg-white rounded-lg shadow p-4">
-            <h2 class="text-xl font-semibold text-gray-900 mb-4">Recent Activities</h2>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        {% for activity in recent_activities %}
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="flex items-center">
-                                    <div class="flex-shrink-0 h-10 w-10">
-                                        <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                                            {{ activity.user.first_name[0].upper() }}
+        <!-- Charts Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+            <!-- Attendance Trends -->
+            <div class="bg-white rounded-lg shadow p-4">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Attendance Trends</h2>
+                <canvas id="attendanceChart" class="w-full h-64"></canvas>
+            </div>
+
+            <!-- Department Statistics -->
+            <div class="bg-white rounded-lg shadow p-4">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Department Statistics</h2>
+                <canvas id="departmentChart" class="w-full h-64"></canvas>
+            </div>
+        </div>
+
+        <!-- Activity and Registration Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <!-- Recent Activities -->
+            <div class="bg-white rounded-lg shadow p-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-900">Recent Activities</h2>
+                    <a href="{{ url_for('admin.activity_logs') }}" class="text-blue-600 hover:text-blue-800">View All</a>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for activity in recent_activities %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 h-10 w-10">
+                                            <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                                                {{ activity.user.first_name[0].upper() }}
+                                            </div>
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900">
+                                                {{ activity.user.first_name }} {{ activity.user.last_name }}
+                                            </div>
+                                            <div class="text-sm text-gray-500">{{ activity.user.email }}</div>
                                         </div>
                                     </div>
-                                    <div class="ml-4">
-                                        <div class="text-sm font-medium text-gray-900">
-                                            {{ activity.user.first_name }} {{ activity.user.last_name }}
-                                        </div>
-                                        <div class="text-sm text-gray-500">{{ activity.user.email }}</div>
-                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="text-sm text-gray-900">{{ activity.action }}</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ activity.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Recent Registrations -->
+            <div class="bg-white rounded-lg shadow p-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-900">Recent Registrations</h2>
+                    <a href="{{ url_for('admin.manage_users') }}" class="text-blue-600 hover:text-blue-800">View All</a>
+                </div>
+                <div class="space-y-4">
+                    {% for user in recent_registrations %}
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                                {{ user.first_name[0].upper() }}
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">
+                                    {{ user.first_name }} {{ user.last_name }}
                                 </div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="text-sm text-gray-900">{{ activity.action }}</span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {{ activity.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                                <div class="text-sm text-gray-500">{{ user.email }}</div>
+                            </div>
+                        </div>
+                        <div class="text-sm text-gray-500">
+                            {{ user.created_at.strftime('%Y-%m-%d') }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Charts JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Attendance Trends Chart
+    const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
+    new Chart(attendanceCtx, {
+        type: 'line',
+        data: {
+            labels: {{ stats.attendance_labels|tojson|safe }},
+            datasets: [{
+                label: 'Daily Attendance',
+                data: {{ stats.attendance_data|tojson|safe }},
+                borderColor: 'rgb(59, 130, 246)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Department Statistics Chart
+    const deptCtx = document.getElementById('departmentChart').getContext('2d');
+    new Chart(deptCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ stats.department_labels|tojson|safe }},
+            datasets: [{
+                label: 'Users per Department',
+                data: {{ stats.department_data|tojson|safe }},
+                backgroundColor: 'rgba(99, 102, 241, 0.5)',
+                borderColor: 'rgb(99, 102, 241)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+});
+</script>
 {% endblock %}

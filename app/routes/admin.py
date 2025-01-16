@@ -1,22 +1,29 @@
-"""Admin routes and views."""
-from datetime import datetime, timedelta
-from flask import Blueprint, render_template, jsonify, current_app, flash, request, redirect, url_for
+"""Admin routes."""
+from flask import (
+    Blueprint, render_template, request, redirect, url_for, flash,
+    current_app, jsonify, send_file
+)
 from flask_login import login_required, current_user
-from sqlalchemy import func, desc
-from app.models.user import User
-from app.models.course import Course
-from app.models.department import Department
-from app.models.attendance import Attendance
-from app.models.activity_log import ActivityLog
-from app.models.hardware import HardwareStatus
-from app.auth.decorators import admin_required, roles_required
-from app.extensions import db
-from app.utils.hardware import HardwareController
-import serial.tools.list_ports
-import json
+from datetime import datetime, timedelta
+from sqlalchemy import func, text, desc
+from ..models import (
+    User, Course, Department, Attendance, ActivityLog,
+    CourseStudent, CourseLecturer
+)
+from ..forms import (
+    UserForm, CourseForm, DepartmentForm, AttendanceForm,
+    SettingsForm
+)
+from ..utils import admin_required
+from ..extensions import db
+from ..hardware.controller import HardwareController
 import logging
+import csv
+import io
+import json
+from werkzeug.security import generate_password_hash
 
-admin_bp = Blueprint('admin', __name__)
+# Configure logging
 logger = logging.getLogger(__name__)
 
 # Initialize hardware controller
@@ -25,6 +32,8 @@ try:
 except Exception as e:
     logger.error(f"Failed to initialize hardware controller: {e}")
     hardware_controller = None
+
+admin_bp = Blueprint('admin', __name__)
 
 @admin_bp.route('/dashboard')
 @login_required
@@ -43,70 +52,29 @@ def dashboard():
         # Get current time
         now = datetime.now()
         
-        # Get basic statistics
-        total_students = User.query.filter_by(role='student').count()
-        total_lecturers = User.query.filter_by(role='lecturer').count()
-        stats = {
-            'total_users': total_students + total_lecturers,
-            'total_students': total_students,
-            'total_lecturers': total_lecturers,
-            'total_departments': Department.query.count(),
-            'total_courses': Course.query.count(),
-            'today_attendance': Attendance.query.filter(
-                Attendance.timestamp >= datetime.now().replace(hour=0, minute=0, second=0)
-            ).count()
-        }
+        # Get statistics
+        stats = get_dashboard_stats()
         
-        # Get department statistics with lecturer count
-        departments = []
-        try:
-            for dept in Department.query.all():
-                student_count = User.query.filter_by(department_id=dept.id, role='student').count()
-                lecturer_count = User.query.filter_by(department_id=dept.id, role='lecturer').count()
-                departments.append({
-                    'name': dept.name,
-                    'student_count': student_count,
-                    'lecturer_count': lecturer_count
-                })
-        except Exception as dept_error:
-            logger.error(f"Error getting department statistics: {dept_error}")
-            departments = []
-
-        # Get hardware status with error handling
-        hardware_status = {
-            'connected': False,
-            'controller': False,
-            'fingerprint': False,
-            'rfid': False,
-            'last_updated': datetime.now().strftime('%H:%M:%S')
-        }
+        # Get departments for filtering
+        departments = Department.query.all()
         
-        if hardware_controller is not None:
-            try:
-                hardware_status.update({
-                    'connected': hardware_controller.is_connected(),
-                    'controller': hardware_controller.is_connected(),
-                    'fingerprint': hardware_controller.fingerprint_status(),
-                    'rfid': hardware_controller.rfid_status(),
-                })
-            except Exception as hw_error:
-                logger.error(f"Hardware status error: {hw_error}")
-                hardware_status['error'] = 'Hardware communication error'
-
-        # Get recent activities with error handling
+        # Get hardware status
         try:
-            recent_activities = ActivityLog.query.order_by(
-                ActivityLog.timestamp.desc()
-            ).limit(5).all()
+            hardware_status = HardwareController.get_status()
+        except Exception as hw_error:
+            logger.error(f"Error getting hardware status: {hw_error}")
+            hardware_status = {'status': 'Unknown', 'message': str(hw_error)}
+        
+        # Get recent activities
+        try:
+            recent_activities = ActivityLog.query.order_by(ActivityLog.timestamp.desc()).limit(5).all()
         except Exception as act_error:
             logger.error(f"Error getting recent activities: {act_error}")
             recent_activities = []
-
-        # Get recent registrations with error handling
+            
+        # Get recent registrations
         try:
-            recent_registrations = User.query.order_by(
-                User.created_at.desc()
-            ).limit(5).all()
+            recent_registrations = User.query.order_by(User.created_at.desc()).limit(5).all()
         except Exception as reg_error:
             logger.error(f"Error getting recent registrations: {reg_error}")
             recent_registrations = []
@@ -118,11 +86,9 @@ def dashboard():
                             hardware_status=hardware_status,
                             recent_activities=recent_activities,
                             recent_registrations=recent_registrations)
-
     except Exception as e:
         logger.error(f"Error in dashboard route: {e}")
-        flash('An error occurred while loading the dashboard. Please try again later.', 'error')
-        return render_template('error/500.html'), 500
+        return render_template('errors/500.html'), 500
 
 @admin_bp.route('/new-dashboard')
 @login_required
@@ -374,22 +340,65 @@ def update_user(user_id):
 @login_required
 @admin_required
 def get_dashboard_stats():
-    """Get real-time dashboard statistics."""
+    """Get statistics for the admin dashboard."""
     try:
-        stats = {
-            'total_users': User.query.count(),
-            'total_students': User.query.filter_by(role='student').count(),
-            'total_lecturers': User.query.filter_by(role='lecturer').count(),
-            'total_courses': Course.query.count(),
-            'total_departments': Department.query.count(),
-            'today_attendance': Attendance.query.filter(
-                Attendance.timestamp >= datetime.now().replace(hour=0, minute=0, second=0)
-            ).count()
+        # Get total users
+        total_users = User.query.count()
+        
+        # Get total courses
+        total_courses = Course.query.count()
+        
+        # Get total departments
+        total_departments = Department.query.count()
+        
+        # Get today's attendance
+        today = datetime.now().date()
+        today_attendance = Attendance.query.filter(
+            func.date(Attendance.timestamp) == today
+        ).count()
+        
+        # Get attendance data for the last 7 days
+        seven_days_ago = datetime.now() - timedelta(days=7)
+        attendance_data = db.session.query(
+            func.date(Attendance.timestamp).label('date'),
+            func.count(Attendance.id).label('count')
+        ).filter(
+            Attendance.timestamp >= seven_days_ago
+        ).group_by(
+            func.date(Attendance.timestamp)
+        ).order_by(
+            func.date(Attendance.timestamp)
+        ).all()
+        
+        attendance_labels = [row.date.strftime('%Y-%m-%d') for row in attendance_data]
+        attendance_counts = [row.count for row in attendance_data]
+        
+        # Get department statistics
+        department_stats = db.session.query(
+            Department.name,
+            func.count(User.id).label('user_count')
+        ).join(
+            User, Department.id == User.department_id
+        ).group_by(
+            Department.name
+        ).all()
+        
+        department_labels = [dept.name for dept in department_stats]
+        department_counts = [dept.user_count for dept in department_stats]
+        
+        return {
+            'total_users': total_users,
+            'total_courses': total_courses,
+            'total_departments': total_departments,
+            'today_attendance': today_attendance,
+            'attendance_labels': attendance_labels,
+            'attendance_data': attendance_counts,
+            'department_labels': department_labels,
+            'department_data': department_counts
         }
-        return jsonify({'success': True, 'data': stats})
     except Exception as e:
-        logger.error(f"Error fetching dashboard stats: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+        logger.error(f"Error getting dashboard stats: {e}")
+        return {}
 
 @admin_bp.route('/manage-courses')
 @login_required
