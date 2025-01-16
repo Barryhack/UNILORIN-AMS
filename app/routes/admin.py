@@ -108,10 +108,14 @@ def new_dashboard():
         
         # Get hardware status
         try:
-            hardware_status = HardwareController.get_status()
+            controller = get_hardware_controller()
+            if controller:
+                hardware_status = controller.get_status()
+            else:
+                hardware_status = {'status': 'Not Connected', 'message': 'Hardware controller not initialized'}
         except Exception as hw_error:
             logger.error(f"Error getting hardware status: {hw_error}")
-            hardware_status = {'status': 'Unknown', 'message': str(hw_error)}
+            hardware_status = {'status': 'Error', 'message': str(hw_error)}
         
         # Get recent activities
         try:
@@ -234,13 +238,13 @@ def hardware():
 def connect_hardware():
     """Connect to hardware device."""
     try:
-        port = request.form.get('port')
-        if hardware_controller is not None and hardware_controller.connect(port):
-            flash('Successfully connected to hardware device.', 'success')
-            return jsonify({'status': 'success', 'message': 'Connected successfully'})
-        else:
-            flash('Failed to connect to hardware device.', 'error')
-            return jsonify({'status': 'error', 'message': 'Connection failed'})
+        controller = get_hardware_controller()
+        if controller:
+            if controller.connect():
+                flash('Successfully connected to hardware device.', 'success')
+                return jsonify({'status': 'success', 'message': 'Connected successfully'})
+            return jsonify({'status': 'error', 'message': 'Failed to connect to hardware'})
+        return jsonify({'status': 'error', 'message': 'Hardware controller not initialized'})
     except Exception as e:
         logger.error(f"Error connecting to hardware: {e}")
         return jsonify({'status': 'error', 'message': str(e)})
@@ -251,10 +255,12 @@ def connect_hardware():
 def disconnect_hardware():
     """Disconnect from hardware device."""
     try:
-        if hardware_controller is not None:
-            hardware_controller.disconnect()
-        flash('Successfully disconnected from hardware device.', 'success')
-        return jsonify({'status': 'success', 'message': 'Disconnected successfully'})
+        controller = get_hardware_controller()
+        if controller:
+            controller.disconnect()
+            flash('Successfully disconnected from hardware device.', 'success')
+            return jsonify({'status': 'success', 'message': 'Disconnected successfully'})
+        return jsonify({'status': 'error', 'message': 'Hardware controller not initialized'})
     except Exception as e:
         logger.error(f"Error disconnecting hardware: {e}")
         return jsonify({'status': 'error', 'message': str(e)})
