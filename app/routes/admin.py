@@ -16,7 +16,7 @@ from ..forms import (
 )
 from ..utils import admin_required, roles_required
 from ..extensions import db
-from ..hardware.controller import HardwareController
+from ..hardware.controller import HardwareController, get_hardware_controller
 import logging
 import csv
 
@@ -259,25 +259,25 @@ def disconnect_hardware():
         logger.error(f"Error disconnecting hardware: {e}")
         return jsonify({'status': 'error', 'message': str(e)})
 
-@admin_bp.route('/hardware/status', methods=['GET'])
+@admin_bp.route('/hardware/status')
 @login_required
 @admin_required
-def get_hardware_status():
+def hardware_status():
     """Get hardware status."""
     try:
-        if hardware_controller is not None:
-            status = hardware_controller.get_status()
+        controller = get_hardware_controller()
+        if controller:
+            status = controller.get_status()
             return jsonify(status)
-        else:
-            return jsonify({'status': 'error', 'message': 'Hardware controller not initialized'})
+        return jsonify({'error': 'Hardware controller not initialized'})
     except Exception as e:
         logger.error(f"Error getting hardware status: {e}")
-        return jsonify({'status': 'error', 'message': str(e)})
+        return jsonify({'error': str(e)})
 
 @admin_bp.route('/api/hardware/status')
 @login_required
 @admin_required
-def hardware_status():
+def api_hardware_status():
     """Get hardware status."""
     try:
         hardware = get_hardware_controller()
