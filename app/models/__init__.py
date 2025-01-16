@@ -10,6 +10,7 @@ from .course import Course
 from .department import Department
 from .attendance import Attendance
 from .course_student import CourseStudent
+from .course_lecturer import CourseLecturer
 from .login_log import LoginLog
 from .activity_log import ActivityLog
 from .notification import Notification
@@ -23,6 +24,7 @@ __all__ = [
     'Department',
     'Attendance',
     'CourseStudent',
+    'CourseLecturer',
     'LoginLog',
     'ActivityLog',
     'Notification',
