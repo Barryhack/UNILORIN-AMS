@@ -124,6 +124,57 @@ def dashboard():
         flash('An error occurred while loading the dashboard. Please try again later.', 'error')
         return render_template('error/500.html'), 500
 
+@admin_bp.route('/new-dashboard')
+@login_required
+@admin_required
+def new_dashboard():
+    """Admin dashboard view."""
+    try:
+        # Debug logging
+        template_path = current_app.jinja_loader.get_source(current_app.jinja_env, 'admin/dashboard_new.html')[1]
+        current_app.logger.info(f'Loading template from: {template_path}')
+        
+        # Get current time
+        now = datetime.now()
+        
+        # Get statistics
+        stats = get_dashboard_stats()
+        
+        # Get departments for filtering
+        departments = Department.query.all()
+        
+        # Get hardware status
+        try:
+            hardware_status = HardwareController.get_status()
+        except Exception as hw_error:
+            logger.error(f"Error getting hardware status: {hw_error}")
+            hardware_status = {'status': 'Unknown', 'message': str(hw_error)}
+        
+        # Get recent activities
+        try:
+            recent_activities = ActivityLog.query.order_by(ActivityLog.timestamp.desc()).limit(5).all()
+        except Exception as act_error:
+            logger.error(f"Error getting recent activities: {act_error}")
+            recent_activities = []
+            
+        # Get recent registrations
+        try:
+            recent_registrations = User.query.order_by(User.created_at.desc()).limit(5).all()
+        except Exception as reg_error:
+            logger.error(f"Error getting recent registrations: {reg_error}")
+            recent_registrations = []
+
+        return render_template('admin/dashboard_new.html',
+                            now=now,
+                            stats=stats,
+                            departments=departments,
+                            hardware_status=hardware_status,
+                            recent_activities=recent_activities,
+                            recent_registrations=recent_registrations)
+    except Exception as e:
+        logger.error(f"Error in dashboard route: {e}")
+        return render_template('errors/500.html'), 500
+
 @admin_bp.route('/register', methods=['GET', 'POST'])
 @login_required
 @admin_required

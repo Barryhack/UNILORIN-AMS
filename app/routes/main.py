@@ -15,16 +15,13 @@ main_bp = Blueprint('main', __name__)
 
 @main_bp.route('/')
 def index():
+    """Redirect to appropriate dashboard based on user role."""
     if not current_user.is_authenticated:
-        next_page = request.args.get('next')
-        if not next_page or urlparse(next_page).netloc != '':
-            next_page = url_for('main.dashboard')
-        return redirect(url_for('auth.login', next=next_page))
-        
-    # Redirect to appropriate dashboard based on user role
-    if current_user.role == 'admin':
-        return redirect(url_for('admin.dashboard'))
-    elif current_user.role == 'lecturer':
+        return redirect(url_for('auth.login'))
+    
+    if current_user.is_admin:
+        return redirect(url_for('admin.new_dashboard'))
+    elif current_user.is_lecturer:
         return redirect(url_for('lecturer.dashboard'))
     else:
         return redirect(url_for('student.dashboard'))
