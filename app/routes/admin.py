@@ -8,20 +8,17 @@ from datetime import datetime, timedelta
 from sqlalchemy import func, text, desc
 from ..models import (
     User, Course, Department, Attendance, ActivityLog,
-    CourseStudent, CourseLecturer
+    CourseStudent, CourseLecturer, LoginLog
 )
 from ..forms import (
     UserForm, CourseForm, DepartmentForm, AttendanceForm,
     SettingsForm
 )
-from ..utils import admin_required
+from ..utils import admin_required, roles_required
 from ..extensions import db
 from ..hardware.controller import HardwareController
 import logging
 import csv
-import io
-import json
-from werkzeug.security import generate_password_hash
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -512,7 +509,7 @@ def system_logs():
 
 @admin_bp.route('/users')
 @login_required
-@roles_required('admin')
+@admin_required
 def users():
     """List all users."""
     users_list = User.query.all()
@@ -520,7 +517,7 @@ def users():
 
 @admin_bp.route('/user/<int:user_id>', methods=['GET', 'POST'])
 @login_required
-@roles_required('admin')
+@admin_required
 def edit_user(user_id):
     """Edit a user."""
     user = User.query.get_or_404(user_id)
@@ -535,7 +532,7 @@ def edit_user(user_id):
 
 @admin_bp.route('/user/<string:user_id>/delete', methods=['POST'])
 @login_required
-@roles_required('admin')
+@admin_required
 def delete_user(user_id):
     """Delete user from system."""
     try:
@@ -575,7 +572,7 @@ def delete_user(user_id):
 
 @admin_bp.route('/departments')
 @login_required
-@roles_required('admin')
+@admin_required
 def departments():
     departments = Department.query.all()
     faculties = Faculty.query.all()
@@ -583,7 +580,7 @@ def departments():
 
 @admin_bp.route('/department/create', methods=['POST'])
 @login_required
-@roles_required('admin')
+@admin_required
 def create_department():
     name = request.form.get('name')
     code = request.form.get('code')
@@ -613,7 +610,7 @@ def create_department():
 
 @admin_bp.route('/department/<int:dept_id>/edit', methods=['POST'])
 @login_required
-@roles_required('admin')
+@admin_required
 def edit_department(dept_id):
     department = Department.query.get_or_404(dept_id)
     
@@ -635,7 +632,7 @@ def edit_department(dept_id):
 
 @admin_bp.route('/department/<int:dept_id>/delete', methods=['POST'])
 @login_required
-@roles_required('admin')
+@admin_required
 def delete_department(dept_id):
     department = Department.query.get_or_404(dept_id)
     
@@ -659,7 +656,7 @@ def delete_department(dept_id):
 
 @admin_bp.route('/courses')
 @login_required
-@roles_required('admin')
+@admin_required
 def courses():
     courses = Course.query.all()
     departments = Department.query.all()
@@ -667,7 +664,7 @@ def courses():
 
 @admin_bp.route('/course/create', methods=['POST'])
 @login_required
-@roles_required('admin')
+@admin_required
 def create_course():
     name = request.form.get('name')
     code = request.form.get('code')
@@ -697,7 +694,7 @@ def create_course():
 
 @admin_bp.route('/course/<int:course_id>/edit', methods=['POST'])
 @login_required
-@roles_required('admin')
+@admin_required
 def edit_course(course_id):
     course = Course.query.get_or_404(course_id)
     
@@ -719,7 +716,7 @@ def edit_course(course_id):
 
 @admin_bp.route('/course/<int:course_id>/delete', methods=['POST'])
 @login_required
-@roles_required('admin')
+@admin_required
 def delete_course(course_id):
     course = Course.query.get_or_404(course_id)
     
@@ -743,7 +740,7 @@ def delete_course(course_id):
 
 @admin_bp.route('/login-logs')
 @login_required
-@roles_required('admin')
+@admin_required
 def login_logs():
     page = request.args.get('page', 1, type=int)
     logs = LoginLog.query.order_by(LoginLog.timestamp.desc()).paginate(
@@ -752,7 +749,7 @@ def login_logs():
 
 @admin_bp.route('/statistics')
 @login_required
-@roles_required('admin')
+@admin_required
 def statistics():
     # User statistics
     total_users = User.query.count()
@@ -791,7 +788,7 @@ def statistics():
 
 @admin_bp.route('/attendance')
 @login_required
-@roles_required('admin')
+@admin_required
 def attendance():
     """View and manage attendance records"""
     attendance_records = Attendance.query.order_by(Attendance.marked_at.desc()).all()
