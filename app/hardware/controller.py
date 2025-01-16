@@ -2,6 +2,7 @@
 import logging
 import serial
 import time
+import os
 from threading import Lock
 from typing import Optional, Dict, Any, Tuple
 from ..models import User
@@ -25,15 +26,22 @@ class HardwareController:
         self.lock = Lock()
         self.connected = False
         self.last_error = None
+        self.simulation_mode = os.environ.get('HARDWARE_SIMULATION', 'true').lower() == 'true'
         
-        try:
-            self.connect()
-        except Exception as e:
-            logger.error(f"Failed to initialize hardware: {e}")
-            self.last_error = str(e)
+        if not self.simulation_mode:
+            try:
+                self.connect()
+            except Exception as e:
+                logger.error(f"Failed to initialize hardware: {e}")
+                self.last_error = str(e)
     
     def connect(self) -> bool:
         """Establish connection with the hardware."""
+        if self.simulation_mode:
+            logger.info("Running in simulation mode - hardware connection simulated")
+            self.connected = True
+            return True
+            
         try:
             with self.lock:
                 if not self.connected:
@@ -50,6 +58,11 @@ class HardwareController:
     
     def disconnect(self):
         """Disconnect from the hardware."""
+        if self.simulation_mode:
+            logger.info("Running in simulation mode - hardware disconnection simulated")
+            self.connected = False
+            return
+            
         try:
             with self.lock:
                 if self.serial and self.serial.is_open:
@@ -65,9 +78,18 @@ class HardwareController:
         Returns:
             Dict containing status information
         """
+        if self.simulation_mode:
+            return {
+                'connected': self.connected,
+                'port': 'SIMULATED',
+                'mode': 'simulation',
+                'last_error': self.last_error
+            }
+            
         return {
             'connected': self.connected,
             'port': self.port,
+            'mode': 'hardware',
             'last_error': self.last_error
         }
     
@@ -77,6 +99,10 @@ class HardwareController:
         Returns:
             Tuple of (success, template_data, message)
         """
+        if self.simulation_mode:
+            logger.info("Running in simulation mode - fingerprint scan simulated")
+            return True, b'SIMULATED_FINGERPRINT_TEMPLATE', "Fingerprint scanned successfully"
+        
         try:
             with self.lock:
                 if not self.connected:
@@ -104,6 +130,10 @@ class HardwareController:
         Returns:
             Tuple of (success, card_id, message)
         """
+        if self.simulation_mode:
+            logger.info("Running in simulation mode - RFID scan simulated")
+            return True, 'SIMULATED_RFID_CARD_ID', "RFID card scanned successfully"
+        
         try:
             with self.lock:
                 if not self.connected:
@@ -131,6 +161,14 @@ class HardwareController:
         Returns:
             Tuple of (success, registration_data, message)
         """
+        if self.simulation_mode:
+            logger.info("Running in simulation mode - user registration simulated")
+            registration_data = {
+                'fingerprint_template': 'SIMULATED_FINGERPRINT_TEMPLATE',
+                'rfid_card_id': 'SIMULATED_RFID_CARD_ID'
+            }
+            return True, registration_data, "Registration successful"
+        
         try:
             # Step 1: Scan fingerprint
             fp_success, fp_template, fp_message = self.scan_fingerprint()
@@ -164,6 +202,10 @@ class HardwareController:
         Returns:
             Tuple of (success, message)
         """
+        if self.simulation_mode:
+            logger.info("Running in simulation mode - user verification simulated")
+            return True, "User verified successfully"
+        
         try:
             # Get user data
             user = User.query.get(user_id)
