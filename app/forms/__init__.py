@@ -15,6 +15,7 @@ from .course import CourseForm
 from .department import DepartmentForm
 from .attendance import AttendanceForm
 from .settings import SettingsForm
+from .auth import LoginForm, ChangePasswordForm
 
 # List all forms for easy access
 __all__ = [
@@ -23,5 +24,7 @@ __all__ = [
     'CourseForm',
     'DepartmentForm',
     'AttendanceForm',
-    'SettingsForm'
+    'SettingsForm',
+    'LoginForm',
+    'ChangePasswordForm'
 ]

@@ -1,9 +1,12 @@
+"""Settings forms."""
 from flask_wtf import FlaskForm
 from wtforms import StringField, IntegerField, SelectField
 from wtforms.validators import DataRequired, NumberRange, Length
 from app.forms import BaseForm
 
-class SystemSettingsForm(BaseForm):
+class SettingsForm(BaseForm):
+    """Form for system settings."""
+    
     system_name = StringField('System Name', validators=[
         DataRequired(),
         Length(min=3, max=100, message='System name must be between 3 and 100 characters')
