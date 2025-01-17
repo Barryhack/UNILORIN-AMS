@@ -16,11 +16,15 @@
         document.addEventListener('alpine:init', () => {
             Alpine.store('sidebar', {
                 open: false,
+                collapsed: false,
                 toggle() {
                     this.open = !this.open;
                 },
                 close() {
                     this.open = false;
+                },
+                collapse() {
+                    this.collapsed = !this.collapsed;
                 }
             });
         });
@@ -95,15 +99,20 @@
          x-cloak></div>
 
     <!-- Sidebar -->
-    <div class="fixed inset-y-0 left-0 z-40 w-72 bg-white shadow-xl transform transition-transform duration-300 ease-in-out lg:translate-x-0"
-         :class="{ 'translate-x-0': $store.sidebar.open || !isMobile, '-translate-x-full': !$store.sidebar.open && isMobile }">
+    <div class="fixed inset-y-0 left-0 z-40 bg-white shadow-xl transform transition-all duration-300 ease-in-out"
+         :class="{ 
+            'w-72': !$store.sidebar.collapsed,
+            'w-20': $store.sidebar.collapsed,
+            'translate-x-0': $store.sidebar.open || !isMobile,
+            '-translate-x-full': !$store.sidebar.open && isMobile
+         }">
         
         <!-- Sidebar Header -->
         <div class="h-16 flex items-center justify-between px-6 border-b border-gray-200">
             <a href="{{ url_for('admin.dashboard') }}" class="flex items-center space-x-3">
                 <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="Logo" 
                      class="h-10 w-10 rounded-lg shadow-sm transition-transform duration-200 hover:scale-105">
-                <span class="text-xl font-bold text-gray-900">AMS</span>
+                <span class="text-xl font-bold text-gray-900" x-show="!$store.sidebar.collapsed">AMS</span>
             </a>
             <button x-show="isMobile" 
                     @click="$store.sidebar.close()"
@@ -151,7 +160,12 @@
     </div>
 
     <!-- Main content -->
-    <div class="lg:pl-[280px]">
+    <div class="transition-all duration-300 ease-in-out"
+         :class="{
+            'lg:pl-72': !$store.sidebar.collapsed && !isMobile,
+            'lg:pl-20': $store.sidebar.collapsed && !isMobile,
+            'pl-0': isMobile
+         }">
         <!-- Top navigation -->
         <nav class="bg-white shadow-sm border-b border-gray-200">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -161,26 +175,29 @@
                         <!-- Mobile menu button -->
                         <button type="button" 
                                 @click="$store.sidebar.toggle()"
-                                class="lg:hidden inline-flex items-center justify-center p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200">
+                                class="inline-flex items-center justify-center p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200">
                             <span class="sr-only">Toggle sidebar</span>
                             <i class="fas text-xl transition-transform duration-200" 
-                               :class="$store.sidebar.open ? 'fa-times rotate-180' : 'fa-bars'"></i>
+                               :class="$store.sidebar.open || !isMobile ? 'fa-bars' : 'fa-bars'"></i>
                         </button>
 
-                        <!-- Page title - Show on desktop -->
-                        <h1 class="hidden ml-8 text-xl font-semibold text-gray-800 lg:block">
-                            {% if request.endpoint == 'admin.dashboard' %}
-                                Dashboard
-                            {% elif request.endpoint == 'admin.register_user' %}
-                                Register User
-                            {% elif request.endpoint == 'admin.manage_courses' %}
-                                Manage Courses
-                            {% elif request.endpoint == 'admin.hardware' %}
-                                Hardware
-                            {% elif request.endpoint == 'admin.reports' %}
-                                Reports
-                            {% endif %}
-                        </h1>
+                        <!-- Logo and title -->
+                        <div class="ml-8 flex items-center space-x-3">
+                            <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="Logo" class="h-8 w-8">
+                            <h1 class="text-xl font-semibold text-gray-800">
+                                {% if request.endpoint == 'admin.dashboard' %}
+                                    Dashboard
+                                {% elif request.endpoint == 'admin.register_user' %}
+                                    Register User
+                                {% elif request.endpoint == 'admin.manage_courses' %}
+                                    Manage Courses
+                                {% elif request.endpoint == 'admin.hardware' %}
+                                    Hardware
+                                {% elif request.endpoint == 'admin.reports' %}
+                                    Reports
+                                {% endif %}
+                            </h1>
+                        </div>
                     </div>
                     
                     <!-- Right side -->
