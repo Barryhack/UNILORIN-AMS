@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full">
+<html lang="en" class="h-full bg-gray-50">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -21,50 +21,68 @@
     {% block extra_styles %}{% endblock %}
     
     <style>
-        html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
+        :root {
+            --header-height: 64px;
+            --sidebar-width: 256px;
+        }
+        
+        html {
+            scroll-behavior: smooth;
         }
         
         body {
-            display: flex;
-            flex-direction: column;
+            font-family: 'Inter', sans-serif;
             min-height: 100vh;
             background-color: #f9fafb;
         }
-
-        .scroll-container {
+        
+        #main-content {
+            margin-left: var(--sidebar-width);
+            margin-top: var(--header-height);
+            min-height: calc(100vh - var(--header-height));
+            transition: margin-left 0.3s ease;
             overflow-y: auto;
             overflow-x: hidden;
-            height: 100%;
-            width: 100%;
+            padding: 1.5rem;
         }
-
+        
+        @media (max-width: 1024px) {
+            #main-content {
+                margin-left: 0;
+            }
+        }
+        
+        .scroll-container {
+            height: 100%;
+            overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: thin;
+            scrollbar-color: #888 #f1f1f1;
+        }
+        
         .scroll-container::-webkit-scrollbar {
             width: 6px;
         }
-
+        
         .scroll-container::-webkit-scrollbar-track {
             background: #f1f1f1;
+            border-radius: 3px;
         }
-
+        
         .scroll-container::-webkit-scrollbar-thumb {
             background: #888;
             border-radius: 3px;
         }
-
+        
         .scroll-container::-webkit-scrollbar-thumb:hover {
             background: #555;
         }
-
+        
         .nav-link {
             position: relative;
             transition: all 0.3s ease;
         }
-
+        
         .nav-link::before {
             content: '';
             position: absolute;
@@ -76,17 +94,27 @@
             transform: scaleY(0);
             transition: transform 0.2s;
         }
-
+        
         .nav-link:hover::before,
         .nav-link.active::before {
             transform: scaleY(1);
         }
+        
+        @media (max-width: 1024px) {
+            #sidebar {
+                transform: translateX(-100%);
+            }
+            
+            #sidebar.show {
+                transform: translateX(0);
+            }
+        }
     </style>
 </head>
 
-<body class="h-full font-sans antialiased">
+<body class="h-full">
     <!-- Top Navigation -->
-    <nav class="fixed top-0 z-50 w-full bg-white border-b border-gray-200">
+    <nav class="fixed top-0 z-50 w-full bg-white border-b border-gray-200 h-[var(--header-height)]">
         <div class="px-3 py-3 lg:px-5 lg:pl-3">
             <div class="flex items-center justify-between">
                 <div class="flex items-center justify-start">
@@ -99,23 +127,24 @@
                     </a>
                 </div>
                 <div class="flex items-center">
-                    <!-- Profile dropdown -->
-                    <div class="relative ml-3">
-                        <button id="profile-button" class="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300">
-                            <span class="sr-only">Open user menu</span>
-                            <div class="w-8 h-8 rounded-full bg-[#002147] flex items-center justify-center text-white">
-                                {{ current_user.first_name[0].upper() }}
-                            </div>
-                        </button>
-                        <!-- Dropdown menu -->
-                        <div id="profile-dropdown" class="hidden absolute right-0 z-50 mt-2 w-48 bg-white rounded-lg shadow-lg">
-                            <div class="px-4 py-3">
-                                <p class="text-sm text-gray-900">{{ current_user.first_name }} {{ current_user.last_name }}</p>
-                                <p class="text-sm font-medium text-gray-500 truncate">{{ current_user.email }}</p>
-                            </div>
-                            <div class="py-1">
-                                <a href="/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</a>
-                                <a href="/auth/logout" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
+                    <div class="flex items-center ml-3">
+                        <div class="relative">
+                            <button type="button" class="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300" id="user-menu-button">
+                                <span class="sr-only">Open user menu</span>
+                                <div class="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-white">
+                                    {{ current_user.first_name[0].upper() }}
+                                </div>
+                            </button>
+                            <div class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-50" id="user-dropdown">
+                                <div class="px-4 py-3">
+                                    <p class="text-sm text-gray-900">{{ current_user.first_name }} {{ current_user.last_name }}</p>
+                                    <p class="text-sm font-medium text-gray-900 truncate">{{ current_user.email }}</p>
+                                </div>
+                                <ul class="py-1" aria-labelledby="user-menu-button">
+                                    <li>
+                                        <a href="{{ url_for('auth.logout') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Sign out</a>
+                                    </li>
+                                </ul>
                             </div>
                         </div>
                     </div>
@@ -124,63 +153,54 @@
         </div>
     </nav>
 
-    <!-- Error Container -->
-    <div id="error-container" class="fixed top-16 left-1/2 transform -translate-x-1/2 z-50 hidden w-96">
-        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-md" role="alert">
-            <div class="flex items-center">
-                <div class="py-1">
-                    <i class="fas fa-exclamation-circle"></i>
-                </div>
-                <div class="ml-3">
-                    <p id="error-message" class="text-sm"></p>
-                </div>
-                <button type="button" class="ml-auto -mx-1.5 -my-1.5 bg-red-100 text-red-500 rounded-lg focus:ring-2 focus:ring-red-400 p-1.5 hover:bg-red-200 inline-flex h-8 w-8">
-                    <span class="sr-only">Close</span>
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-        </div>
-    </div>
-
     <!-- Sidebar -->
-    <aside id="sidebar" class="fixed top-0 left-0 z-40 w-64 h-screen pt-20 transition-transform -translate-x-full bg-white border-r border-gray-200 lg:translate-x-0">
-        <!-- User Profile -->
+    <aside id="sidebar" class="fixed top-0 left-0 z-40 w-[var(--sidebar-width)] h-screen pt-[var(--header-height)] transition-transform bg-white border-r border-gray-200 lg:translate-x-0">
         <div class="flex flex-col h-full">
             <div class="flex items-center justify-center p-6 border-b border-gray-200">
                 <div class="flex flex-col items-center">
-                    <div class="w-16 h-16 rounded-full bg-[#002147] flex items-center justify-center text-white text-2xl">
+                    <div class="w-20 h-20 rounded-full bg-gray-300 flex items-center justify-center text-white text-2xl mb-2">
                         {{ current_user.first_name[0].upper() }}
                     </div>
-                    <h5 class="mt-2 text-xl font-medium text-gray-900">{{ current_user.first_name }} {{ current_user.last_name }}</h5>
+                    <h5 class="text-lg font-semibold text-gray-900">{{ current_user.first_name }} {{ current_user.last_name }}</h5>
                     <span class="text-sm text-gray-500">{{ current_user.role.title() }}</span>
                 </div>
             </div>
-
-            <!-- Navigation -->
-            <div class="py-4 px-3 overflow-y-auto">
+            <div class="scroll-container flex-1 px-3 py-4 overflow-y-auto">
                 <ul class="space-y-2">
                     <li>
-                        <a href="/admin/new-dashboard" class="nav-link flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 ">
-                            <i class="fas fa-home w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"></i>
+                        <a href="{{ url_for('admin.dashboard') }}" class="nav-link flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 {% if request.endpoint == 'admin.dashboard' %}bg-gray-100{% endif %}">
+                            <i class="fas fa-tachometer-alt w-6 h-6 text-gray-500 transition duration-75"></i>
                             <span class="ml-3">Dashboard</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{{ url_for('admin.manage_users') }}" class="nav-link flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 {% if request.endpoint == 'admin.manage_users' %}active{% endif %}">
+                        <a href="{{ url_for('admin.manage_users') }}" class="nav-link flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 {% if request.endpoint == 'admin.manage_users' %}bg-gray-100{% endif %}">
                             <i class="fas fa-users w-6 h-6 text-gray-500 transition duration-75"></i>
                             <span class="ml-3">Users</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{{ url_for('admin.manage_departments') }}" class="nav-link flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 {% if request.endpoint == 'admin.manage_departments' %}active{% endif %}">
+                        <a href="{{ url_for('admin.manage_courses') }}" class="nav-link flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 {% if request.endpoint == 'admin.manage_courses' %}bg-gray-100{% endif %}">
+                            <i class="fas fa-book w-6 h-6 text-gray-500 transition duration-75"></i>
+                            <span class="ml-3">Courses</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('admin.manage_departments') }}" class="nav-link flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 {% if request.endpoint == 'admin.manage_departments' %}bg-gray-100{% endif %}">
                             <i class="fas fa-building w-6 h-6 text-gray-500 transition duration-75"></i>
                             <span class="ml-3">Departments</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{{ url_for('admin.manage_courses') }}" class="nav-link flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 {% if request.endpoint == 'admin.manage_courses' %}active{% endif %}">
-                            <i class="fas fa-book w-6 h-6 text-gray-500 transition duration-75"></i>
-                            <span class="ml-3">Courses</span>
+                        <a href="{{ url_for('admin.activity_logs') }}" class="nav-link flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 {% if request.endpoint == 'admin.activity_logs' %}bg-gray-100{% endif %}">
+                            <i class="fas fa-history w-6 h-6 text-gray-500 transition duration-75"></i>
+                            <span class="ml-3">Activity Logs</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('admin.system_logs') }}" class="nav-link flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 {% if request.endpoint == 'admin.system_logs' %}bg-gray-100{% endif %}">
+                            <i class="fas fa-terminal w-6 h-6 text-gray-500 transition duration-75"></i>
+                            <span class="ml-3">System Logs</span>
                         </a>
                     </li>
                 </ul>
@@ -189,61 +209,59 @@
     </aside>
 
     <!-- Main Content -->
-    <div class="p-4 lg:ml-64 pt-20">
-        <!-- Flash Messages -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="mb-4 p-4 rounded-lg {% if category == 'error' %}bg-red-100 text-red-700 border-red-400{% else %}bg-green-100 text-green-700 border-green-400{% endif %}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-
+    <main id="main-content" class="scroll-container">
         {% block content %}{% endblock %}
-    </div>
+    </main>
 
-    <!-- Scripts -->
     <script>
         // Force reload if template version changes
-        const TEMPLATE_VERSION = '1.0.1';
+        const TEMPLATE_VERSION = '1.0.2';
         if (localStorage.getItem('template_version') !== TEMPLATE_VERSION) {
             localStorage.setItem('template_version', TEMPLATE_VERSION);
-            if (!window.location.hash) {
-                window.location.reload(true);
-            }
+            window.location.reload(true);
         }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            // Toggle sidebar on mobile
-            const sidebarToggle = document.getElementById('sidebar-toggle');
-            const sidebar = document.getElementById('sidebar');
+        
+        // User dropdown toggle
+        const userMenuButton = document.getElementById('user-menu-button');
+        const userDropdown = document.getElementById('user-dropdown');
+        
+        if (userMenuButton && userDropdown) {
+            userMenuButton.addEventListener('click', () => {
+                userDropdown.classList.toggle('hidden');
+            });
             
-            if (sidebarToggle) {
-                sidebarToggle.addEventListener('click', function() {
-                    sidebar.classList.toggle('-translate-x-full');
-                });
-            }
-
-            // Toggle profile dropdown
-            const profileButton = document.getElementById('profile-button');
-            const profileDropdown = document.getElementById('profile-dropdown');
+            document.addEventListener('click', (event) => {
+                if (!userMenuButton.contains(event.target) && !userDropdown.contains(event.target)) {
+                    userDropdown.classList.add('hidden');
+                }
+            });
+        }
+        
+        // Sidebar toggle for mobile
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        const sidebar = document.getElementById('sidebar');
+        
+        if (sidebarToggle && sidebar) {
+            sidebarToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('-translate-x-full');
+            });
             
-            if (profileButton && profileDropdown) {
-                profileButton.addEventListener('click', function() {
-                    profileDropdown.classList.toggle('hidden');
-                });
-
-                // Close dropdown when clicking outside
-                document.addEventListener('click', function(event) {
-                    if (!profileButton.contains(event.target) && !profileDropdown.contains(event.target)) {
-                        profileDropdown.classList.add('hidden');
+            // Close sidebar when clicking outside on mobile
+            document.addEventListener('click', (event) => {
+                if (window.innerWidth < 1024) {
+                    if (!sidebar.contains(event.target) && !sidebarToggle.contains(event.target)) {
+                        sidebar.classList.add('-translate-x-full');
                     }
-                });
+                }
+            });
+        }
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (window.innerWidth >= 1024) {
+                sidebar.classList.remove('-translate-x-full');
             }
         });
     </script>
-    {% block extra_scripts %}{% endblock %}
 </body>
 </html>
