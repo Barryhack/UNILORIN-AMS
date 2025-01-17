@@ -19,18 +19,20 @@ def login():
         return redirect(url_for('main.index'))
 
     form = LoginForm()
+    error = None
     
     if request.method == 'POST':
         logger.info(f"Login attempt from IP: {request.remote_addr}")
         
         if form.validate_on_submit():
-            login_id = form.login.data
-            logger.info(f"Attempting login with ID: {login_id}")
-            
-            user = User.query.filter_by(login_id=login_id).first()
-            
-            if user and user.verify_password(form.password.data):
-                try:
+            try:
+                # Find user by username or email
+                user = User.query.filter(
+                    (User.username == form.login.data) | 
+                    (User.email == form.login.data)
+                ).first()
+                
+                if user and user.check_password(form.password.data):
                     # Update last login
                     user.last_login = datetime.utcnow()
                     
@@ -49,67 +51,36 @@ def login():
                         user_id=user.id,
                         action='login',
                         details=f'User logged in from {request.remote_addr}',
-                        ip_address=request.remote_addr,
-                        timestamp=datetime.utcnow()
+                        category='auth',
+                        ip_address=request.remote_addr
                     )
                     db.session.add(activity_log)
                     
-                    # Commit the transaction
-                    db.session.commit()
+                    try:
+                        db.session.commit()
+                    except SQLAlchemyError as e:
+                        logger.error(f"Database error during login: {e}")
+                        db.session.rollback()
                     
-                    # Log in user after successful transaction
-                    login_user(user, remember=form.remember.data)
-                    logger.info(f"User {login_id} logged in successfully")
+                    # Log in the user
+                    login_user(user)
+                    logger.info(f"User {user.username} logged in successfully")
                     
-                    # Redirect to next page or default
+                    # Redirect to the next page or default
                     next_page = request.args.get('next')
                     if not next_page or url_parse(next_page).netloc != '':
-                        if user.role == 'admin':
-                            next_page = url_for('admin.dashboard')
-                        elif user.role == 'lecturer':
-                            next_page = url_for('lecturer.dashboard')
-                        else:
-                            next_page = url_for('student.dashboard')
-                    return redirect(url_parse(next_page).path)
-                    
-                except SQLAlchemyError as e:
-                    db.session.rollback()
-                    logger.error(f"Database error during login: {str(e)}")
-                    flash('An error occurred during login. Please try again.', 'error')
-                except Exception as e:
-                    db.session.rollback()
-                    logger.error(f"Unexpected error during login: {str(e)}")
-                    flash('An unexpected error occurred. Please try again.', 'error')
-            else:
-                logger.warning(f"Failed login attempt for ID: {login_id}")
-                flash('Invalid username or password', 'error')
-                
-                # Log failed login attempt
-                try:
-                    login_log = LoginLog(
-                        user_id=user.id if user else None,
-                        ip_address=request.remote_addr,
-                        user_agent=request.user_agent.string,
-                        action='login',
-                        status='failed'
-                    )
-                    db.session.add(login_log)
-                    db.session.commit()
-                except SQLAlchemyError as e:
-                    db.session.rollback()
-                    logger.error(f"Database error logging failed login: {str(e)}")
-                except Exception as e:
-                    db.session.rollback()
-                    logger.error(f"Error logging failed login attempt: {str(e)}")
+                        next_page = url_for('main.index')
+                    return redirect(next_page)
+                else:
+                    error = "Invalid username/email or password"
+                    logger.warning(f"Failed login attempt for user: {form.login.data}")
+            except Exception as e:
+                logger.error(f"Error during login: {e}")
+                error = "An error occurred during login. Please try again."
         else:
-            logger.warning("Form validation failed")
-            for field, errors in form.errors.items():
-                for error in errors:
-                    flash(f"{field}: {error}", 'error')
-    
-    # Pass next parameter to template
-    next_page = request.args.get('next')
-    return render_template('auth/login.html', form=form, next=next_page)
+            error = "Please check your input and try again."
+            
+    return render_template('auth/login.html', form=form, error=error)
 
 @auth_bp.route('/logout')
 @login_required
