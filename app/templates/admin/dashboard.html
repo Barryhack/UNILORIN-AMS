@@ -162,16 +162,16 @@
 <!-- Hardware Status -->
 {% if hardware_status %}
 <div class="fixed bottom-4 right-4">
-    <div class="bg-white rounded-lg shadow-lg p-4 border {% if hardware_status.status == 'connected' %}border-green-500{% else %}border-red-500{% endif %}">
+    <div id="hardware-status-container" class="bg-white rounded-lg shadow-lg p-4 border {% if hardware_status.status == 'connected' %}border-green-500{% else %}border-red-500{% endif %}">
         <div class="flex items-center space-x-3">
             <div class="flex-shrink-0">
-                <i class="fas fa-microchip {% if hardware_status.status == 'connected' %}text-green-500{% else %}text-red-500{% endif %}"></i>
+                <i id="hardware-status-icon" class="fas fa-microchip {% if hardware_status.status == 'connected' %}text-green-500{% else %}text-red-500{% endif %}"></i>
             </div>
             <div>
-                <p class="text-sm font-medium {% if hardware_status.status == 'connected' %}text-green-700{% else %}text-red-700{% endif %}">
-                    Hardware Status: {{ hardware_status.status|title }}
+                <p class="text-sm font-medium">
+                    Hardware Status: <span id="hardware-status" class="{% if hardware_status.status == 'connected' %}text-green-700{% else %}text-red-700{% endif %}">{{ hardware_status.status|title }}</span>
                 </p>
-                <p class="text-xs text-gray-500">{{ hardware_status.message }}</p>
+                <p id="hardware-message" class="text-xs text-gray-500">{{ hardware_status.message }}</p>
             </div>
         </div>
     </div>
@@ -186,15 +186,43 @@
         fetch("{{ url_for('admin.api_hardware_status') }}")
             .then(response => response.json())
             .then(data => {
-                const statusDiv = document.querySelector('#hardware-status');
-                if (statusDiv) {
-                    statusDiv.textContent = data.status;
-                    statusDiv.className = data.status === 'connected' ? 'text-green-600' : 'text-red-600';
+                const container = document.getElementById('hardware-status-container');
+                const status = document.getElementById('hardware-status');
+                const icon = document.getElementById('hardware-status-icon');
+                const message = document.getElementById('hardware-message');
+                
+                if (container && status && icon && message) {
+                    // Update status text
+                    status.textContent = data.status.charAt(0).toUpperCase() + data.status.slice(1);
+                    
+                    // Update status colors
+                    if (data.status === 'connected') {
+                        container.classList.remove('border-red-500');
+                        container.classList.add('border-green-500');
+                        status.classList.remove('text-red-700');
+                        status.classList.add('text-green-700');
+                        icon.classList.remove('text-red-500');
+                        icon.classList.add('text-green-500');
+                    } else {
+                        container.classList.remove('border-green-500');
+                        container.classList.add('border-red-500');
+                        status.classList.remove('text-green-700');
+                        status.classList.add('text-red-700');
+                        icon.classList.remove('text-green-500');
+                        icon.classList.add('text-red-500');
+                    }
+                    
+                    // Update message
+                    message.textContent = data.message;
                 }
             })
             .catch(error => console.error('Error updating hardware status:', error));
     }
 
+    // Initial update
+    updateHardwareStatus();
+
+    // Update every 30 seconds
     setInterval(updateHardwareStatus, 30000);
 </script>
 {% endblock %}
