@@ -95,52 +95,55 @@
          x-cloak></div>
 
     <!-- Sidebar -->
-    <div class="sidebar bg-white shadow-xl overflow-y-auto"
-         :class="{ 'translate-x-0': $store.sidebar.open || !isMobile, '-translate-x-full': !$store.sidebar.open && isMobile }"
-         @click.away="if (isMobile) $store.sidebar.close()">
-        <div class="p-6">
-            <div class="flex items-center justify-between">
-                <a href="{{ url_for('admin.dashboard') }}" class="flex items-center space-x-3">
-                    <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="Logo" class="h-8 w-8">
-                    <span class="text-xl font-semibold text-gray-900">AMS</span>
-                </a>
-                <button x-show="isMobile" 
-                        @click="$store.sidebar.close()"
-                        class="lg:hidden text-gray-500 hover:text-gray-600"
-                        x-cloak>
-                    <span class="sr-only">Close sidebar</span>
-                    <i class="fas fa-times text-xl"></i>
-                </button>
-            </div>
-            
-            <nav class="mt-8 space-y-1">
+    <div class="fixed inset-y-0 left-0 z-40 w-72 bg-white shadow-xl transform transition-transform duration-300 ease-in-out lg:translate-x-0"
+         :class="{ 'translate-x-0': $store.sidebar.open || !isMobile, '-translate-x-full': !$store.sidebar.open && isMobile }">
+        
+        <!-- Sidebar Header -->
+        <div class="h-16 flex items-center justify-between px-6 border-b border-gray-200">
+            <a href="{{ url_for('admin.dashboard') }}" class="flex items-center space-x-3">
+                <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="Logo" 
+                     class="h-10 w-10 rounded-lg shadow-sm transition-transform duration-200 hover:scale-105">
+                <span class="text-xl font-bold text-gray-900">AMS</span>
+            </a>
+            <button x-show="isMobile" 
+                    @click="$store.sidebar.close()"
+                    class="p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
+                    x-cloak>
+                <span class="sr-only">Close sidebar</span>
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        
+        <!-- Sidebar Content -->
+        <div class="flex-1 overflow-y-auto">
+            <nav class="px-4 py-6 space-y-2">
                 <a href="{{ url_for('admin.dashboard') }}" 
-                   class="flex items-center px-4 py-2 text-sm font-medium rounded-md {% if request.endpoint == 'admin.dashboard' %}bg-blue-100 text-blue-700{% else %}text-gray-600 hover:bg-gray-50 hover:text-gray-900{% endif %}">
-                    <i class="fas fa-home w-5 h-5 mr-3"></i>
+                   class="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 {% if request.endpoint == 'admin.dashboard' %}bg-blue-50 text-blue-700 hover:bg-blue-100{% else %}text-gray-700 hover:bg-gray-100 hover:text-gray-900{% endif %}">
+                    <i class="fas fa-home w-5 h-5 mr-3 {% if request.endpoint == 'admin.dashboard' %}text-blue-600{% endif %}"></i>
                     Dashboard
                 </a>
                 
                 <a href="{{ url_for('admin.register_user') }}"
-                   class="flex items-center px-4 py-2 text-sm font-medium rounded-md {% if request.endpoint == 'admin.register_user' %}bg-blue-100 text-blue-700{% else %}text-gray-600 hover:bg-gray-50 hover:text-gray-900{% endif %}">
-                    <i class="fas fa-user-plus w-5 h-5 mr-3"></i>
+                   class="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 {% if request.endpoint == 'admin.register_user' %}bg-blue-50 text-blue-700 hover:bg-blue-100{% else %}text-gray-700 hover:bg-gray-100 hover:text-gray-900{% endif %}">
+                    <i class="fas fa-user-plus w-5 h-5 mr-3 {% if request.endpoint == 'admin.register_user' %}text-blue-600{% endif %}"></i>
                     Register User
                 </a>
                 
                 <a href="{{ url_for('admin.manage_courses') }}"
-                   class="flex items-center px-4 py-2 text-sm font-medium rounded-md {% if request.endpoint == 'admin.manage_courses' %}bg-blue-100 text-blue-700{% else %}text-gray-600 hover:bg-gray-50 hover:text-gray-900{% endif %}">
-                    <i class="fas fa-book w-5 h-5 mr-3"></i>
+                   class="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 {% if request.endpoint == 'admin.manage_courses' %}bg-blue-50 text-blue-700 hover:bg-blue-100{% else %}text-gray-700 hover:bg-gray-100 hover:text-gray-900{% endif %}">
+                    <i class="fas fa-book w-5 h-5 mr-3 {% if request.endpoint == 'admin.manage_courses' %}text-blue-600{% endif %}"></i>
                     Manage Courses
                 </a>
 
                 <a href="{{ url_for('admin.hardware') }}"
-                   class="flex items-center px-4 py-2 text-sm font-medium rounded-md {% if request.endpoint == 'admin.hardware' %}bg-blue-100 text-blue-700{% else %}text-gray-600 hover:bg-gray-50 hover:text-gray-900{% endif %}">
-                    <i class="fas fa-microchip w-5 h-5 mr-3"></i>
+                   class="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 {% if request.endpoint == 'admin.hardware' %}bg-blue-50 text-blue-700 hover:bg-blue-100{% else %}text-gray-700 hover:bg-gray-100 hover:text-gray-900{% endif %}">
+                    <i class="fas fa-microchip w-5 h-5 mr-3 {% if request.endpoint == 'admin.hardware' %}text-blue-600{% endif %}"></i>
                     Hardware
                 </a>
                 
                 <a href="{{ url_for('admin.reports') }}"
-                   class="flex items-center px-4 py-2 text-sm font-medium rounded-md {% if request.endpoint == 'admin.reports' %}bg-blue-100 text-blue-700{% else %}text-gray-600 hover:bg-gray-50 hover:text-gray-900{% endif %}">
-                    <i class="fas fa-chart-bar w-5 h-5 mr-3"></i>
+                   class="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 {% if request.endpoint == 'admin.reports' %}bg-blue-50 text-blue-700 hover:bg-blue-100{% else %}text-gray-700 hover:bg-gray-100 hover:text-gray-900{% endif %}">
+                    <i class="fas fa-chart-bar w-5 h-5 mr-3 {% if request.endpoint == 'admin.reports' %}text-blue-600{% endif %}"></i>
                     Reports
                 </a>
             </nav>
