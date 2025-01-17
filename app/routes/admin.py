@@ -106,20 +106,32 @@ def dashboard():
         now = datetime.now()
         
         # Get statistics
-        stats = get_dashboard_statistics()
-        
+        try:
+            stats = get_dashboard_statistics()
+        except Exception as e:
+            logger.error(f"Error getting dashboard statistics: {e}")
+            stats = {
+                'total_users': 0,
+                'total_courses': 0,
+                'total_departments': 0,
+                'today_attendance': 0,
+                'attendance_data': [],
+                'department_labels': [],
+                'department_data': []
+            }
+            
         # Get recent activities
         try:
             recent_activities = ActivityLog.query.order_by(ActivityLog.timestamp.desc()).limit(5).all()
-        except Exception as act_error:
-            logger.error(f"Error getting recent activities: {act_error}")
+        except Exception as e:
+            logger.error(f"Error getting recent activities: {e}")
             recent_activities = []
             
         # Get recent registrations
         try:
             recent_registrations = User.query.order_by(User.created_at.desc()).limit(5).all()
-        except Exception as reg_error:
-            logger.error(f"Error getting recent registrations: {reg_error}")
+        except Exception as e:
+            logger.error(f"Error getting recent registrations: {e}")
             recent_registrations = []
 
         # Get hardware status
@@ -129,9 +141,9 @@ def dashboard():
                 hardware_status = controller.get_status()
             else:
                 hardware_status = {'status': 'disconnected', 'message': 'Hardware controller not initialized'}
-        except Exception as hw_error:
-            logger.error(f"Error getting hardware status: {hw_error}")
-            hardware_status = {'status': 'error', 'message': str(hw_error)}
+        except Exception as e:
+            logger.error(f"Error getting hardware status: {e}")
+            hardware_status = {'status': 'error', 'message': str(e)}
 
         return render_template('admin/dashboard.html',
                             now=now,
@@ -141,7 +153,21 @@ def dashboard():
                             recent_registrations=recent_registrations)
     except Exception as e:
         logger.error(f"Error in dashboard route: {e}")
-        return render_template('errors/500.html'), 500
+        flash('Error loading dashboard. Please try again.', 'error')
+        return render_template('admin/dashboard.html',
+                            now=datetime.now(),
+                            stats={
+                                'total_users': 0,
+                                'total_courses': 0,
+                                'total_departments': 0,
+                                'today_attendance': 0,
+                                'attendance_data': [],
+                                'department_labels': [],
+                                'department_data': []
+                            },
+                            hardware_status={'status': 'error', 'message': 'Error loading hardware status'},
+                            recent_activities=[],
+                            recent_registrations=[])
 
 @admin_bp.route('/register', methods=['GET', 'POST'])
 @login_required

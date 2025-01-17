@@ -11,7 +11,20 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <!-- Alpine.js -->
-    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://unpkg.com/alpinejs@3.13.3/dist/cdn.min.js" defer></script>
+    <script>
+        // Fallback if Alpine.js fails to load
+        window.addEventListener('load', function() {
+            if (typeof Alpine === 'undefined') {
+                console.error('Alpine.js failed to load. Using fallback.');
+                // Basic fallback for sidebar toggle
+                document.querySelector('.sidebar-toggle').addEventListener('click', function() {
+                    var sidebar = document.querySelector('.sidebar');
+                    sidebar.classList.toggle('hidden');
+                });
+            }
+        });
+    </script>
     
     {% block extra_styles %}{% endblock %}
     
