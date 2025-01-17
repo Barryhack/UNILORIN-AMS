@@ -108,20 +108,6 @@ def dashboard():
         # Get statistics
         stats = get_dashboard_statistics()
         
-        # Get departments for filtering
-        departments = Department.query.all()
-        
-        # Get hardware status
-        try:
-            controller = get_hardware_controller()
-            if controller:
-                hardware_status = controller.get_status()
-            else:
-                hardware_status = {'status': 'disconnected', 'message': 'Hardware controller not initialized'}
-        except Exception as hw_error:
-            logger.error(f"Error getting hardware status: {hw_error}")
-            hardware_status = {'status': 'error', 'message': str(hw_error)}
-        
         # Get recent activities
         try:
             recent_activities = ActivityLog.query.order_by(ActivityLog.timestamp.desc()).limit(5).all()
@@ -136,10 +122,20 @@ def dashboard():
             logger.error(f"Error getting recent registrations: {reg_error}")
             recent_registrations = []
 
-        return render_template('admin/dashboard_new.html',
+        # Get hardware status
+        try:
+            controller = get_hardware_controller()
+            if controller:
+                hardware_status = controller.get_status()
+            else:
+                hardware_status = {'status': 'disconnected', 'message': 'Hardware controller not initialized'}
+        except Exception as hw_error:
+            logger.error(f"Error getting hardware status: {hw_error}")
+            hardware_status = {'status': 'error', 'message': str(hw_error)}
+
+        return render_template('admin/dashboard.html',
                             now=now,
                             stats=stats,
-                            departments=departments,
                             hardware_status=hardware_status,
                             recent_activities=recent_activities,
                             recent_registrations=recent_registrations)
