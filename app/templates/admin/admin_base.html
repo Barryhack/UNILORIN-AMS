@@ -140,16 +140,16 @@
             padding-top: 4rem;
             min-height: 100vh;
             background-color: #F3F4F6;
+            transition: margin-left 0.3s ease;
         }
 
         @media (min-width: 1024px) {
             .main-content {
-                padding-left: var(--sidebar-width, 16rem);
-                transition: padding-left 0.3s ease;
+                margin-left: 16rem;
             }
 
             .main-content.collapsed {
-                --sidebar-width: 4rem;
+                margin-left: 4rem;
             }
         }
 
@@ -362,30 +362,37 @@
 
     <!-- Header -->
     <header class="header">
-        <div class="header-container">
-            <!-- Left section -->
-            <div class="header-left">
-                <button 
-                    @click="isMobile ? sidebarOpen = !sidebarOpen : sidebarCollapsed = !sidebarCollapsed"
-                    class="menu-button"
-                    :aria-label="isMobile ? (sidebarOpen ? 'Close menu' : 'Open menu') : (sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar')">
-                    <i class="fas" :class="isMobile ? 'fa-bars' : (sidebarCollapsed ? 'fa-indent' : 'fa-outdent')"></i>
-                </button>
-                
-                <div class="logo-container">
-                    <img src="{{ url_for('static', filename='images/unilorin-logo.png') }}" alt="UNILORIN Logo" class="logo-image">
-                    <span class="logo-text" x-show="!sidebarCollapsed || isMobile">AMS</span>
-                </div>
-            </div>
-
-            <!-- Right section -->
-            <div class="header-right">
-                <div class="user-section">
-                    <span class="user-name hidden sm:inline">{{ current_user.first_name }} {{ current_user.last_name }}</span>
-                    <a href="{{ url_for('auth.logout') }}" class="logout-button">
-                        <i class="fas fa-sign-out-alt"></i>
-                        <span>Logout</span>
+        <div class="px-4 sm:px-6 lg:px-8">
+            <div class="flex h-16 items-center justify-between">
+                <!-- Left section -->
+                <div class="flex items-center space-x-3">
+                    <button 
+                        @click="sidebarOpen = !sidebarOpen" 
+                        class="text-gray-500 hover:text-gray-600 focus:outline-none lg:hidden p-2 rounded-lg hover:bg-gray-100">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    <button 
+                        @click="sidebarCollapsed = !sidebarCollapsed" 
+                        class="hidden lg:block text-gray-500 hover:text-gray-600 focus:outline-none p-2 rounded-lg hover:bg-gray-100">
+                        <i class="fas" :class="sidebarCollapsed ? 'fa-indent' : 'fa-outdent'"></i>
+                    </button>
+                    <a href="{{ url_for('admin.dashboard') }}" class="flex items-center space-x-3">
+                        <div class="logo-container">
+                            <img src="{{ url_for('static', filename='images/unilorin-logo.png') }}" alt="UNILORIN Logo">
+                        </div>
+                        <span class="text-xl font-semibold text-gray-900" x-show="!sidebarCollapsed">AMS</span>
                     </a>
+                </div>
+
+                <!-- Right section -->
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-sm text-gray-700">{{ current_user.first_name }} {{ current_user.last_name }}</span>
+                        <a href="{{ url_for('auth.logout') }}" class="text-sm text-gray-700 hover:text-gray-900">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span class="ml-1">Logout</span>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
