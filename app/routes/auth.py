@@ -3,7 +3,9 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.urls import url_parse
 from app.forms.auth import LoginForm
-from app.models import User, LoginLog, ActivityLog
+from app.models.user import User
+from app.models.activity_log import ActivityLog
+from app.models.login_log import LoginLog
 from app.extensions import db
 from datetime import datetime
 import logging
@@ -26,13 +28,10 @@ def login():
         
         if form.validate_on_submit():
             try:
-                # Find user by username or email
-                user = User.query.filter(
-                    (User.username == form.login.data) | 
-                    (User.email == form.login.data)
-                ).first()
+                # Find user by login_id
+                user = User.query.filter_by(login_id=form.login.data).first()
                 
-                if user and user.check_password(form.password.data):
+                if user and user.verify_password(form.password.data):
                     # Update last login
                     user.last_login = datetime.utcnow()
                     
@@ -61,25 +60,48 @@ def login():
                     except SQLAlchemyError as e:
                         logger.error(f"Database error during login: {e}")
                         db.session.rollback()
+                        error = "Database error occurred. Please try again."
+                        return render_template('auth/login.html', form=form, error=error)
                     
                     # Log in the user
-                    login_user(user)
-                    logger.info(f"User {user.username} logged in successfully")
+                    login_user(user, remember=form.remember.data)
+                    logger.info(f"User {user.login_id} logged in successfully")
                     
-                    # Redirect to the next page or default
-                    next_page = request.args.get('next')
-                    if not next_page or url_parse(next_page).netloc != '':
-                        next_page = url_for('main.index')
-                    return redirect(next_page)
+                    # Redirect based on role
+                    if user.role == 'admin':
+                        return redirect(url_for('admin.dashboard'))
+                    elif user.role == 'lecturer':
+                        return redirect(url_for('lecturer.dashboard'))
+                    else:
+                        return redirect(url_for('student.dashboard'))
                 else:
-                    error = "Invalid username/email or password"
-                    logger.warning(f"Failed login attempt for user: {form.login.data}")
+                    error = "Invalid login ID or password"
+                    logger.warning(f"Failed login attempt for login_id: {form.login.data}")
+                    
+                    # Log failed attempt
+                    if user:
+                        login_log = LoginLog(
+                            user_id=user.id,
+                            ip_address=request.remote_addr,
+                            user_agent=request.user_agent.string,
+                            action='login',
+                            status='failed'
+                        )
+                        try:
+                            db.session.add(login_log)
+                            db.session.commit()
+                        except SQLAlchemyError as e:
+                            logger.error(f"Error logging failed login: {e}")
+                            db.session.rollback()
             except Exception as e:
                 logger.error(f"Error during login: {e}")
                 error = "An error occurred during login. Please try again."
         else:
             error = "Please check your input and try again."
-            
+            for field, errors in form.errors.items():
+                for error in errors:
+                    logger.warning(f"Form validation error - {field}: {error}")
+    
     return render_template('auth/login.html', form=form, error=error)
 
 @auth_bp.route('/logout')
