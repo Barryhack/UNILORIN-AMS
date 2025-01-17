@@ -58,7 +58,6 @@ class ActivityLog(db.Model):
             ip_address=ip_address
         )
         db.session.add(log)
-        db.session.commit()
         return log
 
     @classmethod
