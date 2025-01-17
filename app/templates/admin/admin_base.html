@@ -177,11 +177,12 @@
                     <div class="flex items-center">
                         <!-- Mobile menu button -->
                         <button type="button" 
-                                @click="$store.sidebar.toggle()"
-                                class="lg:hidden inline-flex items-center justify-center p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200">
+                                @click="isMobile ? $store.sidebar.toggle() : $store.sidebar.collapsed = !$store.sidebar.collapsed"
+                                class="inline-flex items-center justify-center p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200"
+                                :class="{ 'lg:hidden': !$store.sidebar.collapsed }">
                             <span class="sr-only">Toggle sidebar</span>
                             <i class="fas text-xl transition-transform duration-200" 
-                               :class="$store.sidebar.open ? 'fa-times' : 'fa-bars'"></i>
+                               :class="$store.sidebar.open || !$store.sidebar.collapsed ? 'fa-times' : 'fa-bars'"></i>
                         </button>
 
                         <!-- Logo and title -->
