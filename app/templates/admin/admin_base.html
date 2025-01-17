@@ -16,487 +16,163 @@
     {% block extra_styles %}{% endblock %}
     
     <style>
+        /* Base Styles */
         [x-cloak] { display: none !important; }
-        
-        /* Header Styles */
-        header {
-            position: fixed;
-            top: 0;
-            z-index: 30;
-            width: 100%;
-            background-color: #ffffff;
-            border-bottom: 1px solid rgba(229, 231, 235, 0.5);
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+
+        /* Sidebar Transitions */
+        .sidebar-transition {
+            transition-property: transform, width;
+            transition-duration: 300ms;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .header-container {
-            padding: 0 1rem;
-        }
-
-        @media (min-width: 640px) {
-            .header-container {
-                padding: 0 1.5rem;
+        /* Mobile Optimizations */
+        @media (max-width: 1023px) {
+            .sidebar {
+                width: 256px !important;
+                box-shadow: 4px 0 6px -1px rgba(0, 0, 0, 0.1);
+            }
+            
+            .nav-section {
+                padding: 0.75rem 1rem;
+            }
+            
+            .nav-link {
+                padding: 0.75rem 1rem;
+                margin: 0.25rem 0;
             }
         }
 
-        @media (min-width: 1024px) {
-            .header-container {
-                padding: 0 2rem;
-            }
-        }
-
-        .header-content {
-            display: flex;
-            height: 4rem;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        /* Left Section */
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .menu-button {
+        /* Improved Touch Targets */
+        .nav-link {
+            min-height: 48px;
             position: relative;
-            width: 2.5rem;
-            height: 2.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0.5rem;
-            color: #6B7280;
-            border-radius: 0.5rem;
-            transition: all 0.2s ease-in-out;
         }
 
-        .menu-button::after {
+        .nav-link::before {
             content: '';
             position: absolute;
-            inset: -0.25rem;
-            border-radius: 0.5rem;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
             background-color: currentColor;
             opacity: 0;
             transition: opacity 0.2s ease-in-out;
+            border-radius: inherit;
         }
 
-        .menu-button:focus::after {
+        .nav-link:active::before {
             opacity: 0.1;
         }
 
-        .menu-button:hover {
-            color: #374151;
-            background-color: #F3F4F6;
-        }
-
-        .menu-button:focus {
-            outline: none;
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
-        }
-
-        .menu-button i {
-            font-size: 1.25rem;
-        }
-
-        /* Logo Section */
-        .logo-link {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            text-decoration: none;
-        }
-
-        .logo-container {
-            width: 2.5rem;
-            height: 2.5rem;
-            border-radius: 0.5rem;
-            overflow: hidden;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-        }
-
-        .logo-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-
-        .logo-text {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: #111827;
-            letter-spacing: -0.025em;
-        }
-
-        /* Right Section */
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .user-section {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .user-name {
-            font-size: 0.875rem;
-            color: #4B5563;
-            font-weight: 500;
-        }
-
-        .logout-link {
-            display: flex;
-            align-items: center;
-            padding: 0.5rem 0.75rem;
-            font-size: 0.875rem;
-            color: #4B5563;
-            border-radius: 0.375rem;
-            transition: all 0.2s ease-in-out;
-            text-decoration: none;
-        }
-
-        .logout-link:hover {
-            color: #111827;
-            background-color: #F3F4F6;
-        }
-
-        .logout-link i {
-            margin-right: 0.375rem;
-            font-size: 0.875rem;
-        }
-
-        @media (max-width: 1023px) {
-            .collapse-button {
-                display: none;
-            }
-        }
-
-        /* Mobile Overlay */
-        .mobile-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 25;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease-in-out;
-        }
-
-        .mobile-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        /* Responsive Adjustments */
-        @media (max-width: 1023px) {
-            .sidebar-width {
-                width: 240px;
-                transform: translateX(-100%);
-                box-shadow: 4px 0 8px rgba(0, 0, 0, 0.1);
-            }
-
-            .sidebar-open {
-                transform: translateX(0);
-            }
-
-            .main-content {
-                margin-left: 0 !important;
-            }
-
-            .stats-grid {
-                grid-template-columns: repeat(1, 1fr);
-                gap: 1rem;
-                padding: 1rem;
-            }
-
-            .quick-actions {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 0.75rem;
-                padding: 1rem;
-            }
-
-            .recent-activity {
-                margin-top: 1rem;
-            }
-
-            .activity-list {
-                max-height: 300px;
-            }
-        }
-
-        @media (min-width: 640px) and (max-width: 1023px) {
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        /* Main Content Responsive */
-        .main-content {
-            transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            margin-left: 280px;
-            margin-top: 4rem;
-            min-height: calc(100vh - 4rem);
-            background-color: #F9FAFB;
-        }
-
-        .main-content.collapsed {
-            margin-left: 64px;
-        }
-
-        @media (max-width: 1023px) {
-            .main-content {
-                margin-left: 0;
-                padding: 1rem;
-            }
-        }
-
-        /* Sidebar Container */
-        .sidebar-width { 
-            width: 280px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        .sidebar-collapsed { 
-            width: 64px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        /* Navigation Section */
-        .nav-section {
-            padding: 0.5rem 0;
-            display: flex;
-            flex-direction: column;
-            gap: 0.25rem;
-        }
-
-        .nav-section:not(:last-child) {
-            border-bottom: 1px solid rgba(229, 231, 235, 0.3);
-            margin-bottom: 0.5rem;
-        }
-
-        /* Section Title */
-        .section-title {
-            padding: 0.75rem 1rem;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: #6B7280;
-        }
-
-        /* Navigation Link */
-        .nav-link {
-            display: flex;
-            align-items: center;
-            padding: 0.75rem 1rem;
-            margin: 0 0.5rem;
-            border-radius: 0.5rem;
-            color: #4B5563;
-            font-size: 0.875rem;
-            font-weight: 500;
-            transition: all 0.2s ease-in-out;
-        }
-
-        .nav-link:hover {
-            background-color: #F3F4F6;
-            color: #111827;
-            transform: translateX(4px);
-        }
-
-        .nav-link.active {
-            background-color: #EFF6FF;
-            color: #2563EB;
-            position: relative;
-        }
-
-        .nav-link.active::before {
-            content: '';
-            position: absolute;
-            left: -0.5rem;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 3px;
-            height: 1.5rem;
-            background-color: #2563EB;
-            border-radius: 0 3px 3px 0;
-        }
-
-        /* Icon */
-        .nav-link i {
-            width: 1.25rem;
-            height: 1.25rem;
-            margin-right: 0.75rem;
-            color: #9CA3AF;
-            transition: color 0.2s ease-in-out;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .nav-link:hover i {
-            color: #6B7280;
-        }
-
-        .nav-link.active i {
-            color: #2563EB;
-        }
-
-        /* Text */
-        .nav-text {
-            transition: all 0.2s ease-in-out;
-            white-space: nowrap;
-            opacity: 1;
-        }
-
-        .sidebar-collapsed .nav-text {
-            opacity: 0;
-            transform: translateX(-10px);
-        }
-
-        /* Badge */
-        .nav-badge {
-            display: inline-flex;
-            align-items: center;
-            margin-left: 0.5rem;
-            padding: 0.125rem 0.5rem;
-            font-size: 0.75rem;
-            font-weight: 500;
-            border-radius: 9999px;
-            background-color: #DBEAFE;
-            color: #2563EB;
-        }
-
-        /* Scrollbar */
-        .custom-scrollbar {
+        /* Better Scrolling */
+        .overflow-y-auto {
+            -webkit-overflow-scrolling: touch;
             scrollbar-width: thin;
             scrollbar-color: rgba(156, 163, 175, 0.3) transparent;
         }
 
-        .custom-scrollbar::-webkit-scrollbar {
+        .overflow-y-auto::-webkit-scrollbar {
             width: 4px;
         }
 
-        .custom-scrollbar::-webkit-scrollbar-track {
+        .overflow-y-auto::-webkit-scrollbar-track {
             background: transparent;
         }
 
-        .custom-scrollbar::-webkit-scrollbar-thumb {
+        .overflow-y-auto::-webkit-scrollbar-thumb {
             background-color: rgba(156, 163, 175, 0.3);
-            border-radius: 20px;
+            border-radius: 4px;
         }
 
-        .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+        .overflow-y-auto::-webkit-scrollbar-thumb:hover {
             background-color: rgba(156, 163, 175, 0.5);
-        }
-
-        /* Settings Section */
-        .border-t {
-            border-top-width: 1px;
-            --tw-border-opacity: 1;
-            border-color: rgba(229, 231, 235, var(--tw-border-opacity));
         }
     </style>
 </head>
 
-<body class="h-full" x-data="{ sidebarOpen: true, sidebarCollapsed: false }">
+<body class="h-full bg-gray-100" x-data="{ 
+    sidebarOpen: false, 
+    sidebarCollapsed: false,
+    isMobile: window.innerWidth < 1024,
+    init() {
+        this.$watch('sidebarOpen', value => {
+            if (this.isMobile) {
+                document.body.style.overflow = value ? 'hidden' : '';
+            }
+        });
+        window.addEventListener('resize', () => {
+            this.isMobile = window.innerWidth < 1024;
+            if (!this.isMobile) {
+                this.sidebarOpen = true;
+            }
+        });
+    }
+}">
     <!-- Mobile Overlay -->
     <div 
-        x-show="sidebarOpen" 
+        x-show="sidebarOpen && isMobile" 
         @click="sidebarOpen = false" 
-        class="mobile-overlay" 
-        :class="{ 'active': sidebarOpen }"
+        class="fixed inset-0 bg-black bg-opacity-50 z-20 transition-opacity lg:hidden"
+        x-transition:enter="transition-opacity ease-linear duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition-opacity ease-linear duration-300"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
         x-cloak>
     </div>
 
-    <!-- Header -->
-    <header>
-        <div class="header-container">
-            <div class="header-content">
-                <!-- Left section -->
-                <div class="header-left">
-                    <!-- Single Menu Button - Context Aware -->
-                    <button 
-                        @click="window.innerWidth >= 1024 ? sidebarCollapsed = !sidebarCollapsed : sidebarOpen = !sidebarOpen" 
-                        class="menu-button"
-                        :aria-label="window.innerWidth >= 1024 ? (sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar') : (sidebarOpen ? 'Close menu' : 'Open menu')">
-                        <i class="fas" :class="window.innerWidth >= 1024 ? (sidebarCollapsed ? 'fa-indent' : 'fa-outdent') : 'fa-bars'"></i>
-                    </button>
-                    <a href="{{ url_for('admin.dashboard') }}" class="logo-link">
-                        <div class="logo-container">
-                            <img src="{{ url_for('static', filename='images/unilorin-logo.png') }}" alt="UNILORIN Logo">
-                        </div>
-                        <span class="logo-text" x-show="!sidebarCollapsed || window.innerWidth < 1024">AMS</span>
-                    </a>
-                </div>
-
-                <!-- Right section -->
-                <div class="header-right">
-                    <div class="user-section">
-                        <span class="user-name">{{ current_user.first_name }} {{ current_user.last_name }}</span>
-                        <a href="{{ url_for('auth.logout') }}" class="logout-link">
-                            <i class="fas fa-sign-out-alt"></i>
-                            <span>Logout</span>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </header>
-
     <!-- Sidebar -->
     <aside 
+        x-cloak
+        class="fixed top-16 bottom-0 left-0 z-30 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out lg:translate-x-0"
         :class="{
-            'sidebar-width': true,
-            'sidebar-collapsed': sidebarCollapsed && window.innerWidth >= 1024,
-            'sidebar-open': sidebarOpen && window.innerWidth < 1024
-        }"
-        class="fixed top-16 bottom-0 left-0 z-20 bg-white border-r border-gray-200 transition-all duration-300">
+            'translate-x-0': sidebarOpen,
+            '-translate-x-full': !sidebarOpen,
+            'lg:w-64': !sidebarCollapsed,
+            'lg:w-16': sidebarCollapsed
+        }">
         <nav class="flex flex-col h-full">
             <!-- Main Navigation -->
-            <div class="flex-1 py-4 overflow-y-auto custom-scrollbar">
+            <div class="flex-1 overflow-y-auto custom-scrollbar">
                 <!-- Overview -->
                 <div class="nav-section">
                     <a href="{{ url_for('admin.dashboard') }}" 
                        class="nav-link {{ 'active' if request.endpoint == 'admin.dashboard' else '' }}">
                         <i class="fas fa-home"></i>
-                        <span class="nav-text" x-show="!sidebarCollapsed || window.innerWidth < 1024">Dashboard</span>
+                        <span class="nav-text" x-show="!sidebarCollapsed || isMobile">Dashboard</span>
                     </a>
                 </div>
 
                 <!-- Management -->
                 <div class="nav-section">
-                    <h3 class="section-title" x-show="!sidebarCollapsed || window.innerWidth < 1024">Management</h3>
+                    <h3 class="section-title" x-show="!sidebarCollapsed || isMobile">Management</h3>
                     <a href="{{ url_for('admin.manage_users') }}" 
                        class="nav-link {{ 'active' if request.endpoint == 'admin.manage_users' else '' }}">
                         <i class="fas fa-users"></i>
-                        <span class="nav-text" x-show="!sidebarCollapsed || window.innerWidth < 1024">Users</span>
+                        <span class="nav-text" x-show="!sidebarCollapsed || isMobile">Users</span>
                     </a>
                     <a href="{{ url_for('admin.manage_departments') }}" 
                        class="nav-link {{ 'active' if request.endpoint == 'admin.manage_departments' else '' }}">
                         <i class="fas fa-building"></i>
-                        <span class="nav-text" x-show="!sidebarCollapsed || window.innerWidth < 1024">Departments</span>
+                        <span class="nav-text" x-show="!sidebarCollapsed || isMobile">Departments</span>
                     </a>
                 </div>
 
                 <!-- Academic -->
                 <div class="nav-section">
-                    <h3 class="section-title" x-show="!sidebarCollapsed || window.innerWidth < 1024">Academic</h3>
+                    <h3 class="section-title" x-show="!sidebarCollapsed || isMobile">Academic</h3>
                     <a href="{{ url_for('admin.manage_courses') }}" 
                        class="nav-link {{ 'active' if request.endpoint == 'admin.manage_courses' else '' }}">
                         <i class="fas fa-book"></i>
-                        <span class="nav-text" x-show="!sidebarCollapsed || window.innerWidth < 1024">Courses</span>
+                        <span class="nav-text" x-show="!sidebarCollapsed || isMobile">Courses</span>
                     </a>
                     <a href="{{ url_for('admin.attendance') }}" 
                        class="nav-link {{ 'active' if request.endpoint == 'admin.attendance' else '' }}">
                         <i class="fas fa-clock"></i>
-                        <span class="nav-text" x-show="!sidebarCollapsed || window.innerWidth < 1024">
+                        <span class="nav-text" x-show="!sidebarCollapsed || isMobile">
                             Attendance
                             <span class="nav-badge">New</span>
                         </span>
@@ -505,21 +181,21 @@
 
                 <!-- System -->
                 <div class="nav-section">
-                    <h3 class="section-title" x-show="!sidebarCollapsed || window.innerWidth < 1024">System</h3>
+                    <h3 class="section-title" x-show="!sidebarCollapsed || isMobile">System</h3>
                     <a href="{{ url_for('admin.hardware') }}" 
                        class="nav-link {{ 'active' if request.endpoint == 'admin.hardware' else '' }}">
                         <i class="fas fa-microchip"></i>
-                        <span class="nav-text" x-show="!sidebarCollapsed || window.innerWidth < 1024">Hardware</span>
+                        <span class="nav-text" x-show="!sidebarCollapsed || isMobile">Hardware</span>
                     </a>
                     <a href="{{ url_for('admin.reports') }}" 
                        class="nav-link {{ 'active' if request.endpoint == 'admin.reports' else '' }}">
                         <i class="fas fa-chart-bar"></i>
-                        <span class="nav-text" x-show="!sidebarCollapsed || window.innerWidth < 1024">Reports</span>
+                        <span class="nav-text" x-show="!sidebarCollapsed || isMobile">Reports</span>
                     </a>
                     <a href="{{ url_for('admin.activity_logs') }}" 
                        class="nav-link {{ 'active' if request.endpoint == 'admin.activity_logs' else '' }}">
                         <i class="fas fa-history"></i>
-                        <span class="nav-text" x-show="!sidebarCollapsed || window.innerWidth < 1024">Activity Logs</span>
+                        <span class="nav-text" x-show="!sidebarCollapsed || isMobile">Activity Logs</span>
                     </a>
                 </div>
             </div>
@@ -530,17 +206,56 @@
                     <a href="{{ url_for('admin.settings') }}" 
                        class="nav-link {{ 'active' if request.endpoint == 'admin.settings' else '' }}">
                         <i class="fas fa-cog"></i>
-                        <span class="nav-text" x-show="!sidebarCollapsed || window.innerWidth < 1024">Settings</span>
+                        <span class="nav-text" x-show="!sidebarCollapsed || isMobile">Settings</span>
                     </a>
                 </div>
             </div>
         </nav>
     </aside>
 
+    <!-- Header -->
+    <header class="fixed top-0 right-0 left-0 z-40">
+        <div class="bg-white border-b border-gray-200 px-4 sm:px-6">
+            <div class="flex h-16 items-center justify-between">
+                <!-- Left section -->
+                <div class="flex items-center">
+                    <button 
+                        @click="isMobile ? sidebarOpen = !sidebarOpen : sidebarCollapsed = !sidebarCollapsed"
+                        class="inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+                        :aria-label="isMobile ? (sidebarOpen ? 'Close menu' : 'Open menu') : (sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar')">
+                        <i class="fas" :class="isMobile ? 'fa-bars' : (sidebarCollapsed ? 'fa-indent' : 'fa-outdent')"></i>
+                    </button>
+                    
+                    <a href="{{ url_for('admin.dashboard') }}" class="flex items-center ml-4 space-x-3">
+                        <div class="flex-shrink-0 w-8 h-8">
+                            <img src="{{ url_for('static', filename='images/unilorin-logo.png') }}" alt="UNILORIN Logo" class="w-full h-full object-contain">
+                        </div>
+                        <span class="text-xl font-semibold text-gray-900" x-show="!sidebarCollapsed || isMobile">AMS</span>
+                    </a>
+                </div>
+
+                <!-- Right section -->
+                <div class="flex items-center">
+                    <div class="flex items-center space-x-4">
+                        <span class="text-sm text-gray-700 hidden sm:inline">{{ current_user.first_name }} {{ current_user.last_name }}</span>
+                        <a href="{{ url_for('auth.logout') }}" 
+                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors">
+                            <i class="fas fa-sign-out-alt mr-2"></i>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
     <!-- Main Content -->
-    <main 
-        class="main-content"
-        :class="{ 'collapsed': sidebarCollapsed && window.innerWidth >= 1024 }">
+    <main class="min-h-screen pt-16 transition-all duration-300"
+          :class="{
+              'lg:pl-64': !sidebarCollapsed,
+              'lg:pl-16': sidebarCollapsed,
+              'pl-0': isMobile
+          }">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <!-- Flash Messages -->
             {% with messages = get_flashed_messages(with_categories=true) %}
