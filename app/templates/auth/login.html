@@ -57,6 +57,18 @@
             position: relative;
         }
 
+        .right-side {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            padding: 2rem;
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.2);
+            position: relative;
+            z-index: 2;
+        }
+
         .university-logo {
             width: 140px;
             height: auto;
@@ -89,43 +101,17 @@
             text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
         }
 
-        .right-side {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: white;
-            padding: 2rem;
-            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.2);
-            position: relative;
-            z-index: 2;
-        }
-
         .login-form-container {
             width: 100%;
             max-width: 400px;
             padding: 2rem;
-            background: white;
-            border-radius: 1rem;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .login-form-container h2 {
             font-size: 2rem;
             font-weight: 700;
-            color: #1e1b4b;
+            color: #1e293b;
             margin-bottom: 0.5rem;
-            text-align: center;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
-
-        .login-form-container p {
-            text-align: center;
-            color: #6b7280;
-            margin-bottom: 2rem;
-            font-size: 1.1rem;
         }
 
         .form-group {
@@ -134,27 +120,25 @@
 
         .form-group label {
             display: block;
-            margin-bottom: 0.5rem;
             font-weight: 500;
-            color: #374151;
+            color: #475569;
+            margin-bottom: 0.5rem;
         }
 
         .form-control {
             width: 100%;
             padding: 0.75rem 1rem;
-            border: 2px solid #e5e7eb;
+            border: 1px solid #e2e8f0;
             border-radius: 0.5rem;
             font-size: 1rem;
-            transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.8);
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+            color: #1e293b;
+            transition: border-color 0.2s;
         }
 
         .form-control:focus {
-            border-color: #1e1b4b;
             outline: none;
-            box-shadow: 0 0 0 3px rgba(30, 27, 75, 0.1), inset 0 2px 4px rgba(0, 0, 0, 0.05);
-            background: white;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
 
         .remember-me {
@@ -162,39 +146,35 @@
             align-items: center;
             gap: 0.5rem;
             margin-bottom: 1.5rem;
-            color: #4b5563;
+        }
+
+        .remember-me label {
+            color: #475569;
+            font-size: 0.875rem;
         }
 
         .btn-primary {
+            display: block;
             width: 100%;
-            padding: 0.75rem 1.5rem;
-            background: linear-gradient(135deg, #1e1b4b, #2d2a5d);
+            padding: 0.75rem;
+            background: #1d4ed8;
             color: white;
             border: none;
             border-radius: 0.5rem;
-            font-size: 1rem;
             font-weight: 600;
+            text-align: center;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.2s;
         }
 
         .btn-primary:hover {
-            background: linear-gradient(135deg, #2d2a5d, #1e1b4b);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        .btn-primary:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background: #1e40af;
         }
 
         .error-message {
             color: #dc2626;
             font-size: 0.875rem;
             margin-top: 0.25rem;
-            display: block;
         }
 
         .alert {
@@ -274,7 +254,7 @@
                     
                     <!-- ID Number Field -->
                     <div class="form-group">
-                        <label>ID Number</label>
+                        <label for="{{ form.login.id }}">ID Number</label>
                         {{ form.login(class="form-control", placeholder="e.g., LECT/CSC/001 or 19/30qc012") }}
                         {% if form.login.errors %}
                             {% for error in form.login.errors %}
@@ -285,7 +265,7 @@
 
                     <!-- Password Field -->
                     <div class="form-group">
-                        <label>Password</label>
+                        <label for="{{ form.password.id }}">Password</label>
                         {{ form.password(class="form-control", placeholder="Enter your password") }}
                         {% if form.password.errors %}
                             {% for error in form.password.errors %}
@@ -296,8 +276,8 @@
 
                     <!-- Remember Me -->
                     <div class="remember-me">
-                        {{ form.remember }}
-                        <label for="remember">Remember me</label>
+                        {{ form.remember(class="") }}
+                        <label for="{{ form.remember.id }}">Remember me</label>
                     </div>
 
                     <!-- Sign In Button -->
