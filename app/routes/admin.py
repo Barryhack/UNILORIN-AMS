@@ -16,21 +16,82 @@ from ..forms import (
 )
 from ..utils import admin_required, roles_required
 from ..extensions import db
-from ..hardware.controller import HardwareController, get_hardware_controller
+from ..hardware.controller import init_hardware, get_hardware_controller
 import logging
 import csv
 
-# Configure logging
+admin_bp = Blueprint('admin', __name__)
 logger = logging.getLogger(__name__)
 
-# Initialize hardware controller
-try:
-    hardware_controller = HardwareController()
-except Exception as e:
-    logger.error(f"Failed to initialize hardware controller: {e}")
-    hardware_controller = None
-
-admin_bp = Blueprint('admin', __name__)
+def get_dashboard_statistics():
+    """Get statistics for the admin dashboard."""
+    try:
+        # Get total users
+        total_users = User.query.count()
+        
+        # Get total courses
+        total_courses = Course.query.count()
+        
+        # Get total departments
+        total_departments = Department.query.count()
+        
+        # Get today's attendance
+        today = datetime.now().date()
+        today_attendance = Attendance.query.filter(
+            func.date(Attendance.timestamp) == today
+        ).count()
+        
+        # Get attendance data for the last 7 days
+        seven_days_ago = datetime.now() - timedelta(days=7)
+        attendance_data = db.session.query(
+            func.date(Attendance.timestamp).label('date'),
+            func.count(Attendance.id).label('count')
+        ).filter(
+            Attendance.timestamp >= seven_days_ago
+        ).group_by(
+            func.date(Attendance.timestamp)
+        ).order_by(
+            func.date(Attendance.timestamp)
+        ).all()
+        
+        attendance_labels = [row.date.strftime('%Y-%m-%d') for row in attendance_data]
+        attendance_counts = [row.count for row in attendance_data]
+        
+        # Get department statistics
+        department_stats = db.session.query(
+            Department.name,
+            func.count(User.id).label('user_count')
+        ).join(
+            User, Department.id == User.department_id
+        ).group_by(
+            Department.name
+        ).all()
+        
+        department_labels = [dept.name for dept in department_stats]
+        department_counts = [dept.user_count for dept in department_stats]
+        
+        return {
+            'total_users': total_users,
+            'total_courses': total_courses,
+            'total_departments': total_departments,
+            'today_attendance': today_attendance,
+            'attendance_labels': attendance_labels,
+            'attendance_data': attendance_counts,
+            'department_labels': department_labels,
+            'department_data': department_counts
+        }
+    except Exception as e:
+        logger.error(f"Error getting dashboard stats: {e}")
+        return {
+            'total_users': 0,
+            'total_courses': 0,
+            'total_departments': 0,
+            'today_attendance': 0,
+            'attendance_labels': [],
+            'attendance_data': [],
+            'department_labels': [],
+            'department_data': []
+        }
 
 @admin_bp.route('/dashboard')
 @login_required
@@ -50,7 +111,7 @@ def dashboard():
         now = datetime.now()
         
         # Get statistics
-        stats = get_dashboard_stats()
+        stats = get_dashboard_statistics()
         
         # Get departments for filtering
         departments = Department.query.all()
@@ -101,7 +162,7 @@ def new_dashboard():
         now = datetime.now()
         
         # Get statistics
-        stats = get_dashboard_stats()
+        stats = get_dashboard_statistics()
         
         # Get departments for filtering
         departments = Department.query.all()
@@ -408,65 +469,8 @@ def update_user(user_id):
 @login_required
 @admin_required
 def get_dashboard_stats():
-    """Get statistics for the admin dashboard."""
-    try:
-        # Get total users
-        total_users = User.query.count()
-        
-        # Get total courses
-        total_courses = Course.query.count()
-        
-        # Get total departments
-        total_departments = Department.query.count()
-        
-        # Get today's attendance
-        today = datetime.now().date()
-        today_attendance = Attendance.query.filter(
-            func.date(Attendance.timestamp) == today
-        ).count()
-        
-        # Get attendance data for the last 7 days
-        seven_days_ago = datetime.now() - timedelta(days=7)
-        attendance_data = db.session.query(
-            func.date(Attendance.timestamp).label('date'),
-            func.count(Attendance.id).label('count')
-        ).filter(
-            Attendance.timestamp >= seven_days_ago
-        ).group_by(
-            func.date(Attendance.timestamp)
-        ).order_by(
-            func.date(Attendance.timestamp)
-        ).all()
-        
-        attendance_labels = [row.date.strftime('%Y-%m-%d') for row in attendance_data]
-        attendance_counts = [row.count for row in attendance_data]
-        
-        # Get department statistics
-        department_stats = db.session.query(
-            Department.name,
-            func.count(User.id).label('user_count')
-        ).join(
-            User, Department.id == User.department_id
-        ).group_by(
-            Department.name
-        ).all()
-        
-        department_labels = [dept.name for dept in department_stats]
-        department_counts = [dept.user_count for dept in department_stats]
-        
-        return {
-            'total_users': total_users,
-            'total_courses': total_courses,
-            'total_departments': total_departments,
-            'today_attendance': today_attendance,
-            'attendance_labels': attendance_labels,
-            'attendance_data': attendance_counts,
-            'department_labels': department_labels,
-            'department_data': department_counts
-        }
-    except Exception as e:
-        logger.error(f"Error getting dashboard stats: {e}")
-        return {}
+    """Get statistics for the admin dashboard API endpoint."""
+    return jsonify(get_dashboard_statistics())
 
 @admin_bp.route('/manage-courses')
 @login_required
