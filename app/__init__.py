@@ -1,7 +1,7 @@
 """Flask application factory."""
 from flask import Flask, request, redirect
 from config import Config
-from .hardware.controller import HardwareController
+from .hardware.controller import init_hardware
 import logging
 import os
 from datetime import datetime, timedelta
@@ -37,6 +37,14 @@ def create_app(config_class=Config):
     # Initialize extensions
     init_extensions(app)
 
+    # Initialize hardware controller
+    with app.app_context():
+        try:
+            init_hardware()
+            app.logger.info('Hardware controller initialized')
+        except Exception as e:
+            app.logger.error(f'Error initializing hardware controller: {e}')
+
     # Initialize database and create default users
     with app.app_context():
         try:
@@ -54,8 +62,5 @@ def create_app(config_class=Config):
     app.register_blueprint(lecturer_bp, url_prefix='/lecturer')
     app.register_blueprint(student_bp, url_prefix='/student')
     app.register_blueprint(admin_bp, url_prefix='/admin')
-
-    # Initialize hardware controller
-    app.hardware_controller = HardwareController()
 
     return app
