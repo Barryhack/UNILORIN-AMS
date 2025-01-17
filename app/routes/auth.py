@@ -18,6 +18,7 @@ auth_bp = Blueprint('auth', __name__)
 def login():
     """Handle user login."""
     if current_user.is_authenticated:
+        logger.info(f"Already authenticated user {current_user.login_id} redirected to index")
         return redirect(url_for('main.index'))
 
     form = LoginForm()
@@ -30,56 +31,68 @@ def login():
             try:
                 # Find user by login_id
                 user = User.query.filter_by(login_id=form.login.data).first()
+                logger.info(f"Looking up user with login_id: {form.login.data}")
                 
-                if user and user.verify_password(form.password.data):
-                    # Update last login
-                    user.last_login = datetime.utcnow()
-                    
-                    # Create login log
-                    login_log = LoginLog(
-                        user_id=user.id,
-                        ip_address=request.remote_addr,
-                        user_agent=request.user_agent.string,
-                        action='login',
-                        status='success'
-                    )
-                    db.session.add(login_log)
-                    
-                    # Create activity log
-                    activity_log = ActivityLog(
-                        user_id=user.id,
-                        action='login',
-                        details=f'User logged in from {request.remote_addr}',
-                        category='auth',
-                        ip_address=request.remote_addr
-                    )
-                    db.session.add(activity_log)
-                    
-                    try:
-                        db.session.commit()
-                    except SQLAlchemyError as e:
-                        logger.error(f"Database error during login: {e}")
-                        db.session.rollback()
-                        error = "Database error occurred. Please try again."
-                        return render_template('auth/login.html', form=form, error=error)
-                    
-                    # Log in the user
-                    login_user(user, remember=form.remember.data)
-                    logger.info(f"User {user.login_id} logged in successfully")
-                    
-                    # Redirect based on role
-                    if user.role == 'admin':
-                        return redirect(url_for('admin.dashboard'))
-                    elif user.role == 'lecturer':
-                        return redirect(url_for('lecturer.dashboard'))
-                    else:
-                        return redirect(url_for('student.dashboard'))
-                else:
+                if not user:
+                    logger.warning(f"No user found with login_id: {form.login.data}")
                     error = "Invalid login ID or password"
-                    logger.warning(f"Failed login attempt for login_id: {form.login.data}")
+                    return render_template('auth/login.html', form=form, error=error)
+                
+                if not user.is_active:
+                    logger.warning(f"Inactive user attempted login: {user.login_id}")
+                    error = "This account is inactive. Please contact an administrator."
+                    return render_template('auth/login.html', form=form, error=error)
+                
+                if user.verify_password(form.password.data):
+                    try:
+                        # Update last login
+                        user.last_login = datetime.utcnow()
+                        
+                        # Create login log
+                        login_log = LoginLog(
+                            user_id=user.id,
+                            ip_address=request.remote_addr,
+                            user_agent=request.user_agent.string,
+                            action='login',
+                            status='success'
+                        )
+                        db.session.add(login_log)
+                        
+                        # Create activity log
+                        activity_log = ActivityLog(
+                            user_id=user.id,
+                            action='login',
+                            details=f'User logged in from {request.remote_addr}',
+                            category='auth',
+                            ip_address=request.remote_addr
+                        )
+                        db.session.add(activity_log)
+                        
+                        # Commit all changes
+                        db.session.commit()
+                        
+                        # Log in the user
+                        login_user(user, remember=form.remember.data)
+                        logger.info(f"User {user.login_id} logged in successfully")
+                        
+                        # Redirect based on role
+                        if user.role == 'admin':
+                            return redirect(url_for('admin.dashboard'))
+                        elif user.role == 'lecturer':
+                            return redirect(url_for('lecturer.dashboard'))
+                        else:
+                            return redirect(url_for('student.dashboard'))
+                            
+                    except SQLAlchemyError as e:
+                        logger.error(f"Database error during login for user {user.login_id}: {str(e)}")
+                        db.session.rollback()
+                        error = "A database error occurred. Please try again."
+                else:
+                    logger.warning(f"Invalid password for user: {user.login_id}")
+                    error = "Invalid login ID or password"
                     
                     # Log failed attempt
-                    if user:
+                    try:
                         login_log = LoginLog(
                             user_id=user.id,
                             ip_address=request.remote_addr,
@@ -87,20 +100,21 @@ def login():
                             action='login',
                             status='failed'
                         )
-                        try:
-                            db.session.add(login_log)
-                            db.session.commit()
-                        except SQLAlchemyError as e:
-                            logger.error(f"Error logging failed login: {e}")
-                            db.session.rollback()
+                        db.session.add(login_log)
+                        db.session.commit()
+                    except SQLAlchemyError as e:
+                        logger.error(f"Error logging failed login: {str(e)}")
+                        db.session.rollback()
+                        
             except Exception as e:
-                logger.error(f"Error during login: {e}")
-                error = "An error occurred during login. Please try again."
+                logger.error(f"Unexpected error during login: {str(e)}", exc_info=True)
+                error = "An unexpected error occurred. Please try again."
         else:
-            error = "Please check your input and try again."
+            logger.warning("Form validation failed")
             for field, errors in form.errors.items():
                 for error in errors:
                     logger.warning(f"Form validation error - {field}: {error}")
+            error = "Please check your input and try again."
     
     return render_template('auth/login.html', form=form, error=error)
 
