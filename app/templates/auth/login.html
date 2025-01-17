@@ -4,9 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Attendance Management System</title>
-    {% extends "base.html" %}
-
-    {% block styles %}
+    
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Styles -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
     <style>
         * {
             margin: 0;
@@ -44,10 +50,149 @@
             background-position: center;
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
             color: white;
             padding: 2rem;
+            position: relative;
+        }
+
+        .right-side {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            padding: 2rem;
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.2);
+            position: relative;
+            z-index: 2;
+        }
+
+        .university-logo {
+            width: 140px;
+            height: auto;
+            margin-bottom: 2rem;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+        }
+
+        .welcome-content {
+            text-align: center;
+            max-width: 600px;
+        }
+
+        .welcome-content h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            font-style: italic;
+            margin-bottom: 1rem;
+            color: #ffd700;
+        }
+
+        .system-name {
+            font-size: 1.8rem;
+            font-weight: 600;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .login-form-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 2rem;
+        }
+
+        .login-form-container h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            color: #475569;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            color: #1e293b;
+            transition: border-color 0.2s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .remember-me label {
+            color: #475569;
+            font-size: 0.875rem;
+        }
+
+        .btn-primary {
+            display: block;
+            width: 100%;
+            padding: 0.75rem;
+            background: #1d4ed8;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary:hover {
+            background: #1e40af;
+        }
+
+        .error-message {
+            color: #dc2626;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .alert-success {
+            background: #ecfdf5;
+            color: #059669;
         }
 
         @media (max-width: 768px) {
@@ -56,86 +201,107 @@
             }
 
             .left-side {
-                display: none;
+                flex: none;
+                height: 40vh;
+                padding: 1.5rem;
             }
 
             .right-side {
-                width: 100%;
-                padding: 2rem;
+                flex: none;
+                height: 60vh;
+                padding: 1.5rem;
+            }
+
+            .university-logo {
+                width: 100px;
+                margin-bottom: 1rem;
+            }
+
+            .welcome-content h1 {
+                font-size: 2rem;
+            }
+
+            .subtitle {
+                font-size: 1.2rem;
+            }
+
+            .system-name {
+                font-size: 1.5rem;
             }
         }
     </style>
-    {% endblock %}
 </head>
 <body>
-    {% block content %}
     <div class="auth-container">
         <!-- Left side with background and branding -->
         <div class="left-side">
-            <div class="text-center">
-                <h1 class="text-4xl font-bold mb-4">Welcome to AMS</h1>
-                <p class="text-xl mb-8">University of Ilorin Attendance Management System</p>
-                <div class="flex justify-center">
-                    <img src="{{ url_for('static', filename='images/unilorin-logo-white.png') }}" alt="UNILORIN Logo" class="w-32">
-                </div>
+            <img src="{{ url_for('static', filename='images/unilorin-logo.png') }}" alt="University of Ilorin Logo" class="university-logo">
+            <div class="welcome-content">
+                <h1>UNIVERSITY OF ILORIN</h1>
+                <p class="subtitle">Better By Far...</p>
+                <h2 class="system-name">ATTENDANCE MANAGEMENT SYSTEM</h2>
             </div>
         </div>
 
         <!-- Right side with login form -->
         <div class="right-side">
-            <div class="w-full max-w-md mx-auto">
-                <div class="text-center mb-8">
-                    <h2 class="text-2xl font-bold text-gray-900">Sign in to your account</h2>
-                    <p class="mt-2 text-sm text-gray-600">
-                        Please enter your credentials to access the system
-                    </p>
-                </div>
+            <div class="login-form-container">
+                <h2>Welcome Back</h2>
+                <p class="text-gray-600 mb-8">Sign in to continue to AMS</p>
+
+                <form method="POST" action="{{ url_for('auth.login') }}" class="space-y-6" novalidate>
+                    {{ form.csrf_token }}
+                    
+                    <!-- ID Number Field -->
+                    <div class="form-group">
+                        <label for="{{ form.login.id }}">ID Number</label>
+                        {{ form.login(class="form-control", placeholder="e.g., LECT/CSC/001 or 19/30qc012") }}
+                        {% if form.login.errors %}
+                            {% for error in form.login.errors %}
+                                <span class="error-message">{{ error }}</span>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    <!-- Password Field -->
+                    <div class="form-group">
+                        <label for="{{ form.password.id }}">Password</label>
+                        {{ form.password(class="form-control", placeholder="Enter your password") }}
+                        {% if form.password.errors %}
+                            {% for error in form.password.errors %}
+                                <span class="error-message">{{ error }}</span>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    <!-- Remember Me -->
+                    <div class="remember-me">
+                        {{ form.remember(class="") }}
+                        <label for="{{ form.remember.id }}">Remember me</label>
+                    </div>
+
+                    <!-- Sign In Button -->
+                    {{ form.submit(class="btn-primary") }}
+                </form>
+
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert {% if category == 'error' %}alert-error{% else %}alert-success{% endif %}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
 
                 {% if error %}
-                <div class="mb-4 p-4 rounded-md bg-red-50 border border-red-200">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <i class="fas fa-exclamation-circle text-red-400"></i>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-sm text-red-700">{{ error }}</p>
-                        </div>
-                    </div>
+                <div class="alert alert-error">
+                    {{ error }}
                 </div>
                 {% endif %}
-
-                <form method="POST" action="{{ url_for('auth.login') }}" class="space-y-6">
-                    {{ form.csrf_token }}
-                    <div>
-                        <label for="login" class="block text-sm font-medium text-gray-700">Login ID</label>
-                        <div class="mt-1">
-                            {{ form.login(class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm") }}
-                        </div>
-                    </div>
-
-                    <div>
-                        <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-                        <div class="mt-1">
-                            {{ form.password(class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm") }}
-                        </div>
-                    </div>
-
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center">
-                            {{ form.remember(class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded") }}
-                            <label for="remember" class="ml-2 block text-sm text-gray-900">Remember me</label>
-                        </div>
-                    </div>
-
-                    <div>
-                        <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                            Sign in
-                        </button>
-                    </div>
-                </form>
             </div>
         </div>
     </div>
-    {% endblock %}
 </body>
 </html>
