@@ -63,7 +63,8 @@ def login():
                             user_id=user.id,
                             action='login',
                             details=f'User logged in from {request.remote_addr}',
-                            category='auth',
+                            resource_type='auth',
+                            status='success',
                             ip_address=request.remote_addr
                         )
                         db.session.add(activity_log)
