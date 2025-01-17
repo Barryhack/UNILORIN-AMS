@@ -138,4 +138,4 @@ def not_found_error(error):
     return {"error": "Not Found", "message": str(error)}, 404
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True, use_reloader=True)
