@@ -112,27 +112,12 @@ def dashboard():
         try:
             controller = get_hardware_controller()
             if controller:
-                if controller.simulation_mode:
-                    hardware_status = {
-                        'status': 'Simulation',
-                        'message': 'Running in simulation mode'
-                    }
-                else:
-                    hardware_status = {
-                        'status': 'Connected' if controller.is_connected() else 'Not Connected',
-                        'message': 'Hardware is ready' if controller.is_connected() else 'Hardware not connected'
-                    }
+                hardware_status = controller.get_status()
             else:
-                hardware_status = {
-                    'status': 'Not Available',
-                    'message': 'Hardware controller not initialized'
-                }
+                hardware_status = {'connected': False, 'status': 'Not Connected', 'message': 'Hardware controller not initialized'}
         except Exception as hw_error:
             logger.error(f"Error getting hardware status: {hw_error}")
-            hardware_status = {
-                'status': 'Error',
-                'message': str(hw_error)
-            }
+            hardware_status = {'connected': False, 'status': 'Error', 'message': str(hw_error)}
         
         # Get recent activities
         try:
@@ -184,10 +169,10 @@ def new_dashboard():
             if controller:
                 hardware_status = controller.get_status()
             else:
-                hardware_status = {'status': 'Not Connected', 'message': 'Hardware controller not initialized'}
+                hardware_status = {'connected': False, 'status': 'Not Connected', 'message': 'Hardware controller not initialized'}
         except Exception as hw_error:
             logger.error(f"Error getting hardware status: {hw_error}")
-            hardware_status = {'status': 'Error', 'message': str(hw_error)}
+            hardware_status = {'connected': False, 'status': 'Error', 'message': str(hw_error)}
         
         # Get recent activities
         try:
