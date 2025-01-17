@@ -23,32 +23,72 @@
     <style>
         :root {
             --header-height: 64px;
-            --sidebar-width: 256px;
-        }
-        
-        html {
-            scroll-behavior: smooth;
+            --sidebar-width: 280px;
+            --primary-color: #002147;
+            --secondary-color: #FFD700;
+            --success-color: #10B981;
+            --warning-color: #F59E0B;
+            --danger-color: #EF4444;
+            --text-primary: #111827;
+            --text-secondary: #4B5563;
+            --bg-primary: #F9FAFB;
+            --bg-secondary: #F3F4F6;
         }
         
         body {
             font-family: 'Inter', sans-serif;
             min-height: 100vh;
-            background-color: #f9fafb;
+            background-color: var(--bg-primary);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        #header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: var(--header-height);
+            z-index: 50;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        #sidebar {
+            position: fixed;
+            top: var(--header-height);
+            left: 0;
+            bottom: 0;
+            width: var(--sidebar-width);
+            z-index: 40;
+            background: white;
+            border-right: 1px solid #E5E7EB;
+            transition: transform 0.3s ease;
         }
         
         #main-content {
             margin-left: var(--sidebar-width);
             margin-top: var(--header-height);
             min-height: calc(100vh - var(--header-height));
+            padding: 2rem;
             transition: margin-left 0.3s ease;
+            width: calc(100% - var(--sidebar-width));
             overflow-y: auto;
-            overflow-x: hidden;
-            padding: 1.5rem;
+            background-color: var(--bg-primary);
         }
         
         @media (max-width: 1024px) {
+            #sidebar {
+                transform: translateX(-100%);
+            }
+            
             #main-content {
                 margin-left: 0;
+                width: 100%;
+            }
+            
+            #sidebar.show {
+                transform: translateX(0);
             }
         }
         
@@ -79,143 +119,218 @@
         }
         
         .nav-link {
-            position: relative;
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            color: var(--text-secondary);
+            border-radius: 0.5rem;
+            margin: 0.25rem 0.75rem;
             transition: all 0.3s ease;
         }
         
-        .nav-link::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            height: 100%;
-            width: 3px;
-            background-color: #002147;
-            transform: scaleY(0);
-            transition: transform 0.2s;
+        .nav-link:hover {
+            background-color: var(--bg-secondary);
+            color: var(--primary-color);
         }
         
-        .nav-link:hover::before,
-        .nav-link.active::before {
-            transform: scaleY(1);
+        .nav-link.active {
+            background-color: var(--primary-color);
+            color: white;
         }
         
-        @media (max-width: 1024px) {
-            #sidebar {
-                transform: translateX(-100%);
-            }
-            
-            #sidebar.show {
-                transform: translateX(0);
-            }
+        .nav-link i {
+            width: 1.5rem;
+            height: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 0.75rem;
+            font-size: 1.1rem;
+        }
+        
+        .nav-link span {
+            font-weight: 500;
+        }
+        
+        .user-profile {
+            padding: 1.5rem;
+            border-bottom: 1px solid #E5E7EB;
+            background: linear-gradient(to right, var(--primary-color), #1E3A8A);
+            color: white;
+        }
+        
+        .user-avatar {
+            width: 4rem;
+            height: 4rem;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.5);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .flash-message {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .flash-message.success {
+            background-color: #D1FAE5;
+            border: 1px solid #34D399;
+            color: #065F46;
+        }
+        
+        .flash-message.error {
+            background-color: #FEE2E2;
+            border: 1px solid #F87171;
+            color: #991B1B;
         }
     </style>
 </head>
 
 <body class="h-full">
-    <!-- Top Navigation -->
-    <nav class="fixed top-0 z-50 w-full bg-white border-b border-gray-200 h-[var(--header-height)]">
-        <div class="px-3 py-3 lg:px-5 lg:pl-3">
+    <!-- Header -->
+    <header id="header">
+        <div class="px-4 py-3">
             <div class="flex items-center justify-between">
-                <div class="flex items-center justify-start">
-                    <button id="sidebar-toggle" class="inline-flex items-center p-2 text-sm text-gray-500 rounded-lg lg:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200">
-                        <i class="fas fa-bars w-6 h-6"></i>
+                <div class="flex items-center">
+                    <button id="sidebar-toggle" class="p-2 rounded-lg text-gray-500 lg:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200">
+                        <i class="fas fa-bars text-xl"></i>
                     </button>
-                    <a href="/" class="flex ml-2 md:mr-24">
+                    <a href="/" class="flex items-center ml-3">
                         <img src="/static/images/unilorin-logo.png" class="h-8 mr-3" alt="Logo" />
-                        <span class="self-center text-xl font-semibold sm:text-2xl whitespace-nowrap">UNILORIN AMS</span>
+                        <span class="text-xl font-semibold text-gray-900">UNILORIN AMS</span>
                     </a>
                 </div>
-                <div class="flex items-center">
-                    <div class="flex items-center ml-3">
-                        <div class="relative">
-                            <button type="button" class="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300" id="user-menu-button">
-                                <span class="sr-only">Open user menu</span>
-                                <div class="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-white">
-                                    {{ current_user.first_name[0].upper() }}
-                                </div>
-                            </button>
-                            <div class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-50" id="user-dropdown">
-                                <div class="px-4 py-3">
-                                    <p class="text-sm text-gray-900">{{ current_user.first_name }} {{ current_user.last_name }}</p>
-                                    <p class="text-sm font-medium text-gray-900 truncate">{{ current_user.email }}</p>
-                                </div>
-                                <ul class="py-1" aria-labelledby="user-menu-button">
-                                    <li>
-                                        <a href="{{ url_for('auth.logout') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Sign out</a>
-                                    </li>
-                                </ul>
+                <div class="flex items-center gap-4">
+                    <button type="button" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100">
+                        <i class="fas fa-bell text-gray-500"></i>
+                        <span class="bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">3</span>
+                    </button>
+                    <div class="relative">
+                        <button type="button" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100" id="user-menu-button">
+                            <div class="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-white font-medium">
+                                {{ current_user.first_name[0].upper() }}
                             </div>
+                            <span class="hidden md:block text-sm font-medium text-gray-700">{{ current_user.first_name }}</span>
+                            <i class="fas fa-chevron-down text-sm text-gray-500"></i>
+                        </button>
+                        <div class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-50 border border-gray-100" id="user-dropdown">
+                            <div class="p-3 border-b border-gray-100">
+                                <p class="text-sm font-medium text-gray-900">{{ current_user.first_name }} {{ current_user.last_name }}</p>
+                                <p class="text-sm text-gray-500 truncate">{{ current_user.email }}</p>
+                            </div>
+                            <ul class="py-1">
+                                <li>
+                                    <a href="{{ url_for('admin.settings') }}" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                        <i class="fas fa-cog w-4 h-4"></i>
+                                        <span>Settings</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{{ url_for('auth.logout') }}" class="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                                        <i class="fas fa-sign-out-alt w-4 h-4"></i>
+                                        <span>Sign out</span>
+                                    </a>
+                                </li>
+                            </ul>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </nav>
+    </header>
 
     <!-- Sidebar -->
-    <aside id="sidebar" class="fixed top-0 left-0 z-40 w-[var(--sidebar-width)] h-screen pt-[var(--header-height)] transition-transform bg-white border-r border-gray-200 lg:translate-x-0">
+    <aside id="sidebar">
         <div class="flex flex-col h-full">
-            <div class="flex items-center justify-center p-6 border-b border-gray-200">
+            <div class="user-profile">
                 <div class="flex flex-col items-center">
-                    <div class="w-20 h-20 rounded-full bg-gray-300 flex items-center justify-center text-white text-2xl mb-2">
+                    <div class="user-avatar">
                         {{ current_user.first_name[0].upper() }}
                     </div>
-                    <h5 class="text-lg font-semibold text-gray-900">{{ current_user.first_name }} {{ current_user.last_name }}</h5>
-                    <span class="text-sm text-gray-500">{{ current_user.role.title() }}</span>
+                    <h5 class="text-lg font-semibold">{{ current_user.first_name }} {{ current_user.last_name }}</h5>
+                    <span class="text-sm opacity-80">{{ current_user.role.title() }}</span>
                 </div>
             </div>
-            <div class="scroll-container flex-1 px-3 py-4 overflow-y-auto">
-                <ul class="space-y-2">
-                    <li>
-                        <a href="{{ url_for('admin.dashboard') }}" class="nav-link flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 {% if request.endpoint == 'admin.dashboard' %}bg-gray-100{% endif %}">
-                            <i class="fas fa-tachometer-alt w-6 h-6 text-gray-500 transition duration-75"></i>
-                            <span class="ml-3">Dashboard</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ url_for('admin.manage_users') }}" class="nav-link flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 {% if request.endpoint == 'admin.manage_users' %}bg-gray-100{% endif %}">
-                            <i class="fas fa-users w-6 h-6 text-gray-500 transition duration-75"></i>
-                            <span class="ml-3">Users</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ url_for('admin.manage_courses') }}" class="nav-link flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 {% if request.endpoint == 'admin.manage_courses' %}bg-gray-100{% endif %}">
-                            <i class="fas fa-book w-6 h-6 text-gray-500 transition duration-75"></i>
-                            <span class="ml-3">Courses</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ url_for('admin.manage_departments') }}" class="nav-link flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 {% if request.endpoint == 'admin.manage_departments' %}bg-gray-100{% endif %}">
-                            <i class="fas fa-building w-6 h-6 text-gray-500 transition duration-75"></i>
-                            <span class="ml-3">Departments</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ url_for('admin.activity_logs') }}" class="nav-link flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 {% if request.endpoint == 'admin.activity_logs' %}bg-gray-100{% endif %}">
-                            <i class="fas fa-history w-6 h-6 text-gray-500 transition duration-75"></i>
-                            <span class="ml-3">Activity Logs</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ url_for('admin.system_logs') }}" class="nav-link flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:bg-gray-100 {% if request.endpoint == 'admin.system_logs' %}bg-gray-100{% endif %}">
-                            <i class="fas fa-terminal w-6 h-6 text-gray-500 transition duration-75"></i>
-                            <span class="ml-3">System Logs</span>
-                        </a>
-                    </li>
-                </ul>
+            <div class="scroll-container flex-1 py-4">
+                <nav>
+                    <ul class="space-y-1">
+                        <li>
+                            <a href="{{ url_for('admin.dashboard') }}" class="nav-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+                                <i class="fas fa-tachometer-alt"></i>
+                                <span>Dashboard</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('admin.manage_users') }}" class="nav-link {% if request.endpoint == 'admin.manage_users' %}active{% endif %}">
+                                <i class="fas fa-users"></i>
+                                <span>Users</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('admin.manage_courses') }}" class="nav-link {% if request.endpoint == 'admin.manage_courses' %}active{% endif %}">
+                                <i class="fas fa-book"></i>
+                                <span>Courses</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('admin.manage_departments') }}" class="nav-link {% if request.endpoint == 'admin.manage_departments' %}active{% endif %}">
+                                <i class="fas fa-building"></i>
+                                <span>Departments</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('admin.activity_logs') }}" class="nav-link {% if request.endpoint == 'admin.activity_logs' %}active{% endif %}">
+                                <i class="fas fa-history"></i>
+                                <span>Activity Logs</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('admin.system_logs') }}" class="nav-link {% if request.endpoint == 'admin.system_logs' %}active{% endif %}">
+                                <i class="fas fa-terminal"></i>
+                                <span>System Logs</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('admin.settings') }}" class="nav-link {% if request.endpoint == 'admin.settings' %}active{% endif %}">
+                                <i class="fas fa-cog"></i>
+                                <span>Settings</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
             </div>
         </div>
     </aside>
 
     <!-- Main Content -->
     <main id="main-content" class="scroll-container">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">
+                        <i class="fas fa-{% if category == 'error' %}exclamation-circle{% else %}check-circle{% endif %}"></i>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
         {% block content %}{% endblock %}
     </main>
 
     <script>
         // Force reload if template version changes
-        const TEMPLATE_VERSION = '1.0.2';
+        const TEMPLATE_VERSION = '1.0.4';
         if (localStorage.getItem('template_version') !== TEMPLATE_VERSION) {
             localStorage.setItem('template_version', TEMPLATE_VERSION);
             window.location.reload(true);
