@@ -358,12 +358,21 @@ def hardware_status():
 def api_hardware_status():
     """Get hardware status."""
     try:
-        hardware = get_hardware_controller()
-        status = hardware.get_status()
-        return jsonify(status)
+        controller = get_hardware_controller()
+        if not hasattr(controller, 'is_connected'):
+            controller.is_connected = False
+        return jsonify({
+            'status': 'connected' if controller.is_connected else 'disconnected',
+            'device': controller.device if hasattr(controller, 'device') else None,
+            'error': None
+        })
     except Exception as e:
         logger.error(f"Error getting hardware status: {e}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({
+            'status': 'error',
+            'device': None,
+            'error': str(e)
+        })
 
 @admin_bp.route('/api/users/register', methods=['POST'])
 @login_required
@@ -884,3 +893,26 @@ def unenroll_from_course():
             'success': False,
             'message': f'Error unenrolling user: {str(e)}'
         })
+
+@admin_bp.route('/settings', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def settings():
+    """Admin settings view."""
+    form = SettingsForm()
+    if form.validate_on_submit():
+        try:
+            # Save settings
+            current_app.config['SYSTEM_NAME'] = form.system_name.data
+            current_app.config['ADMIN_EMAIL'] = form.admin_email.data
+            flash('Settings updated successfully', 'success')
+            return redirect(url_for('admin.settings'))
+        except Exception as e:
+            logger.error(f"Error updating settings: {e}")
+            flash('Error updating settings', 'error')
+    
+    # Pre-fill form with current settings
+    form.system_name.data = current_app.config.get('SYSTEM_NAME', 'AMS')
+    form.admin_email.data = current_app.config.get('ADMIN_EMAIL', '')
+    
+    return render_template('admin/settings.html', form=form)
