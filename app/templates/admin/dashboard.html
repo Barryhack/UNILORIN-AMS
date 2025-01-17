@@ -160,69 +160,96 @@
 </div>
 
 <!-- Hardware Status -->
-{% if hardware_status %}
 <div class="fixed bottom-4 right-4">
-    <div id="hardware-status-container" class="bg-white rounded-lg shadow-lg p-4 border {% if hardware_status.status == 'connected' %}border-green-500{% else %}border-red-500{% endif %}">
+    <div id="hardware-status-container" class="bg-white rounded-lg shadow-lg p-4 border {% if hardware_status and hardware_status.status == 'connected' %}border-green-500{% else %}border-red-500{% endif %} {% if not hardware_status %}hidden{% endif %}">
         <div class="flex items-center space-x-3">
             <div class="flex-shrink-0">
-                <i id="hardware-status-icon" class="fas fa-microchip {% if hardware_status.status == 'connected' %}text-green-500{% else %}text-red-500{% endif %}"></i>
+                <i id="hardware-status-icon" class="fas fa-microchip {% if hardware_status and hardware_status.status == 'connected' %}text-green-500{% else %}text-red-500{% endif %}"></i>
             </div>
             <div>
                 <p class="text-sm font-medium">
-                    Hardware Status: <span id="hardware-status" class="{% if hardware_status.status == 'connected' %}text-green-700{% else %}text-red-700{% endif %}">{{ hardware_status.status|title }}</span>
+                    Hardware Status: <span id="hardware-status" class="{% if hardware_status and hardware_status.status == 'connected' %}text-green-700{% else %}text-red-700{% endif %}">{{ hardware_status.status|title if hardware_status else 'Disconnected' }}</span>
                 </p>
-                <p id="hardware-message" class="text-xs text-gray-500">{{ hardware_status.message }}</p>
+                <p id="hardware-message" class="text-xs text-gray-500">{{ hardware_status.message if hardware_status else 'Checking hardware status...' }}</p>
             </div>
         </div>
     </div>
 </div>
-{% endif %}
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
     // Refresh hardware status every 30 seconds
     function updateHardwareStatus() {
+        const container = document.getElementById('hardware-status-container');
+        const status = document.getElementById('hardware-status');
+        const icon = document.getElementById('hardware-status-icon');
+        const message = document.getElementById('hardware-message');
+        
+        // Ensure all elements exist
+        if (!container || !status || !icon || !message) {
+            console.error('Hardware status elements not found');
+            return;
+        }
+
         fetch("{{ url_for('admin.api_hardware_status') }}")
-            .then(response => response.json())
-            .then(data => {
-                const container = document.getElementById('hardware-status-container');
-                const status = document.getElementById('hardware-status');
-                const icon = document.getElementById('hardware-status-icon');
-                const message = document.getElementById('hardware-message');
-                
-                if (container && status && icon && message) {
-                    // Update status text
-                    status.textContent = data.status.charAt(0).toUpperCase() + data.status.slice(1);
-                    
-                    // Update status colors
-                    if (data.status === 'connected') {
-                        container.classList.remove('border-red-500');
-                        container.classList.add('border-green-500');
-                        status.classList.remove('text-red-700');
-                        status.classList.add('text-green-700');
-                        icon.classList.remove('text-red-500');
-                        icon.classList.add('text-green-500');
-                    } else {
-                        container.classList.remove('border-green-500');
-                        container.classList.add('border-red-500');
-                        status.classList.remove('text-green-700');
-                        status.classList.add('text-red-700');
-                        icon.classList.remove('text-green-500');
-                        icon.classList.add('text-red-500');
-                    }
-                    
-                    // Update message
-                    message.textContent = data.message;
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
                 }
+                return response.json();
             })
-            .catch(error => console.error('Error updating hardware status:', error));
+            .then(data => {
+                // Show the container if it was hidden
+                container.classList.remove('hidden');
+                
+                // Update status text with proper capitalization
+                const statusText = data.status.charAt(0).toUpperCase() + data.status.slice(1);
+                status.textContent = statusText;
+                
+                // Update colors based on status
+                if (data.status === 'connected') {
+                    container.classList.remove('border-red-500');
+                    container.classList.add('border-green-500');
+                    status.classList.remove('text-red-700');
+                    status.classList.add('text-green-700');
+                    icon.classList.remove('text-red-500');
+                    icon.classList.add('text-green-500');
+                } else {
+                    container.classList.remove('border-green-500');
+                    container.classList.add('border-red-500');
+                    status.classList.remove('text-green-700');
+                    status.classList.add('text-red-700');
+                    icon.classList.remove('text-green-500');
+                    icon.classList.add('text-red-500');
+                }
+                
+                // Update message
+                message.textContent = data.message || 'No status message available';
+            })
+            .catch(error => {
+                console.error('Error updating hardware status:', error);
+                
+                // Show error state
+                container.classList.remove('hidden');
+                container.classList.remove('border-green-500');
+                container.classList.add('border-red-500');
+                status.classList.remove('text-green-700');
+                status.classList.add('text-red-700');
+                status.textContent = 'Error';
+                icon.classList.remove('text-green-500');
+                icon.classList.add('text-red-500');
+                message.textContent = 'Failed to update hardware status';
+            });
     }
 
-    // Initial update
-    updateHardwareStatus();
+    // Wait for DOM to be fully loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initial update
+        updateHardwareStatus();
 
-    // Update every 30 seconds
-    setInterval(updateHardwareStatus, 30000);
+        // Update every 30 seconds
+        setInterval(updateHardwareStatus, 30000);
+    });
 </script>
 {% endblock %}
