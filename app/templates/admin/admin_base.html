@@ -99,12 +99,10 @@
          x-cloak></div>
 
     <!-- Sidebar -->
-    <div class="fixed inset-y-0 left-0 z-40 bg-white shadow-xl transform transition-all duration-300 ease-in-out"
+    <div class="fixed inset-y-0 left-0 z-40 bg-white shadow-xl transform transition-all duration-300 ease-in-out w-72"
          :class="{ 
-            'w-72': !$store.sidebar.collapsed,
-            'w-20': $store.sidebar.collapsed,
-            'translate-x-0': $store.sidebar.open || !isMobile,
-            '-translate-x-full': !$store.sidebar.open && isMobile
+            'translate-x-0': ($store.sidebar.open && isMobile) || (!$store.sidebar.collapsed && !isMobile),
+            '-translate-x-full': (!$store.sidebar.open && isMobile) || ($store.sidebar.collapsed && !isMobile)
          }">
         
         <!-- Sidebar Header -->
@@ -112,7 +110,7 @@
             <a href="{{ url_for('admin.dashboard') }}" class="flex items-center space-x-3">
                 <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="Logo" 
                      class="h-10 w-10 rounded-lg shadow-sm transition-transform duration-200 hover:scale-105">
-                <span class="text-xl font-bold text-gray-900" x-show="!$store.sidebar.collapsed">AMS</span>
+                <span class="text-xl font-bold text-gray-900">AMS</span>
             </a>
             <!-- Desktop collapse button -->
             <button @click="$store.sidebar.collapsed = !$store.sidebar.collapsed"
@@ -169,8 +167,7 @@
     <div class="transition-all duration-300 ease-in-out"
          :class="{
             'lg:pl-72': !$store.sidebar.collapsed && !isMobile,
-            'lg:pl-20': $store.sidebar.collapsed && !isMobile,
-            'pl-0': isMobile
+            'pl-0': $store.sidebar.collapsed || isMobile
          }">
         <!-- Top navigation -->
         <nav class="bg-white shadow-sm border-b border-gray-200">
