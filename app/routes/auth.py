@@ -59,7 +59,7 @@ def login():
                         db.session.add(login_log)
                         
                         # Create activity log
-                        activity_log = ActivityLog(
+                        activity_log = ActivityLog.log_activity(
                             user_id=user.id,
                             action='login',
                             details=f'User logged in from {request.remote_addr}',
@@ -67,7 +67,6 @@ def login():
                             status='success',
                             ip_address=request.remote_addr
                         )
-                        db.session.add(activity_log)
                         
                         # Commit all changes
                         db.session.commit()
@@ -125,12 +124,13 @@ def logout():
     """Handle user logout."""
     try:
         # Create activity log
-        activity_log = ActivityLog(
+        activity_log = ActivityLog.log_activity(
             user_id=current_user.id,
             action='logout',
             details=f'User logged out from {request.remote_addr}',
-            ip_address=request.remote_addr,
-            timestamp=datetime.utcnow()
+            resource_type='auth',
+            status='success',
+            ip_address=request.remote_addr
         )
         db.session.add(activity_log)
         db.session.commit()
