@@ -26,23 +26,27 @@
         .sidebar-collapsed { width: 64px; }
         
         .nav-link {
-            @apply flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200;
+            @apply flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 mx-2;
+            @apply text-gray-600 hover:text-gray-900;
         }
         
         .nav-link:hover {
-            @apply bg-gray-50 text-gray-900;
+            @apply bg-gray-50;
+            transform: translateX(4px);
         }
         
         .nav-link.active {
-            @apply bg-blue-50 text-blue-700;
+            @apply bg-blue-50 text-blue-600;
+            box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.1);
         }
         
         .nav-link i {
-            @apply text-gray-400 group-hover:text-gray-500 flex-shrink-0 -ml-1 mr-3 h-6 w-6;
+            @apply flex-shrink-0 w-5 h-5 transition-colors duration-200;
+            @apply text-gray-400 group-hover:text-gray-500;
         }
         
         .nav-link.active i {
-            @apply text-blue-700;
+            @apply text-blue-600;
         }
         
         /* Custom Scrollbar */
@@ -74,6 +78,20 @@
             transition-property: margin, width;
             transition-duration: 200ms;
         }
+
+        /* Logo styles */
+        .logo-container {
+            height: 32px;
+            width: auto;
+            display: flex;
+            align-items: center;
+        }
+
+        .logo-container img {
+            height: 100%;
+            width: auto;
+            object-fit: contain;
+        }
     </style>
 </head>
 
@@ -91,20 +109,22 @@
         <div class="px-4 sm:px-6 lg:px-8">
             <div class="flex h-16 items-center justify-between">
                 <!-- Left section -->
-                <div class="flex items-center">
+                <div class="flex items-center space-x-4">
                     <button 
                         @click="sidebarOpen = !sidebarOpen" 
-                        class="text-gray-500 focus:outline-none lg:hidden">
+                        class="text-gray-500 hover:text-gray-600 focus:outline-none lg:hidden">
                         <i class="fas fa-bars text-xl"></i>
                     </button>
                     <button 
                         @click="sidebarCollapsed = !sidebarCollapsed" 
-                        class="hidden lg:block text-gray-500 focus:outline-none">
+                        class="hidden lg:block text-gray-500 hover:text-gray-600 focus:outline-none">
                         <i class="fas" :class="sidebarCollapsed ? 'fa-indent' : 'fa-outdent'"></i>
                     </button>
-                    <a href="{{ url_for('admin.dashboard') }}" class="flex items-center space-x-3 px-4">
-                        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="h-8 w-auto">
-                        <span class="text-xl font-semibold text-gray-900">AMS</span>
+                    <a href="{{ url_for('admin.dashboard') }}" class="flex items-center space-x-3">
+                        <div class="logo-container">
+                            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="h-full w-auto">
+                        </div>
+                        <span class="text-xl font-semibold text-gray-900" x-show="!sidebarCollapsed">AMS</span>
                     </a>
                 </div>
 
@@ -154,73 +174,60 @@
         class="fixed top-16 bottom-0 left-0 z-20 bg-white border-r border-gray-200 sidebar-transition lg:translate-x-0">
         <nav class="flex flex-col h-full">
             <!-- Navigation Links -->
-            <div class="flex-1 space-y-1 px-2 py-4 overflow-y-auto custom-scrollbar">
+            <div class="flex-1 space-y-2 px-2 py-4 overflow-y-auto custom-scrollbar">
                 <a href="{{ url_for('admin.dashboard') }}" 
                    class="nav-link group {{ 'active' if request.endpoint == 'admin.dashboard' else '' }}">
-                    <i class="fas fa-home"></i>
+                    <i class="fas fa-home mr-3"></i>
                     <span x-show="!sidebarCollapsed">Dashboard</span>
                 </a>
                 
                 <a href="{{ url_for('admin.manage_users') }}" 
                    class="nav-link group {{ 'active' if request.endpoint == 'admin.manage_users' else '' }}">
-                    <i class="fas fa-users"></i>
+                    <i class="fas fa-users mr-3"></i>
                     <span x-show="!sidebarCollapsed">Users</span>
                 </a>
                 
                 <a href="{{ url_for('admin.manage_courses') }}" 
                    class="nav-link group {{ 'active' if request.endpoint == 'admin.manage_courses' else '' }}">
-                    <i class="fas fa-book"></i>
+                    <i class="fas fa-book mr-3"></i>
                     <span x-show="!sidebarCollapsed">Courses</span>
                 </a>
                 
                 <a href="{{ url_for('admin.manage_departments') }}" 
                    class="nav-link group {{ 'active' if request.endpoint == 'admin.manage_departments' else '' }}">
-                    <i class="fas fa-building"></i>
+                    <i class="fas fa-building mr-3"></i>
                     <span x-show="!sidebarCollapsed">Departments</span>
                 </a>
                 
                 <a href="{{ url_for('admin.attendance') }}" 
                    class="nav-link group {{ 'active' if request.endpoint == 'admin.attendance' else '' }}">
-                    <i class="fas fa-clock"></i>
+                    <i class="fas fa-clock mr-3"></i>
                     <span x-show="!sidebarCollapsed">Attendance</span>
                 </a>
                 
                 <a href="{{ url_for('admin.hardware') }}" 
                    class="nav-link group {{ 'active' if request.endpoint == 'admin.hardware' else '' }}">
-                    <i class="fas fa-microchip"></i>
+                    <i class="fas fa-microchip mr-3"></i>
                     <span x-show="!sidebarCollapsed">Hardware</span>
                 </a>
                 
                 <a href="{{ url_for('admin.reports') }}" 
                    class="nav-link group {{ 'active' if request.endpoint == 'admin.reports' else '' }}">
-                    <i class="fas fa-chart-bar"></i>
+                    <i class="fas fa-chart-bar mr-3"></i>
                     <span x-show="!sidebarCollapsed">Reports</span>
                 </a>
                 
                 <a href="{{ url_for('admin.activity_logs') }}" 
                    class="nav-link group {{ 'active' if request.endpoint == 'admin.activity_logs' else '' }}">
-                    <i class="fas fa-history"></i>
+                    <i class="fas fa-history mr-3"></i>
                     <span x-show="!sidebarCollapsed">Activity Logs</span>
                 </a>
-            </div>
 
-            <!-- User Profile -->
-            <div class="border-t border-gray-200 p-4" x-show="!sidebarCollapsed">
-                <div class="flex items-center space-x-3">
-                    <div class="flex-shrink-0">
-                        <div class="h-9 w-9 rounded-full bg-blue-600 flex items-center justify-center text-white">
-                            {{ current_user.first_name[0].upper() }}
-                        </div>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium text-gray-900 truncate">
-                            {{ current_user.first_name }} {{ current_user.last_name }}
-                        </p>
-                        <p class="text-xs text-gray-500 truncate">
-                            {{ current_user.role.title() }}
-                        </p>
-                    </div>
-                </div>
+                <a href="{{ url_for('admin.settings') }}" 
+                   class="nav-link group {{ 'active' if request.endpoint == 'admin.settings' else '' }}">
+                    <i class="fas fa-cog mr-3"></i>
+                    <span x-show="!sidebarCollapsed">Settings</span>
+                </a>
             </div>
         </nav>
     </aside>
@@ -234,50 +241,38 @@
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
-                        <div class="mb-4 rounded-md p-4 {{ 'bg-red-50' if category == 'error' else 'bg-green-50' }}">
-                            <div class="flex">
-                                <div class="flex-shrink-0">
-                                    <i class="fas {{ 'fa-times-circle text-red-400' if category == 'error' else 'fa-check-circle text-green-400' }}"></i>
-                                </div>
-                                <div class="ml-3">
-                                    <p class="text-sm font-medium {{ 'text-red-800' if category == 'error' else 'text-green-800' }}">
-                                        {{ message }}
-                                    </p>
-                                </div>
-                            </div>
+                        <div class="mb-4 p-4 rounded-lg {% if category == 'error' %}bg-red-50 text-red-700{% else %}bg-green-50 text-green-700{% endif %}">
+                            {{ message }}
                         </div>
                     {% endfor %}
                 {% endif %}
             {% endwith %}
-            
-            <!-- Page Content -->
+
             {% block content %}{% endblock %}
         </div>
     </main>
 
+    {% block extra_scripts %}{% endblock %}
+
     <script>
-        // Hardware status update
         function updateHardwareStatus() {
-            fetch('/admin/api/hardware/status')
+            fetch("{{ url_for('admin.api_hardware_status') }}")
                 .then(response => response.json())
                 .then(data => {
                     const statusElement = document.getElementById('hardware-status');
-                    if (data.connected) {
+                    if (data.status === 'connected') {
                         statusElement.textContent = 'Connected';
-                        statusElement.classList.remove('text-red-500');
-                        statusElement.classList.add('text-green-500');
+                        statusElement.className = 'text-green-600';
                     } else {
                         statusElement.textContent = 'Disconnected';
-                        statusElement.classList.remove('text-green-500');
-                        statusElement.classList.add('text-red-500');
+                        statusElement.className = 'text-red-600';
                     }
                 })
                 .catch(error => {
                     console.error('Error fetching hardware status:', error);
                     const statusElement = document.getElementById('hardware-status');
                     statusElement.textContent = 'Error';
-                    statusElement.classList.remove('text-green-500');
-                    statusElement.classList.add('text-red-500');
+                    statusElement.className = 'text-red-600';
                 });
         }
 
@@ -285,7 +280,5 @@
         updateHardwareStatus();
         setInterval(updateHardwareStatus, 30000);
     </script>
-
-    {% block extra_scripts %}{% endblock %}
 </body>
 </html>
