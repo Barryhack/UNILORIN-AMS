@@ -452,11 +452,21 @@ def get_dashboard_stats():
 @admin_required
 def manage_courses():
     """Manage courses view."""
-    courses = Course.query.all()
-    departments = Department.query.all()
-    return render_template('admin/manage_courses.html', 
-                         courses=courses,
-                         departments=departments)
+    try:
+        courses = Course.query.options(
+            db.joinedload(Course.department),
+            db.joinedload(Course.enrolled_students)
+        ).all()
+        departments = Department.query.all()
+        return render_template('admin/manage_courses.html', 
+                             courses=courses,
+                             departments=departments)
+    except Exception as e:
+        current_app.logger.error(f"Error in manage_courses: {str(e)}")
+        return render_template('admin/manage_courses.html',
+                             courses=[],
+                             departments=[],
+                             error="Unable to load courses. Please try again later.")
 
 @admin_bp.route('/manage-departments')
 @login_required
