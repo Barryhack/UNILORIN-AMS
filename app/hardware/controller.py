@@ -13,12 +13,13 @@ logger = logging.getLogger(__name__)
 class HardwareController:
     """Controller for managing fingerprint and RFID hardware."""
     
-    def __init__(self, port: str = 'COM3', baudrate: int = 9600):
+    def __init__(self, port: str = 'COM3', baudrate: int = 9600, simulation_mode: bool = False):
         """Initialize the hardware controller.
         
         Args:
             port: Serial port for the hardware
             baudrate: Baud rate for serial communication
+            simulation_mode: Flag to enable simulation mode
         """
         self.port = port
         self.baudrate = baudrate
@@ -26,7 +27,7 @@ class HardwareController:
         self.lock = Lock()
         self.connected = False
         self.last_error = None
-        self.simulation_mode = os.environ.get('HARDWARE_SIMULATION', 'true').lower() == 'true'
+        self.simulation_mode = simulation_mode
         
         if not self.simulation_mode:
             try:
@@ -240,16 +241,33 @@ class HardwareController:
 # Global hardware controller instance
 controller = None
 
-def init_hardware():
-    """Initialize the global hardware controller."""
+def init_hardware(port: str = 'COM3', baudrate: int = 9600) -> None:
+    """Initialize the global hardware controller.
+    
+    Args:
+        port: Serial port for the hardware
+        baudrate: Baud rate for serial communication
+    """
     global controller
-    if controller is None:
-        controller = HardwareController()
-    return controller
+    try:
+        controller = HardwareController(port, baudrate)
+        logger.info("Hardware controller initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize hardware controller: {e}")
+        controller = HardwareController(port, baudrate, simulation_mode=True)
+        logger.info("Falling back to simulation mode")
 
 def get_hardware_controller() -> Optional[HardwareController]:
-    """Get the global hardware controller instance."""
+    """Get the global hardware controller instance.
+    
+    Returns:
+        The hardware controller instance or None if not initialized
+    """
     global controller
     if controller is None:
-        controller = init_hardware()
+        try:
+            init_hardware()
+        except Exception as e:
+            logger.error(f"Error getting hardware controller: {e}")
+            return None
     return controller

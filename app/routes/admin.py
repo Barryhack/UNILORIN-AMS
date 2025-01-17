@@ -99,14 +99,6 @@ def get_dashboard_statistics():
 def dashboard():
     """Admin dashboard view."""
     try:
-        # Debug logging
-        template_path = current_app.jinja_loader.get_source(current_app.jinja_env, 'admin/dashboard_new.html')[1]
-        current_app.logger.info(f'Loading template from: {template_path}')
-        
-        # Disable template caching
-        current_app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
-        current_app.config['TEMPLATES_AUTO_RELOAD'] = True
-        
         # Get current time
         now = datetime.now()
         
@@ -118,10 +110,29 @@ def dashboard():
         
         # Get hardware status
         try:
-            hardware_status = HardwareController.get_status()
+            controller = get_hardware_controller()
+            if controller:
+                if controller.simulation_mode:
+                    hardware_status = {
+                        'status': 'Simulation',
+                        'message': 'Running in simulation mode'
+                    }
+                else:
+                    hardware_status = {
+                        'status': 'Connected' if controller.is_connected() else 'Not Connected',
+                        'message': 'Hardware is ready' if controller.is_connected() else 'Hardware not connected'
+                    }
+            else:
+                hardware_status = {
+                    'status': 'Not Available',
+                    'message': 'Hardware controller not initialized'
+                }
         except Exception as hw_error:
             logger.error(f"Error getting hardware status: {hw_error}")
-            hardware_status = {'status': 'Unknown', 'message': str(hw_error)}
+            hardware_status = {
+                'status': 'Error',
+                'message': str(hw_error)
+            }
         
         # Get recent activities
         try:

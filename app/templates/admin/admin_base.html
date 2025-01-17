@@ -192,6 +192,12 @@
             border: 1px solid #F87171;
             color: #991B1B;
         }
+        
+        .hardware-status {
+            background-color: #F7F7F7;
+            border: 1px solid #E5E7EB;
+            border-radius: 0.5rem;
+        }
     </style>
 </head>
 
@@ -324,6 +330,22 @@
                 {% endfor %}
             {% endif %}
         {% endwith %}
+        
+        <!-- Hardware Status -->
+        {% if hardware_status %}
+        <div class="hardware-status px-4 py-2 mb-4">
+            <div class="flex items-center gap-2">
+                <i class="fas fa-microchip text-lg"></i>
+                <div>
+                    <div class="text-sm font-medium">Hardware Status</div>
+                    <div class="text-xs {% if hardware_status.status == 'Connected' %}text-green-600{% elif hardware_status.status == 'Simulation' %}text-blue-600{% else %}text-red-600{% endif %}">
+                        {{ hardware_status.status }}
+                    </div>
+                </div>
+            </div>
+            <div class="text-xs text-gray-500 mt-1">{{ hardware_status.message }}</div>
+        </div>
+        {% endif %}
         
         {% block content %}{% endblock %}
     </main>
