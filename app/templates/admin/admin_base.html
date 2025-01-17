@@ -18,6 +18,153 @@
     <style>
         /* Base Styles */
         [x-cloak] { display: none !important; }
+        
+        body {
+            background-color: #F3F4F6;
+        }
+
+        /* Header Styles */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4rem;
+            background-color: white;
+            border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+            z-index: 50;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .header-container {
+            max-width: 100%;
+            height: 100%;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+        }
+
+        /* Menu Button */
+        .menu-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.5rem;
+            height: 2.5rem;
+            padding: 0.5rem;
+            color: #6B7280;
+            border-radius: 0.375rem;
+            transition: all 0.2s ease;
+        }
+
+        .menu-button:hover {
+            color: #111827;
+            background-color: #F3F4F6;
+        }
+
+        .menu-button:focus {
+            outline: none;
+            ring: 2px;
+            ring-offset: 2px;
+            ring-blue-500;
+        }
+
+        /* Logo */
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-image {
+            width: 2rem;
+            height: 2rem;
+            flex-shrink: 0;
+        }
+
+        .logo-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #111827;
+            white-space: nowrap;
+        }
+
+        /* User Section */
+        .user-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-name {
+            font-size: 0.875rem;
+            color: #4B5563;
+            font-weight: 500;
+        }
+
+        .logout-button {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 0.75rem;
+            color: #4B5563;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border-radius: 0.375rem;
+            transition: all 0.2s ease;
+        }
+
+        .logout-button:hover {
+            color: #111827;
+            background-color: #F3F4F6;
+        }
+
+        .logout-button i {
+            margin-right: 0.5rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding-top: 4rem;
+            min-height: 100vh;
+            background-color: #F3F4F6;
+        }
+
+        @media (min-width: 1024px) {
+            .main-content {
+                padding-left: var(--sidebar-width, 16rem);
+                transition: padding-left 0.3s ease;
+            }
+
+            .main-content.collapsed {
+                --sidebar-width: 4rem;
+            }
+        }
+
+        /* Content Container */
+        .content-container {
+            max-width: 80rem;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        @media (min-width: 640px) {
+            .content-container {
+                padding: 2rem;
+            }
+        }
 
         /* Sidebar Transitions */
         .sidebar-transition {
@@ -214,49 +361,39 @@
     </aside>
 
     <!-- Header -->
-    <header class="fixed top-0 right-0 left-0 z-40">
-        <div class="bg-white border-b border-gray-200 px-4 sm:px-6">
-            <div class="flex h-16 items-center justify-between">
-                <!-- Left section -->
-                <div class="flex items-center">
-                    <button 
-                        @click="isMobile ? sidebarOpen = !sidebarOpen : sidebarCollapsed = !sidebarCollapsed"
-                        class="inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
-                        :aria-label="isMobile ? (sidebarOpen ? 'Close menu' : 'Open menu') : (sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar')">
-                        <i class="fas" :class="isMobile ? 'fa-bars' : (sidebarCollapsed ? 'fa-indent' : 'fa-outdent')"></i>
-                    </button>
-                    
-                    <a href="{{ url_for('admin.dashboard') }}" class="flex items-center ml-4 space-x-3">
-                        <div class="flex-shrink-0 w-8 h-8">
-                            <img src="{{ url_for('static', filename='images/unilorin-logo.png') }}" alt="UNILORIN Logo" class="w-full h-full object-contain">
-                        </div>
-                        <span class="text-xl font-semibold text-gray-900" x-show="!sidebarCollapsed || isMobile">AMS</span>
-                    </a>
+    <header class="header">
+        <div class="header-container">
+            <!-- Left section -->
+            <div class="header-left">
+                <button 
+                    @click="isMobile ? sidebarOpen = !sidebarOpen : sidebarCollapsed = !sidebarCollapsed"
+                    class="menu-button"
+                    :aria-label="isMobile ? (sidebarOpen ? 'Close menu' : 'Open menu') : (sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar')">
+                    <i class="fas" :class="isMobile ? 'fa-bars' : (sidebarCollapsed ? 'fa-indent' : 'fa-outdent')"></i>
+                </button>
+                
+                <div class="logo-container">
+                    <img src="{{ url_for('static', filename='images/unilorin-logo.png') }}" alt="UNILORIN Logo" class="logo-image">
+                    <span class="logo-text" x-show="!sidebarCollapsed || isMobile">AMS</span>
                 </div>
+            </div>
 
-                <!-- Right section -->
-                <div class="flex items-center">
-                    <div class="flex items-center space-x-4">
-                        <span class="text-sm text-gray-700 hidden sm:inline">{{ current_user.first_name }} {{ current_user.last_name }}</span>
-                        <a href="{{ url_for('auth.logout') }}" 
-                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors">
-                            <i class="fas fa-sign-out-alt mr-2"></i>
-                            <span>Logout</span>
-                        </a>
-                    </div>
+            <!-- Right section -->
+            <div class="header-right">
+                <div class="user-section">
+                    <span class="user-name hidden sm:inline">{{ current_user.first_name }} {{ current_user.last_name }}</span>
+                    <a href="{{ url_for('auth.logout') }}" class="logout-button">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </a>
                 </div>
             </div>
         </div>
     </header>
 
     <!-- Main Content -->
-    <main class="min-h-screen pt-16 transition-all duration-300"
-          :class="{
-              'lg:pl-64': !sidebarCollapsed,
-              'lg:pl-16': sidebarCollapsed,
-              'pl-0': isMobile
-          }">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main class="main-content" :class="{ 'collapsed': sidebarCollapsed && !isMobile }">
+        <div class="content-container">
             <!-- Flash Messages -->
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
