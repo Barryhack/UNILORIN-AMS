@@ -1,7 +1,7 @@
 """Authentication routes."""
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
-from werkzeug.urls import url_parse
+from urllib.parse import urlparse
 from app.forms.auth import LoginForm
 from app.models.user import User
 from app.models.activity_log import ActivityLog
@@ -150,7 +150,7 @@ def logout():
         logger.error(f"Unexpected error during logout: {str(e)}")
         flash('An unexpected error occurred. Please try again.', 'error')
         
-    return redirect(url_parse(url_for('auth.login')).path)
+    return redirect(urlparse(url_for('auth.login')).path)
 
 @auth_bp.route('/profile')
 @login_required
