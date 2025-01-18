@@ -513,20 +513,21 @@ def manage_departments():
             db.joinedload(Department.courses)
         ).all()
         
+        # Log successful query
+        logger.info(f"Successfully retrieved {len(departments)} departments")
+        
         return render_template('admin/manage_departments.html',
                              departments=departments)
     except SQLAlchemyError as e:
         logger.error(f"Database error in manage_departments: {str(e)}\n{traceback.format_exc()}")
         flash("Error loading departments. Please try again later.", "error")
         return render_template('admin/manage_departments.html',
-                             departments=[],
-                             error="Database error occurred.")
+                             departments=[])
     except Exception as e:
         logger.error(f"Unexpected error in manage_departments: {str(e)}\n{traceback.format_exc()}")
         flash("An unexpected error occurred.", "error")
         return render_template('admin/manage_departments.html',
-                             departments=[],
-                             error="An unexpected error occurred.")
+                             departments=[])
 
 @admin_bp.route('/reports')
 @login_required
@@ -905,3 +906,23 @@ def settings():
     form.admin_email.data = current_app.config.get('ADMIN_EMAIL', '')
     
     return render_template('admin/settings.html', form=form)
+
+@admin_bp.route('/test-db')
+@login_required
+@admin_required
+def test_db():
+    """Test database connection."""
+    try:
+        # Test database connection
+        departments = Department.query.all()
+        return jsonify({
+            'status': 'success',
+            'message': f'Successfully connected to database. Found {len(departments)} departments.',
+            'departments': [{'id': d.id, 'name': d.name, 'code': d.code} for d in departments]
+        })
+    except Exception as e:
+        logger.error(f"Database test error: {str(e)}\n{traceback.format_exc()}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
