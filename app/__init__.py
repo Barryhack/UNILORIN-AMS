@@ -70,16 +70,13 @@ def create_app(config_class=None):
     login_manager.login_view = 'auth.login'
     login_manager.login_message_category = 'info'
 
-    @app.before_first_request
-    def before_first_request():
-        """Initialize application before first request."""
-        # Create database tables if they don't exist
-        with app.app_context():
-            try:
-                db.create_all()
-                app.logger.info('Database tables created successfully')
-            except Exception as e:
-                app.logger.error(f'Error creating database tables: {e}')
+    # Initialize database tables
+    with app.app_context():
+        try:
+            db.create_all()
+            app.logger.info('Database tables created successfully')
+        except Exception as e:
+            app.logger.error(f'Error creating database tables: {e}')
 
     # Add security headers
     @app.after_request
