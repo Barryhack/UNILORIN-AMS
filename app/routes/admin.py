@@ -391,66 +391,63 @@ def register_user_api():
 @admin_required
 def manage_users():
     """Manage users view."""
-    users = User.query.order_by(User.created_at.desc()).all()
-    departments = Department.query.all()
-    
-    # Group users by role for better organization
-    students = [u for u in users if u.role == 'student']
-    lecturers = [u for u in users if u.role == 'lecturer']
-    admins = [u for u in users if u.role == 'admin']
-    
-    return render_template('admin/manage_users.html',
-                         users=users,
-                         students=students,
-                         lecturers=lecturers,
-                         admins=admins,
-                         departments=departments)
-
-@admin_bp.route('/api/users/<int:user_id>', methods=['PUT'])
-@login_required
-@admin_required
-def update_user(user_id):
-    """Update user details."""
     try:
-        user = User.query.get_or_404(user_id)
-        data = request.get_json()
-        
-        # Update user fields
-        user.full_name = data.get('full_name', user.full_name)
-        user.email = data.get('email', user.email)
-        user.department_id = data.get('department_id', user.department_id)
-        user.role = data.get('role', user.role)
-        user.is_active = data.get('is_active', user.is_active)
-        
-        db.session.commit()
-        
-        # Log activity
-        ActivityLog.log_activity(
-            current_user.id,
-            'update_user',
-            f'Updated user: {user.username}',
-            'user',
-            user.id
-        )
-        
-        return jsonify({
-            'success': True,
-            'message': 'User updated successfully'
-        })
-    except Exception as e:
-        db.session.rollback()
-        logger.error(f"Error updating user: {e}")
-        return jsonify({
-            'success': False,
-            'message': str(e)
-        }), 500
+        users = User.query.options(
+            db.joinedload(User.department)
+        ).all()
+        departments = Department.query.all()
+        return render_template('admin/manage_users.html',
+                             users=users,
+                             departments=departments)
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error in manage_users: {str(e)}")
+        flash("Error loading users. Please try again later.", "error")
+        return render_template('admin/manage_users.html',
+                             users=[],
+                             departments=[],
+                             error="Database error occurred.")
 
-@admin_bp.route('/api/dashboard/stats')
+@admin_bp.route('/activity-logs')
 @login_required
 @admin_required
-def get_dashboard_stats():
-    """Get statistics for the admin dashboard API endpoint."""
-    return jsonify(get_dashboard_statistics())
+def activity_logs():
+    """View activity logs."""
+    try:
+        logs = ActivityLog.query.order_by(ActivityLog.timestamp.desc()).limit(100).all()
+        return render_template('admin/activity_logs.html', logs=logs)
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error in activity_logs: {str(e)}")
+        flash("Error loading activity logs. Please try again later.", "error")
+        return render_template('admin/activity_logs.html', logs=[])
+
+@admin_bp.route('/system-logs')
+@login_required
+@admin_required
+def system_logs():
+    """View system logs."""
+    try:
+        # Get the last 100 lines of the application log
+        log_file = current_app.config.get('LOG_FILE', 'app.log')
+        with open(log_file, 'r') as f:
+            logs = f.readlines()[-100:]
+        return render_template('admin/system_logs.html', logs=logs)
+    except Exception as e:
+        current_app.logger.error(f"Error reading system logs: {str(e)}")
+        flash("Error loading system logs. Please try again later.", "error")
+        return render_template('admin/system_logs.html', logs=[])
+
+@admin_bp.route('/login-logs')
+@login_required
+@admin_required
+def login_logs():
+    """View login logs."""
+    try:
+        logs = LoginLog.query.order_by(LoginLog.timestamp.desc()).limit(100).all()
+        return render_template('admin/login_logs.html', logs=logs)
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error in login_logs: {str(e)}")
+        flash("Error loading login logs. Please try again later.", "error")
+        return render_template('admin/login_logs.html', logs=[])
 
 @admin_bp.route('/manage-courses')
 @login_required
@@ -496,31 +493,12 @@ def manage_departments():
     departments = Department.query.all()
     return render_template('admin/manage_departments.html', departments=departments)
 
-@admin_bp.route('/activity-logs')
-@login_required
-@admin_required
-def activity_logs():
-    """View activity logs."""
-    logs = ActivityLog.query.order_by(ActivityLog.timestamp.desc()).limit(100).all()
-    return render_template('admin/activity_logs.html', logs=logs)
-
 @admin_bp.route('/reports')
 @login_required
 @admin_required
 def reports():
     """View system reports."""
     return render_template('admin/reports.html')
-
-@admin_bp.route('/system-logs')
-@login_required
-@admin_required
-def system_logs():
-    """View system logs."""
-    activity_logs = ActivityLog.query.order_by(ActivityLog.timestamp.desc()).limit(100).all()
-    login_logs = LoginLog.query.order_by(LoginLog.timestamp.desc()).limit(100).all()
-    return render_template('admin/system_logs.html', 
-                         activity_logs=activity_logs,
-                         login_logs=login_logs)
 
 @admin_bp.route('/users')
 @login_required
@@ -752,15 +730,6 @@ def delete_course(course_id):
     )
     
     return jsonify({'success': True, 'message': 'Course deleted successfully'})
-
-@admin_bp.route('/login-logs')
-@login_required
-@admin_required
-def login_logs():
-    page = request.args.get('page', 1, type=int)
-    logs = LoginLog.query.order_by(LoginLog.timestamp.desc()).paginate(
-        page=page, per_page=50, error_out=False)
-    return render_template('admin/login_logs.html', logs=logs, datetime=datetime)
 
 @admin_bp.route('/statistics')
 @login_required

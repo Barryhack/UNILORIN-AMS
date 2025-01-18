@@ -132,32 +132,68 @@
             <nav class="px-4 py-6 space-y-2">
                 <a href="{{ url_for('admin.dashboard') }}" 
                    class="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 {% if request.endpoint == 'admin.dashboard' %}bg-blue-50 text-blue-700 hover:bg-blue-100{% else %}text-gray-700 hover:bg-gray-100 hover:text-gray-900{% endif %}">
-                    <i class="fas fa-home w-5 h-5 mr-3 {% if request.endpoint == 'admin.dashboard' %}text-blue-600{% endif %}"></i>
+                    <i class="fas fa-home w-5 h-5 mr-3"></i>
                     Dashboard
                 </a>
                 
                 <a href="{{ url_for('admin.register_user') }}"
                    class="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 {% if request.endpoint == 'admin.register_user' %}bg-blue-50 text-blue-700 hover:bg-blue-100{% else %}text-gray-700 hover:bg-gray-100 hover:text-gray-900{% endif %}">
-                    <i class="fas fa-user-plus w-5 h-5 mr-3 {% if request.endpoint == 'admin.register_user' %}text-blue-600{% endif %}"></i>
+                    <i class="fas fa-user-plus w-5 h-5 mr-3"></i>
                     Register User
                 </a>
                 
+                <a href="{{ url_for('admin.manage_users') }}"
+                   class="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 {% if request.endpoint == 'admin.manage_users' %}bg-blue-50 text-blue-700 hover:bg-blue-100{% else %}text-gray-700 hover:bg-gray-100 hover:text-gray-900{% endif %}">
+                    <i class="fas fa-users w-5 h-5 mr-3"></i>
+                    Manage Users
+                </a>
+
                 <a href="{{ url_for('admin.manage_courses') }}"
                    class="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 {% if request.endpoint == 'admin.manage_courses' %}bg-blue-50 text-blue-700 hover:bg-blue-100{% else %}text-gray-700 hover:bg-gray-100 hover:text-gray-900{% endif %}">
-                    <i class="fas fa-book w-5 h-5 mr-3 {% if request.endpoint == 'admin.manage_courses' %}text-blue-600{% endif %}"></i>
+                    <i class="fas fa-book w-5 h-5 mr-3"></i>
                     Manage Courses
+                </a>
+
+                <a href="{{ url_for('admin.manage_departments') }}"
+                   class="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 {% if request.endpoint == 'admin.manage_departments' %}bg-blue-50 text-blue-700 hover:bg-blue-100{% else %}text-gray-700 hover:bg-gray-100 hover:text-gray-900{% endif %}">
+                    <i class="fas fa-building w-5 h-5 mr-3"></i>
+                    Manage Departments
                 </a>
 
                 <a href="{{ url_for('admin.hardware') }}"
                    class="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 {% if request.endpoint == 'admin.hardware' %}bg-blue-50 text-blue-700 hover:bg-blue-100{% else %}text-gray-700 hover:bg-gray-100 hover:text-gray-900{% endif %}">
-                    <i class="fas fa-microchip w-5 h-5 mr-3 {% if request.endpoint == 'admin.hardware' %}text-blue-600{% endif %}"></i>
+                    <i class="fas fa-microchip w-5 h-5 mr-3"></i>
                     Hardware
                 </a>
-                
+
                 <a href="{{ url_for('admin.reports') }}"
                    class="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 {% if request.endpoint == 'admin.reports' %}bg-blue-50 text-blue-700 hover:bg-blue-100{% else %}text-gray-700 hover:bg-gray-100 hover:text-gray-900{% endif %}">
-                    <i class="fas fa-chart-bar w-5 h-5 mr-3 {% if request.endpoint == 'admin.reports' %}text-blue-600{% endif %}"></i>
+                    <i class="fas fa-chart-bar w-5 h-5 mr-3"></i>
                     Reports
+                </a>
+
+                <a href="{{ url_for('admin.activity_logs') }}"
+                   class="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 {% if request.endpoint == 'admin.activity_logs' %}bg-blue-50 text-blue-700 hover:bg-blue-100{% else %}text-gray-700 hover:bg-gray-100 hover:text-gray-900{% endif %}">
+                    <i class="fas fa-history w-5 h-5 mr-3"></i>
+                    Activity Logs
+                </a>
+
+                <a href="{{ url_for('admin.system_logs') }}"
+                   class="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 {% if request.endpoint == 'admin.system_logs' %}bg-blue-50 text-blue-700 hover:bg-blue-100{% else %}text-gray-700 hover:bg-gray-100 hover:text-gray-900{% endif %}">
+                    <i class="fas fa-terminal w-5 h-5 mr-3"></i>
+                    System Logs
+                </a>
+
+                <a href="{{ url_for('admin.login_logs') }}"
+                   class="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 {% if request.endpoint == 'admin.login_logs' %}bg-blue-50 text-blue-700 hover:bg-blue-100{% else %}text-gray-700 hover:bg-gray-100 hover:text-gray-900{% endif %}">
+                    <i class="fas fa-sign-in-alt w-5 h-5 mr-3"></i>
+                    Login Logs
+                </a>
+
+                <a href="{{ url_for('admin.settings') }}"
+                   class="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 {% if request.endpoint == 'admin.settings' %}bg-blue-50 text-blue-700 hover:bg-blue-100{% else %}text-gray-700 hover:bg-gray-100 hover:text-gray-900{% endif %}">
+                    <i class="fas fa-cog w-5 h-5 mr-3"></i>
+                    Settings
                 </a>
             </nav>
         </div>
