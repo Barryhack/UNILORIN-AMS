@@ -24,6 +24,46 @@ class Lecture(db.Model):
     course = relationship('Course', back_populates='lectures')
     attendances = relationship('Attendance', back_populates='lecture', cascade='all, delete-orphan')
 
+    @property
+    def has_started(self):
+        """Check if lecture has started"""
+        current_time = datetime.now()
+        lecture_datetime = datetime.combine(self.date, self.start_time)
+        return current_time >= lecture_datetime
+
+    @property
+    def has_ended(self):
+        """Check if lecture has ended"""
+        current_time = datetime.now()
+        lecture_datetime = datetime.combine(self.date, self.end_time)
+        return current_time > lecture_datetime
+
+    @property
+    def lecturer(self):
+        """Get the lecturer for this lecture"""
+        return self.course.lecturer if self.course else None
+
+    @property
+    def attended_count(self):
+        """Get count of students who attended this lecture"""
+        return sum(1 for attendance in self.attendances if attendance.status == 'present')
+
+    @property
+    def total_students(self):
+        """Get total number of students enrolled in the course"""
+        return self.course.enrolled_students.count() if self.course else 0
+
+    def get_student_attendance_status(self, student_id):
+        """Get attendance status for a specific student"""
+        attendance = next((a for a in self.attendances if a.user_id == student_id), None)
+        return attendance.status if attendance else None
+
+    def get_attendance_rate(self):
+        """Calculate attendance rate for this lecture"""
+        if not self.total_students:
+            return 0
+        return (self.attended_count / self.total_students) * 100
+
     def __repr__(self):
         return f'<Lecture {self.course.code} on {self.date} at {self.start_time}>'
 
@@ -47,14 +87,6 @@ class Lecture(db.Model):
             'attendance_count': len(self.attendances),
             'attendance_rate': self.get_attendance_rate()
         }
-
-    def get_attendance_rate(self):
-        """Calculate attendance rate for this lecture"""
-        total_students = len(self.course.students)
-        if total_students == 0:
-            return 0
-        present_count = sum(1 for a in self.attendances if a.status == 'present')
-        return (present_count / total_students * 100)
 
     def get_present_students(self):
         """Get list of students present in the lecture"""

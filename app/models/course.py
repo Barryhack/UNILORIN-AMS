@@ -14,8 +14,9 @@ class Course(db.Model):
     credits = db.Column(db.Integer, default=3)
     department_id = db.Column(db.Integer, db.ForeignKey('departments.id'), nullable=False)
     lecturer_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    semester = db.Column(db.String(20))  # e.g., 'Fall 2023'
+    semester = db.Column(db.String(6))  # YYYYMM format
     level = db.Column(db.String(10))  # e.g., '100L', '200L'
+    minimum_attendance = db.Column(db.Integer, default=75)  # Minimum required attendance percentage
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     is_active = db.Column(db.Boolean, default=True)
@@ -54,6 +55,7 @@ class Course(db.Model):
             'lecturer_id': self.lecturer_id,
             'semester': self.semester,
             'level': self.level,
+            'minimum_attendance': self.minimum_attendance,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
             'is_active': self.is_active,
@@ -134,6 +136,63 @@ class Course(db.Model):
             'total_students': total_students,
             'average_attendance': average_attendance,
             'attendance_by_lecture': attendance_by_lecture
+        }
+
+    def get_attendance_rate(self, student_id=None):
+        """Calculate attendance rate for the course
+        If student_id is provided, calculate for specific student
+        Otherwise, calculate average for all enrolled students
+        """
+        from app.models.attendance import Attendance
+        from sqlalchemy import func, case
+
+        query = db.session.query(
+            func.avg(case([(Attendance.status == 'present', 100)], else_=0))
+        ).join(Lecture).filter(Lecture.course_id == self.id)
+
+        if student_id:
+            query = query.filter(Attendance.user_id == student_id)
+
+        return query.scalar() or 0
+
+    def get_active_students_count(self, days=30):
+        """Get count of students who attended at least one lecture in the last X days"""
+        from app.models.attendance import Attendance
+        from datetime import datetime, timedelta
+
+        cutoff_date = datetime.utcnow() - timedelta(days=days)
+        
+        return self.enrolled_students.filter(
+            Attendance.query.filter_by(
+                user_id=User.id,
+                status='present'
+            ).join(Lecture).filter(
+                Lecture.course_id == self.id,
+                Lecture.date >= cutoff_date
+            ).exists()
+        ).count()
+
+    def get_at_risk_students_count(self):
+        """Get count of students below minimum attendance requirement"""
+        at_risk_count = 0
+        for student in self.enrolled_students:
+            if self.get_attendance_rate(student.id) < self.minimum_attendance:
+                at_risk_count += 1
+        return at_risk_count
+
+    def get_completion_status(self):
+        """Get course completion status based on scheduled lectures"""
+        total_lectures = Lecture.query.filter_by(course_id=self.id).count()
+        completed_lectures = Lecture.query.filter_by(
+            course_id=self.id
+        ).filter(
+            Lecture.end_time < datetime.utcnow()
+        ).count()
+        
+        return {
+            'total': total_lectures,
+            'completed': completed_lectures,
+            'percentage': (completed_lectures / total_lectures * 100) if total_lectures > 0 else 0
         }
 
     def get_enrolled_students(self):

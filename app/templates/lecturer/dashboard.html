@@ -3,188 +3,254 @@
 {% block title %}Lecturer Dashboard{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4">
-    <!-- Welcome Section -->
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8 border border-gray-200 dark:border-gray-700 transition-colors duration-200">
-        <div class="flex items-center justify-between">
+<div class="space-y-6">
+    <!-- Welcome Banner -->
+    <div class="p-4 sm:p-6 bg-white rounded-lg shadow-sm border-l-4 border-blue-500">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div>
-                <h1 class="text-3xl font-bold text-gray-800 dark:text-white">Welcome, {{ current_user.name }}</h1>
-                <p class="text-gray-600 dark:text-gray-300 mt-2">Department: {{ current_user.department.name if current_user.department else 'Not Assigned' }}</p>
+                <h1 class="text-xl sm:text-2xl font-bold text-gray-900">Welcome Back, {{ current_user.first_name }}!</h1>
+                <p class="mt-1 text-sm sm:text-base text-gray-600">Department: {{ current_user.department.name if current_user.department else 'Not Assigned' }}</p>
             </div>
-            <div class="text-right">
-                <p class="text-sm text-gray-500 dark:text-gray-400">Last Login: {{ current_user.last_login.strftime('%Y-%m-%d %H:%M') if current_user.last_login else 'Never' }}</p>
+            <div class="mt-2 sm:mt-0 text-right">
+                <p class="text-xs sm:text-sm text-gray-500">{{ now.strftime('%A, %B %d, %Y') }}</p>
+                <p class="text-xs sm:text-sm text-gray-500">{{ now.strftime('%I:%M %p') }}</p>
             </div>
         </div>
     </div>
 
-    <!-- Quick Stats -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Quick Actions -->
+    <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <a href="{{ url_for('lecturer.view_courses') }}" 
+           class="p-3 sm:p-4 bg-blue-500 text-white rounded-lg shadow-sm hover:bg-blue-600 transition-colors">
+            <i class="fas fa-book text-xl sm:text-2xl mb-1 sm:mb-2"></i>
+            <h3 class="text-sm sm:text-base font-semibold">My Courses</h3>
+            <p class="text-xs sm:text-sm opacity-90">View assigned courses</p>
+        </a>
+        <a href="{{ url_for('lecturer.schedule') }}" 
+           class="p-3 sm:p-4 bg-green-500 text-white rounded-lg shadow-sm hover:bg-green-600 transition-colors">
+            <i class="fas fa-calendar text-xl sm:text-2xl mb-1 sm:mb-2"></i>
+            <h3 class="text-sm sm:text-base font-semibold">Schedule</h3>
+            <p class="text-xs sm:text-sm opacity-90">View timetable</p>
+        </a>
+        <a href="{{ url_for('lecturer.attendance_records') }}" 
+           class="p-3 sm:p-4 bg-purple-500 text-white rounded-lg shadow-sm hover:bg-purple-600 transition-colors">
+            <i class="fas fa-clipboard-list text-xl sm:text-2xl mb-1 sm:mb-2"></i>
+            <h3 class="text-sm sm:text-base font-semibold">Records</h3>
+            <p class="text-xs sm:text-sm opacity-90">View attendance records</p>
+        </a>
+        <a href="{{ url_for('lecturer.reports') }}" 
+           class="p-3 sm:p-4 bg-orange-500 text-white rounded-lg shadow-sm hover:bg-orange-600 transition-colors">
+            <i class="fas fa-chart-bar text-xl sm:text-2xl mb-1 sm:mb-2"></i>
+            <h3 class="text-sm sm:text-base font-semibold">Reports</h3>
+            <p class="text-xs sm:text-sm opacity-90">View analytics</p>
+        </a>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <!-- Total Courses -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 transform hover:scale-105 transition-all duration-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/70">
+        <div class="bg-white rounded-lg shadow-sm p-4 sm:p-6 border border-gray-100">
             <div class="flex items-center">
-                <div class="p-3 bg-blue-100 dark:bg-blue-900/50 rounded-lg transition-colors duration-200">
-                    <svg class="h-8 w-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                    </svg>
+                <div class="flex-shrink-0 p-3 rounded-md bg-blue-100 text-blue-600">
+                    <i class="fas fa-book text-lg sm:text-xl"></i>
                 </div>
-                <div class="ml-4">
-                    <p class="text-gray-600 dark:text-gray-300 text-sm font-medium">Total Courses</p>
-                    <h3 class="text-3xl font-bold text-gray-800 dark:text-white mt-1">{{ courses|length }}</h3>
+                <div class="ml-3 sm:ml-4">
+                    <p class="text-xs sm:text-sm font-medium text-gray-500">Total Courses</p>
+                    <p class="text-lg sm:text-xl font-semibold text-gray-900">{{ courses|length }}</p>
                 </div>
             </div>
+            {% if courses_trend > 0 %}
+            <p class="mt-2 text-xs text-green-600"><i class="fas fa-arrow-up"></i> {{ courses_trend }}% from last semester</p>
+            {% elif courses_trend < 0 %}
+            <p class="mt-2 text-xs text-red-600"><i class="fas fa-arrow-down"></i> {{ courses_trend|abs }}% from last semester</p>
+            {% endif %}
         </div>
 
         <!-- Today's Lectures -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 transform hover:scale-105 transition-all duration-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/70">
+        <div class="bg-white rounded-lg shadow-sm p-4 sm:p-6 border border-gray-100">
             <div class="flex items-center">
-                <div class="p-3 bg-green-100 dark:bg-green-900/50 rounded-lg transition-colors duration-200">
-                    <svg class="h-8 w-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                    </svg>
+                <div class="flex-shrink-0 p-3 rounded-md bg-green-100 text-green-600">
+                    <i class="fas fa-calendar-day text-lg sm:text-xl"></i>
                 </div>
-                <div class="ml-4">
-                    <p class="text-gray-600 dark:text-gray-300 text-sm font-medium">Today's Lectures</p>
-                    <h3 class="text-3xl font-bold text-gray-800 dark:text-white mt-1">{{ today_lectures|length }}</h3>
+                <div class="ml-3 sm:ml-4">
+                    <p class="text-xs sm:text-sm font-medium text-gray-500">Today's Lectures</p>
+                    <p class="text-lg sm:text-xl font-semibold text-gray-900">{{ today_lectures|length }}</p>
                 </div>
             </div>
+            <p class="mt-2 text-xs text-gray-500">
+                {{ completed_lectures }} completed / {{ today_lectures|length }} total
+            </p>
         </div>
 
         <!-- Average Attendance -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 transform hover:scale-105 transition-all duration-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/70">
+        <div class="bg-white rounded-lg shadow-sm p-4 sm:p-6 border border-gray-100">
             <div class="flex items-center">
-                <div class="p-3 bg-purple-100 dark:bg-purple-900/50 rounded-lg transition-colors duration-200">
-                    <svg class="h-8 w-8 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                    </svg>
+                <div class="flex-shrink-0 p-3 rounded-md bg-purple-100 text-purple-600">
+                    <i class="fas fa-user-check text-lg sm:text-xl"></i>
                 </div>
-                <div class="ml-4">
-                    <p class="text-gray-600 dark:text-gray-300 text-sm font-medium">Average Attendance</p>
-                    <h3 class="text-3xl font-bold text-gray-800 dark:text-white mt-1">{{ "%.1f"|format(avg_attendance|default(0)) }}%</h3>
+                <div class="ml-3 sm:ml-4">
+                    <p class="text-xs sm:text-sm font-medium text-gray-500">Average Attendance</p>
+                    <p class="text-lg sm:text-xl font-semibold text-gray-900">{{ "%.1f"|format(avg_attendance|default(0)) }}%</p>
                 </div>
             </div>
+            {% if attendance_trend > 0 %}
+            <p class="mt-2 text-xs text-green-600"><i class="fas fa-arrow-up"></i> {{ attendance_trend }}% from last week</p>
+            {% elif attendance_trend < 0 %}
+            <p class="mt-2 text-xs text-red-600"><i class="fas fa-arrow-down"></i> {{ attendance_trend|abs }}% from last week</p>
+            {% endif %}
         </div>
 
         <!-- Total Students -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 transform hover:scale-105 transition-all duration-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/70">
+        <div class="bg-white rounded-lg shadow-sm p-4 sm:p-6 border border-gray-100">
             <div class="flex items-center">
-                <div class="p-3 bg-yellow-100 dark:bg-yellow-900/50 rounded-lg transition-colors duration-200">
-                    <svg class="h-8 w-8 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
+                <div class="flex-shrink-0 p-3 rounded-md bg-orange-100 text-orange-600">
+                    <i class="fas fa-users text-lg sm:text-xl"></i>
                 </div>
-                <div class="ml-4">
-                    <p class="text-gray-600 dark:text-gray-300 text-sm font-medium">Total Students</p>
-                    <h3 class="text-3xl font-bold text-gray-800 dark:text-white mt-1">{{ total_students }}</h3>
+                <div class="ml-3 sm:ml-4">
+                    <p class="text-xs sm:text-sm font-medium text-gray-500">Total Students</p>
+                    <p class="text-lg sm:text-xl font-semibold text-gray-900">{{ total_students }}</p>
                 </div>
             </div>
+            <p class="mt-2 text-xs text-gray-500">
+                {{ active_students }} active / {{ inactive_students }} inactive
+            </p>
         </div>
     </div>
 
-    <!-- Today's Schedule -->
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8 border border-gray-200 dark:border-gray-700 transition-colors duration-200">
-        <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-4">Today's Schedule</h2>
-        {% if today_lectures %}
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead class="bg-gray-50 dark:bg-gray-700/50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Time</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Course</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Topic</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <!-- Today's Schedule -->
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div class="px-4 sm:px-6 py-4 border-b border-gray-200">
+                <h2 class="text-base sm:text-lg font-semibold text-gray-900">Today's Schedule</h2>
+            </div>
+            <div class="p-4 sm:p-6">
+                {% if today_lectures %}
+                <div class="space-y-4">
                     {% for lecture in today_lectures %}
-                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/70">
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-900 dark:text-white">{{ lecture.start_time.strftime('%H:%M') }} - {{ lecture.end_time.strftime('%H:%M') }}</div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm font-medium text-gray-900 dark:text-white">{{ lecture.course.code }}</div>
-                            <div class="text-sm text-gray-500 dark:text-gray-400">{{ lecture.course.title }}</div>
-                        </td>
-                        <td class="px-6 py-4">
-                            <div class="text-sm text-gray-900 dark:text-white">{{ lecture.topic or 'No topic set' }}</div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <a href="{{ url_for('lecturer.take_attendance', lecture_id=lecture.id) }}" 
-                               class="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 mr-4">Take Attendance</a>
-                            <a href="{{ url_for('lecturer.view_attendance', lecture_id=lecture.id) }}"
-                               class="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300">View Details</a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% else %}
-        <div class="text-center py-8">
-            <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-            </svg>
-            <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No lectures scheduled for today</h3>
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Check your course schedule for upcoming lectures.</p>
-        </div>
-        {% endif %}
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Recent Activity -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-            <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-4">Recent Activity</h2>
-            <div class="space-y-4">
-                {% for activity in recent_activities %}
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <span class="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
-                            <svg class="h-5 w-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                        </span>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-900 dark:text-white">{{ activity.action }}</p>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">{{ activity.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-
-        <!-- Course Overview -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-            <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-4">Course Overview</h2>
-            <div class="space-y-4">
-                {% for course in courses[:5] %}
-                <div class="flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-700/70 rounded-lg transition-colors">
-                    <div>
-                        <h3 class="text-lg font-medium text-gray-900 dark:text-white">{{ course.code }}</h3>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">{{ course.title }}</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-sm font-medium text-gray-900 dark:text-white">{{ course.total_students }} Students</p>
-                        <div class="flex items-center mt-1">
-                            <div class="w-24 bg-gray-200 dark:bg-gray-700/50 rounded-full h-2 mr-2">
-                                <div class="bg-blue-600 dark:bg-blue-400 h-2 rounded-full" style="width: {{ course.attendance_percentage|default(0) }}%"></div>
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center space-x-3">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-clock text-gray-400"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">{{ lecture.course.code }} - {{ lecture.course.title }}</p>
+                                    <p class="text-xs text-gray-500">{{ lecture.start_time.strftime('%I:%M %p') }} - {{ lecture.end_time.strftime('%I:%M %p') }}</p>
+                                    <p class="text-xs text-gray-500">Room: {{ lecture.room }}</p>
+                                    {% if lecture.has_started %}
+                                    <p class="text-xs text-gray-500 mt-1">
+                                        <i class="fas fa-users text-blue-500"></i> 
+                                        {{ lecture.attended_count|default(0) }}/{{ lecture.total_students }} students present
+                                    </p>
+                                    {% endif %}
+                                </div>
                             </div>
-                            <span class="text-sm text-gray-600 dark:text-gray-400">{{ "%.1f"|format(course.attendance_percentage|default(0)) }}%</span>
+                        </div>
+                        <div class="ml-4 flex-shrink-0 space-y-2">
+                            {% if lecture.has_started and not lecture.has_ended %}
+                            <a href="{{ url_for('lecturer.take_attendance', lecture_id=lecture.id) }}" 
+                               class="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-5 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-500 focus:outline-none focus:border-blue-700 focus:shadow-outline-blue active:bg-blue-700 transition duration-150 ease-in-out">
+                                Take Attendance
+                            </a>
+                            {% endif %}
+                            <a href="{{ url_for('lecturer.view_attendance', lecture_id=lecture.id) }}"
+                               class="inline-flex items-center px-3 py-1 border border-gray-300 text-sm leading-5 font-medium rounded-md text-gray-700 bg-white hover:text-gray-500 focus:outline-none focus:border-blue-300 focus:shadow-outline-blue active:text-gray-800 active:bg-gray-50 transition duration-150 ease-in-out">
+                                View Details
+                            </a>
                         </div>
                     </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-6">
+                    <i class="fas fa-calendar-times text-gray-400 text-3xl mb-2"></i>
+                    <p class="text-gray-500">No lectures scheduled for today</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Course Insights -->
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div class="px-4 sm:px-6 py-4 border-b border-gray-200">
+                <h2 class="text-base sm:text-lg font-semibold text-gray-900">Course Insights</h2>
+            </div>
+            <div class="p-4 sm:p-6">
+                {% if courses %}
+                <div class="space-y-4">
+                    {% for course in courses[:5] %}
+                    <div class="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                        <div class="flex items-center justify-between mb-2">
+                            <div>
+                                <h3 class="text-sm font-medium text-gray-900">{{ course.code }} - {{ course.title }}</h3>
+                                <p class="text-xs text-gray-500">{{ course.students|length }} students enrolled</p>
+                            </div>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                       {% if course.attendance_rate >= 75 %}bg-green-100 text-green-800
+                                       {% elif course.attendance_rate >= 50 %}bg-yellow-100 text-yellow-800
+                                       {% else %}bg-red-100 text-red-800{% endif %}">
+                                {{ "%.1f"|format(course.attendance_rate|default(0)) }}% attendance
+                            </span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-blue-600 h-2 rounded-full" style="width: {{ course.attendance_rate }}%"></div>
+                        </div>
+                        <div class="mt-2 grid grid-cols-3 gap-2 text-xs text-gray-500">
+                            <div>
+                                <i class="fas fa-clock"></i> {{ course.total_lectures }} lectures
+                            </div>
+                            <div>
+                                <i class="fas fa-user-check"></i> {{ course.active_students }} active
+                            </div>
+                            <div>
+                                <i class="fas fa-exclamation-triangle"></i> {{ course.at_risk_students }} at risk
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% if courses|length > 5 %}
+                <div class="mt-4 text-center">
+                    <a href="{{ url_for('lecturer.view_courses') }}" 
+                       class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        View All Courses
+                        <i class="fas fa-arrow-right ml-2"></i>
+                    </a>
+                </div>
+                {% endif %}
+                {% else %}
+                <p class="text-sm text-gray-500">No courses assigned yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Upcoming Week Preview -->
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div class="px-4 sm:px-6 py-4 border-b border-gray-200">
+            <h2 class="text-base sm:text-lg font-semibold text-gray-900">Upcoming Week</h2>
+        </div>
+        <div class="p-4 sm:p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for day in upcoming_week %}
+                <div class="p-4 bg-gray-50 rounded-lg">
+                    <h3 class="text-sm font-medium text-gray-900 mb-2">{{ day.date.strftime('%A, %b %d') }}</h3>
+                    {% if day.lectures %}
+                    <div class="space-y-2">
+                        {% for lecture in day.lectures %}
+                        <div class="flex items-center space-x-2 text-xs">
+                            <i class="fas fa-clock text-gray-400"></i>
+                            <span class="text-gray-600">{{ lecture.start_time.strftime('%I:%M %p') }}</span>
+                            <span class="text-gray-900">{{ lecture.course.code }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-xs text-gray-500">No lectures scheduled</p>
+                    {% endif %}
                 </div>
                 {% endfor %}
             </div>
-            {% if courses|length > 5 %}
-            <div class="mt-6 text-center">
-                <a href="{{ url_for('lecturer.view_courses') }}" 
-                   class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white dark:text-gray-800 bg-blue-600 dark:bg-blue-400 hover:bg-blue-700 dark:hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-600">
-                    View all courses
-                    <svg class="ml-2 -mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                    </svg>
-                </a>
-            </div>
-            {% endif %}
         </div>
     </div>
 </div>

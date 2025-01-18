@@ -108,3 +108,82 @@ class Attendance(db.Model):
         if notes:
             self.notes = notes
         db.session.commit()
+
+    @staticmethod
+    def get_student_streak(student_id):
+        """Calculate current attendance streak for a student"""
+        from datetime import datetime, timedelta
+        
+        streak = 0
+        current_date = datetime.utcnow().date()
+        
+        while True:
+            attendance = Attendance.query.join(Lecture).filter(
+                Lecture.date == current_date,
+                Attendance.user_id == student_id,
+                Attendance.status == 'present'
+            ).first()
+            
+            if not attendance:
+                break
+                
+            streak += 1
+            current_date -= timedelta(days=1)
+        
+        return streak
+
+    @staticmethod
+    def get_student_attendance_trend(student_id, days=7):
+        """Calculate attendance trend for a student over the specified days"""
+        from sqlalchemy import func, case
+        from datetime import datetime, timedelta
+
+        current_time = datetime.utcnow()
+        
+        # Current period attendance rate
+        current_rate = db.session.query(
+            func.avg(case([(Attendance.status == 'present', 100)], else_=0))
+        ).join(Lecture).filter(
+            Attendance.user_id == student_id,
+            Lecture.date >= current_time.date() - timedelta(days=days),
+            Lecture.date <= current_time.date()
+        ).scalar() or 0
+
+        # Previous period attendance rate
+        previous_rate = db.session.query(
+            func.avg(case([(Attendance.status == 'present', 100)], else_=0))
+        ).join(Lecture).filter(
+            Attendance.user_id == student_id,
+            Lecture.date >= current_time.date() - timedelta(days=days*2),
+            Lecture.date < current_time.date() - timedelta(days=days)
+        ).scalar() or 0
+
+        if previous_rate == 0:
+            return 0
+            
+        return current_rate - previous_rate
+
+    @staticmethod
+    def get_course_attendance_stats(course_id, student_id=None):
+        """Get detailed attendance statistics for a course"""
+        from sqlalchemy import func
+        
+        query = db.session.query(
+            func.count(case([(Attendance.status == 'present', 1)])).label('present'),
+            func.count(case([(Attendance.status == 'absent', 1)])).label('absent'),
+            func.count(case([(Attendance.status == 'late', 1)])).label('late')
+        ).join(Lecture).filter(Lecture.course_id == course_id)
+        
+        if student_id:
+            query = query.filter(Attendance.user_id == student_id)
+            
+        result = query.first()
+        total = result.present + result.absent + result.late
+        
+        return {
+            'present': result.present,
+            'absent': result.absent,
+            'late': result.late,
+            'total': total,
+            'rate': (result.present / total * 100) if total > 0 else 0
+        }
