@@ -6,7 +6,7 @@ from flask import Flask
 from flask_migrate import upgrade
 from config import config
 from .extensions import db, migrate, login_manager, limiter, csrf
-from .models import User
+from .models.user import User
 
 def create_app(config_class=None):
     """Create Flask application."""
@@ -53,6 +53,19 @@ def create_app(config_class=None):
     limiter.init_app(app)
     csrf.init_app(app)
 
+    # Configure Flask-Login
+    login_manager.login_view = 'auth.login'
+    login_manager.login_message_category = 'info'
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        """Load user by ID."""
+        try:
+            return User.query.get(int(user_id))
+        except Exception as e:
+            app.logger.error(f'Error loading user: {e}')
+            return None
+
     # Register blueprints
     from .routes.auth import auth_bp
     from .routes.lecturer import lecturer_bp
@@ -65,10 +78,6 @@ def create_app(config_class=None):
     app.register_blueprint(lecturer_bp, url_prefix='/lecturer')
     app.register_blueprint(student_bp, url_prefix='/student')
     app.register_blueprint(admin_bp, url_prefix='/admin')
-
-    # Configure login manager
-    login_manager.login_view = 'auth.login'
-    login_manager.login_message_category = 'info'
 
     # Initialize database tables
     with app.app_context():
