@@ -490,8 +490,18 @@ def manage_courses():
 @admin_required
 def manage_departments():
     """Manage departments view."""
-    departments = Department.query.all()
-    return render_template('admin/manage_departments.html', departments=departments)
+    try:
+        departments = Department.query.options(
+            db.joinedload(Department.department_users)
+        ).all()
+        return render_template('admin/manage_departments.html', 
+                             departments=departments)
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error in manage_departments: {str(e)}")
+        flash("Error loading departments. Please try again later.", "error")
+        return render_template('admin/manage_departments.html',
+                             departments=[],
+                             error="Database error occurred.")
 
 @admin_bp.route('/reports')
 @login_required
