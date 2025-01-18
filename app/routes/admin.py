@@ -4,19 +4,24 @@ from flask import (
     current_app, jsonify, send_file
 )
 from flask_login import login_required, current_user
+from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime, timedelta
 from sqlalchemy import func, text, desc
-from ..models import (
-    User, Course, Department, Attendance, ActivityLog,
-    CourseStudent, CourseLecturer, LoginLog
-)
-from ..forms import (
+from app.models.course import Course
+from app.models.department import Department
+from app.models.user import User
+from app.models.lecture import Lecture
+from app.models.course_student import CourseStudent
+from app.models.attendance import Attendance
+from app.models.activity_log import ActivityLog
+from app.models.login_log import LoginLog
+from app.forms import (
     UserForm, CourseForm, DepartmentForm, AttendanceForm,
     SettingsForm
 )
-from ..utils import admin_required, roles_required
-from ..extensions import db
-from ..hardware.controller import init_hardware, get_hardware_controller
+from app.utils import admin_required, roles_required
+from app.extensions import db
+from app.hardware.controller import init_hardware, get_hardware_controller
 import logging
 import csv
 
@@ -453,24 +458,35 @@ def get_dashboard_stats():
 def manage_courses():
     """Manage courses view."""
     try:
+        # Get courses with eager loading
         courses = Course.query.options(
             db.joinedload(Course.department),
             db.joinedload(Course.lecturer),
             db.joinedload(Course.enrolled_students)
         ).all()
+        
+        # Get departments and lecturers
         departments = Department.query.all()
-        lecturers = User.query.filter_by(role='lecturer').all()
+        lecturers = User.query.filter(User.role.in_(['lecturer', 'admin'])).all()
+        
         return render_template('admin/manage_courses.html', 
                              courses=courses,
                              departments=departments,
                              lecturers=lecturers)
-    except Exception as e:
-        current_app.logger.error(f"Error in manage_courses: {str(e)}")
+    except SQLAlchemyError as e:
+        current_app.logger.error(f"Database error in manage_courses: {str(e)}")
         return render_template('admin/manage_courses.html',
                              courses=[],
                              departments=[],
                              lecturers=[],
-                             error="Unable to load courses. Please try again later.")
+                             error="Database error occurred. Please try again later.")
+    except Exception as e:
+        current_app.logger.error(f"Unexpected error in manage_courses: {str(e)}")
+        return render_template('admin/manage_courses.html',
+                             courses=[],
+                             departments=[],
+                             lecturers=[],
+                             error="An unexpected error occurred. Please try again later.")
 
 @admin_bp.route('/manage-departments')
 @login_required
