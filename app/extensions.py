@@ -9,6 +9,7 @@ import logging
 from sqlalchemy import text, event
 import os
 import time
+from sqlalchemy.exc import DisconnectionError
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +17,12 @@ logger = logging.getLogger(__name__)
 db = SQLAlchemy()
 migrate = Migrate()
 login_manager = LoginManager()
-limiter = Limiter(key_func=get_remote_address)
+limiter = Limiter(
+    key_func=get_remote_address,
+    storage_uri="memory://",
+    strategy="fixed-window",
+    default_limits=["200 per day", "50 per hour"]
+)
 csrf = CSRFProtect()
 
 def init_db_schema(app):
@@ -27,44 +33,29 @@ def init_db_schema(app):
     for attempt in range(max_retries):
         try:
             with app.app_context():
-                # First terminate all existing connections
-                db.session.execute(text('''
-                    SELECT pg_terminate_backend(pid)
-                    FROM pg_stat_activity
-                    WHERE datname = current_database()
-                    AND pid <> pg_backend_pid()
-                    AND state in ('idle', 'idle in transaction', 'idle in transaction (aborted)', 'disabled')
-                '''))
+                # Check if database exists and is accessible
+                db.session.execute(text('SELECT 1'))
                 db.session.commit()
+                logger.info("Database connection successful")
+
+                # Set statement timeout for PostgreSQL
+                if 'postgresql' in app.config['SQLALCHEMY_DATABASE_URI']:
+                    db.session.execute(text('SET statement_timeout = 30000'))  # 30 seconds
+                    db.session.commit()
+                    logger.info("PostgreSQL settings applied")
+
+                # Initialize tables if they don't exist
+                db.create_all()
+                logger.info("Database tables created")
                 
-                # Set statement timeout to avoid indefinite locks
-                db.session.execute(text('SET statement_timeout = 30000'))  # 30 seconds
-                
-                # Drop and recreate schema
-                db.session.execute(text('''
-                    DROP SCHEMA IF EXISTS public CASCADE;
-                    CREATE SCHEMA public;
-                    GRANT ALL ON SCHEMA public TO postgres;
-                    GRANT ALL ON SCHEMA public TO public;
-                '''))
-                db.session.commit()
-                
-                # Run migrations
-                from flask_migrate import upgrade
-                upgrade()
-                
-                logger.info("Database schema initialized successfully")
                 return True
                 
         except Exception as e:
-            logger.error(f"Attempt {attempt + 1} failed: {e}")
-            db.session.rollback()
-            
             if attempt < max_retries - 1:
-                logger.info(f"Retrying in {retry_delay} seconds...")
+                logger.warning(f"Database connection attempt {attempt + 1} failed: {e}")
                 time.sleep(retry_delay)
             else:
-                logger.error("Max retries reached. Database initialization failed.")
+                logger.error(f"All database connection attempts failed: {e}")
                 raise
     
     return False
@@ -72,25 +63,40 @@ def init_db_schema(app):
 def init_extensions(app):
     """Initialize Flask extensions."""
     try:
-        # Initialize SQLAlchemy first
+        # Initialize SQLAlchemy with engine options
         db.init_app(app)
-        
+        logger.info("SQLAlchemy initialized")
+
         # Initialize Flask-Migrate
         migrate.init_app(app, db)
-        
-        # Initialize other extensions
+        logger.info("Flask-Migrate initialized")
+
+        # Initialize Flask-Login with secure settings
         login_manager.init_app(app)
-        limiter.init_app(app)
-        csrf.init_app(app)
-        
-        # Configure login
         login_manager.login_view = 'auth.login'
-        login_manager.login_message = 'Please log in to access this page.'
         login_manager.login_message_category = 'info'
-        
+        login_manager.session_protection = 'strong'
+        login_manager.refresh_view = 'auth.login'
+        login_manager.needs_refresh_message = 'Please login again to confirm your identity'
+        login_manager.needs_refresh_message_category = 'info'
+        logger.info("Flask-Login initialized")
+
+        # Initialize Flask-Limiter
+        limiter.init_app(app)
+        logger.info("Flask-Limiter initialized")
+
+        # Initialize CSRF protection with secure settings
+        csrf.init_app(app)
+        logger.info("CSRF protection initialized")
+
+        # Initialize database schema
+        if init_db_schema(app):
+            logger.info("Database schema initialized")
+        else:
+            logger.error("Failed to initialize database schema")
+
         @login_manager.user_loader
         def load_user(user_id):
-            """Load user by ID."""
             from .models import User
             return User.query.get(int(user_id))
         
@@ -101,16 +107,25 @@ def init_extensions(app):
                 LoginLog, ActivityLog, Notification, Lecture, HardwareStatus
             )
             
-            try:
-                # Initialize database schema
-                logger.info("Initializing database schema")
-                init_db_schema(app)
-                logger.info("Database initialization completed successfully")
-                
-            except Exception as e:
-                logger.error(f"Error during database initialization: {e}")
-                raise
-                
+        # Set up database connection pooling for PostgreSQL
+        if 'postgresql' in app.config['SQLALCHEMY_DATABASE_URI']:
+            @event.listens_for(db.engine, 'connect')
+            def connect(dbapi_connection, connection_record):
+                connection_record.info['pid'] = os.getpid()
+
+            @event.listens_for(db.engine, 'checkout')
+            def checkout(dbapi_connection, connection_record, connection_proxy):
+                pid = os.getpid()
+                if connection_record.info['pid'] != pid:
+                    connection_record.connection = connection_proxy.connection = None
+                    raise DisconnectionError(
+                        "Connection record belongs to pid %s, "
+                        "attempting to check out in pid %s" %
+                        (connection_record.info['pid'], pid)
+                    )
+
+            logger.info("PostgreSQL connection pooling configured")
+
     except Exception as e:
         logger.error(f"Error initializing extensions: {e}")
         raise
