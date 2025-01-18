@@ -29,146 +29,136 @@ def lecturer_required(f):
 @login_required
 @lecturer_required
 def dashboard():
-    # Get current time
-    current_time = datetime.now()
-    
-    # Get courses and calculate trends
-    courses = Course.query.filter_by(lecturer_id=current_user.id).all()
-    last_semester_courses = Course.query.filter(
-        Course.lecturer_id == current_user.id,
-        Course.semester < current_time.strftime('%Y%m')
-    ).count()
-    
-    current_semester_courses = len(courses)
-    courses_trend = 0
-    if last_semester_courses > 0:
-        courses_trend = ((current_semester_courses - last_semester_courses) / last_semester_courses) * 100
+    try:
+        # Get current time
+        current_time = datetime.now()
+        
+        # Get courses and calculate trends
+        courses = Course.query.filter_by(lecturer_id=current_user.id).all()
+        
+        # Get last semester's courses using proper date comparison
+        current_semester = current_time.strftime('%Y%m')
+        last_semester = f"{int(current_semester) - (6 if current_semester[-2:] == '09' else 7):06d}"
+        
+        last_semester_courses = Course.query.filter(
+            Course.lecturer_id == current_user.id,
+            Course.semester == last_semester
+        ).count()
+        
+        current_semester_courses = len(courses)
+        courses_trend = 0
+        if last_semester_courses > 0:
+            courses_trend = ((current_semester_courses - last_semester_courses) / last_semester_courses) * 100
 
-    # Get today's lectures and completion status
-    today_lectures = Lecture.query.filter(
-        Lecture.lecturer_id == current_user.id,
-        Lecture.date == current_time.date()
-    ).all()
-    
-    completed_lectures = sum(1 for lecture in today_lectures if lecture.has_ended)
+        # Get today's lectures and completion status
+        today_lectures = Lecture.query.join(Course).filter(
+            Course.lecturer_id == current_user.id,
+            Lecture.date == current_time.date()
+        ).all()
+        
+        total_today = len(today_lectures)
+        completed_today = sum(1 for lecture in today_lectures if lecture.has_ended)
+        completion_rate = (completed_today / total_today * 100) if total_today > 0 else 0
 
-    # Calculate attendance trends
-    current_week_attendance = db.session.query(
-        func.avg(case([(Attendance.status == 'present', 100)], else_=0))
-    ).join(Lecture).filter(
-        Lecture.lecturer_id == current_user.id,
-        Lecture.date >= current_time.date() - timedelta(days=7),
-        Lecture.date <= current_time.date()
-    ).scalar() or 0
+        # Calculate attendance trends
+        current_week_attendance = db.session.query(
+            func.avg(case([(Attendance.status == 'present', 100)], else_=0))
+        ).join(Lecture).join(Course).filter(
+            Course.lecturer_id == current_user.id,
+            Lecture.date >= current_time.date() - timedelta(days=7),
+            Lecture.date <= current_time.date()
+        ).scalar() or 0
 
-    last_week_attendance = db.session.query(
-        func.avg(case([(Attendance.status == 'present', 100)], else_=0))
-    ).join(Lecture).filter(
-        Lecture.lecturer_id == current_user.id,
-        Lecture.date >= current_time.date() - timedelta(days=14),
-        Lecture.date < current_time.date() - timedelta(days=7)
-    ).scalar() or 0
+        last_week_attendance = db.session.query(
+            func.avg(case([(Attendance.status == 'present', 100)], else_=0))
+        ).join(Lecture).join(Course).filter(
+            Course.lecturer_id == current_user.id,
+            Lecture.date >= current_time.date() - timedelta(days=14),
+            Lecture.date < current_time.date() - timedelta(days=7)
+        ).scalar() or 0
 
-    attendance_trend = 0
-    if last_week_attendance > 0:
         attendance_trend = current_week_attendance - last_week_attendance
 
-    # Get student statistics
-    total_students = sum(course.enrolled_students.count() for course in courses)
-    active_students = sum(
-        course.enrolled_students.filter(
-            Attendance.query.filter_by(
-                student_id=User.id,
-                status='present'
-            ).filter(
-                Attendance.lecture_id.in_(
-                    Lecture.query.filter_by(course_id=course.id)
-                    .filter(Lecture.date >= current_time.date() - timedelta(days=30))
-                    .with_entities(Lecture.id)
-                )
-            ).exists()
-        ).count()
-        for course in courses
-    )
-    inactive_students = total_students - active_students
-
-    # Get upcoming week schedule
-    upcoming_week = []
-    for i in range(7):
-        date = current_time.date() + timedelta(days=i)
-        lectures = Lecture.query.filter(
-            Lecture.lecturer_id == current_user.id,
-            Lecture.date == date
-        ).order_by(Lecture.start_time).all()
+        # Get active and at-risk students
+        total_students = 0
+        active_students = 0
+        at_risk_students = 0
         
-        upcoming_week.append({
-            'date': date,
-            'lectures': lectures
-        })
+        for course in courses:
+            course_students = course.enrolled_students.count()
+            total_students += course_students
+            active_students += course.get_active_students_count()
+            at_risk_students += course.get_at_risk_students_count()
 
-    # Prepare course insights
-    course_insights = []
-    for course in courses[:5]:  # Get top 5 courses
-        total_lectures = Lecture.query.filter_by(course_id=course.id).count()
-        attendance_rate = db.session.query(
-            func.avg(case([(Attendance.status == 'present', 100)], else_=0))
-        ).join(Lecture).filter(
-            Lecture.course_id == course.id
-        ).scalar() or 0
-        
-        at_risk_students = course.enrolled_students.filter(
-            Attendance.query.filter_by(
-                student_id=User.id,
-                status='present'
-            ).filter(
-                Attendance.lecture_id.in_(
-                    Lecture.query.filter_by(course_id=course.id)
-                    .with_entities(Lecture.id)
-                )
-            ).having(func.avg(case([(Attendance.status == 'present', 100)], else_=0)) < 75)
-            .exists()
-        ).count()
+        # Get upcoming week's schedule
+        week_start = current_time.date()
+        week_end = week_start + timedelta(days=7)
+        upcoming_lectures = Lecture.query.join(Course).filter(
+            Course.lecturer_id == current_user.id,
+            Lecture.date >= week_start,
+            Lecture.date < week_end
+        ).order_by(Lecture.date, Lecture.start_time).all()
 
-        course_insights.append({
-            'code': course.code,
-            'title': course.title,
-            'total_lectures': total_lectures,
-            'attendance_rate': attendance_rate,
-            'active_students': course.enrolled_students.filter(
-                Attendance.query.filter_by(
-                    student_id=User.id,
-                    status='present'
-                ).filter(
-                    Attendance.lecture_id.in_(
-                        Lecture.query.filter_by(course_id=course.id)
-                        .filter(Lecture.date >= current_time.date() - timedelta(days=30))
-                        .with_entities(Lecture.id)
-                    )
-                ).exists()
-            ).count(),
-            'at_risk_students': at_risk_students
-        })
+        # Organize lectures by day
+        schedule = {}
+        for lecture in upcoming_lectures:
+            day = lecture.date.strftime('%Y-%m-%d')
+            if day not in schedule:
+                schedule[day] = []
+            schedule[day].append(lecture)
 
-    # Prepare stats dictionary
-    stats = {
-        'total_courses': len(courses),
-        'courses_trend': courses_trend,
-        'total_lectures': Lecture.query.filter_by(lecturer_id=current_user.id).count(),
-        'today_lectures': len(today_lectures),
-        'completed_lectures': completed_lectures,
-        'total_students': total_students,
-        'active_students': active_students,
-        'inactive_students': inactive_students,
-        'attendance_trend': attendance_trend,
-        'avg_attendance': current_week_attendance
-    }
+        # Get course insights (top 5 courses)
+        course_insights = []
+        for course in courses[:5]:  # Limit to top 5 courses
+            total_lectures = Lecture.query.filter_by(course_id=course.id).count()
+            completed_lectures = Lecture.query.filter(
+                Lecture.course_id == course.id,
+                Lecture.end_time < current_time
+            ).count()
+            
+            course_insights.append({
+                'course': course,
+                'total_lectures': total_lectures,
+                'completed_lectures': completed_lectures,
+                'completion_rate': (completed_lectures / total_lectures * 100) if total_lectures > 0 else 0,
+                'attendance_rate': course.get_attendance_rate(),
+                'student_count': course.enrolled_students.count(),
+                'at_risk_count': course.get_at_risk_students_count()
+            })
 
-    return render_template('lecturer/dashboard.html',
-                         stats=stats,
-                         courses=course_insights,
-                         today_lectures=today_lectures,
-                         upcoming_week=upcoming_week,
-                         now=current_time)
+        return render_template('lecturer/dashboard.html',
+            current_user=current_user,
+            now=current_time,
+            courses=courses,
+            courses_trend=courses_trend,
+            total_today=total_today,
+            completed_today=completed_today,
+            completion_rate=completion_rate,
+            attendance_trend=attendance_trend,
+            total_students=total_students,
+            active_students=active_students,
+            at_risk_students=at_risk_students,
+            schedule=schedule,
+            course_insights=course_insights
+        )
+    except Exception as e:
+        current_app.logger.error(f"Error in lecturer dashboard: {str(e)}")
+        flash('An error occurred while loading the dashboard. Please try again.', 'error')
+        return render_template('lecturer/dashboard.html',
+            current_user=current_user,
+            now=datetime.now(),
+            courses=[],
+            courses_trend=0,
+            total_today=0,
+            completed_today=0,
+            completion_rate=0,
+            attendance_trend=0,
+            total_students=0,
+            active_students=0,
+            at_risk_students=0,
+            schedule={},
+            course_insights=[]
+        )
 
 @lecturer_bp.route('/courses')
 @login_required
