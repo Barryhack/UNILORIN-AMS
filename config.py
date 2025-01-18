@@ -42,6 +42,15 @@ class Config:
     RATELIMIT_STRATEGY = 'fixed-window'
     RATELIMIT_STORAGE_URL = os.environ.get('REDIS_URL', 'memory://')
 
+    # Security Headers
+    SECURITY_HEADERS = {
+        'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'SAMEORIGIN',
+        'X-XSS-Protection': '1; mode=block',
+        'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';"
+    }
+
 class ProductionConfig(Config):
     """Production configuration."""
     
@@ -49,37 +58,21 @@ class ProductionConfig(Config):
     TESTING = False
     
     # Database
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'postgresql://postgres:postgres@localhost:5432/attendance_system'
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
+    if SQLALCHEMY_DATABASE_URI and SQLALCHEMY_DATABASE_URI.startswith('postgres://'):
+        SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI.replace('postgres://', 'postgresql://', 1)
     
-    # Security Headers
-    SECURITY_HEADERS = {
-        'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
-        'X-Content-Type-Options': 'nosniff',
-        'X-Frame-Options': 'SAMEORIGIN',
-        'X-XSS-Protection': '1; mode=block',
-        'Content-Security-Policy': "default-src 'self'; "
-                                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; "
-                                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; "
-                                "img-src 'self' data: https:; "
-                                "font-src 'self' https://fonts.gstatic.com; "
-                                "connect-src 'self'",
-        'Referrer-Policy': 'strict-origin-when-cross-origin'
-    }
-    
-    # Logging
-    LOG_TO_STDOUT = os.environ.get('LOG_TO_STDOUT', 'false').lower() == 'true'
-    LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO')
-    LOG_FORMAT = '%(asctime)s [%(levelname)s] %(name)s: %(message)s'
-    LOG_FILE = os.environ.get('LOG_FILE', 'logs/app.log')
+    # Security
+    SESSION_COOKIE_SECURE = True
+    REMEMBER_COOKIE_SECURE = True
+    REMEMBER_COOKIE_HTTPONLY = True
 
 class DevelopmentConfig(Config):
     """Development configuration."""
     
     DEBUG = True
     TESTING = False
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'sqlite:///attendance.db'
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///attendance.db'
     WTF_CSRF_ENABLED = True
     SESSION_COOKIE_SECURE = False
 
