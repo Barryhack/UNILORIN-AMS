@@ -25,12 +25,20 @@ def index():
         # Log access
         logger.info(f"User {current_user.email} accessing index route")
         
-        if hasattr(current_user, 'is_admin') and current_user.is_admin:
+        # Check user role and redirect accordingly
+        if current_user.role == 'admin':
+            logger.info(f"Admin user {current_user.email} redirected to admin dashboard")
             return redirect(url_for('admin.new_dashboard'))
-        elif hasattr(current_user, 'is_lecturer') and current_user.is_lecturer:
+        elif current_user.role == 'lecturer':
+            logger.info(f"Lecturer {current_user.email} redirected to lecturer dashboard")
             return redirect(url_for('lecturer.dashboard'))
-        else:
+        elif current_user.role == 'student':
+            logger.info(f"Student {current_user.email} redirected to student dashboard")
             return redirect(url_for('student.dashboard'))
+        else:
+            logger.error(f"Invalid role '{current_user.role}' for user {current_user.email}")
+            return render_template('error.html', error="Invalid user role. Please contact administrator."), 400
+            
     except Exception as e:
         logger.error(f"Error in index route: {str(e)}")
         return render_template('error.html', error="An error occurred. Please try again later."), 500
@@ -60,25 +68,42 @@ def dashboard():
                              .limit(5)
                              .all())
             
-            return render_template('staff/dashboard.html',
+            return render_template('dashboard/lecturer.html',
                                 stats=stats,
                                 courses=courses,
                                 recent_lectures=recent_lectures)
         
         elif current_user.role == 'student':
             # Get student's courses
-            enrolled_courses = current_user.enrolled_courses
+            enrolled_courses = current_user.enrolled_courses.all()
             
             # Get recent attendance
-            recent_attendance = current_user.attendances\
-                .order_by(Attendance.created_at.desc())\
-                .limit(5)\
-                .all()
+            recent_attendance = (ActivityLog.query
+                               .filter_by(user_id=current_user.id)
+                               .order_by(ActivityLog.timestamp.desc())
+                               .limit(5)
+                               .all())
             
-            return render_template('student/dashboard.html',
+            return render_template('dashboard/student.html',
                                 stats=stats,
                                 courses=enrolled_courses,
                                 recent_attendance=recent_attendance)
+        
+        elif current_user.role == 'admin':
+            # Get all departments
+            departments = Department.query.all()
+            
+            # Get system stats
+            system_stats = {
+                'cpu_percent': psutil.cpu_percent(),
+                'memory_percent': psutil.virtual_memory().percent,
+                'disk_percent': psutil.disk_usage('/').percent
+            }
+            
+            return render_template('dashboard/admin.html',
+                                stats=stats,
+                                departments=departments,
+                                system_stats=system_stats)
         
         else:
             logger.warning(f"User {current_user.email} has invalid role: {current_user.role}")
@@ -93,37 +118,7 @@ def dashboard():
 def profile():
     """User profile route."""
     try:
-        # Get user's activity logs
-        activity_logs = ActivityLog.query.filter_by(
-            user_id=current_user.id
-        ).order_by(ActivityLog.timestamp.desc()).limit(10).all()
-        
-        # Get attendance stats if user is a student
-        attendance_stats = None
-        if current_user.role == 'student':
-            total_lectures = 0
-            attended_lectures = 0
-            for course in current_user.enrolled_courses:
-                course_lectures = course.lectures.count()
-                total_lectures += course_lectures
-                attended_lectures += Attendance.query.join(
-                    Course, Course.id == Attendance.course_id
-                ).filter(
-                    Attendance.user_id == current_user.id,
-                    Attendance.status == 'present',
-                    Course.id == course.id
-                ).count()
-                
-            attendance_stats = {
-                'total_lectures': total_lectures,
-                'attended_lectures': attended_lectures,
-                'attendance_rate': (attended_lectures / total_lectures * 100) if total_lectures > 0 else 0
-            }
-        
-        return render_template('profile.html',
-                             user=current_user,
-                             activity_logs=activity_logs,
-                             attendance_stats=attendance_stats)
+        return render_template('profile.html', user=current_user)
     except Exception as e:
         logger.error(f"Error in profile route: {str(e)}")
         return render_template('error.html', error="An error occurred. Please try again later."), 500

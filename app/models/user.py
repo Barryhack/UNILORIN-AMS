@@ -101,6 +101,21 @@ class User(UserMixin, db.Model):
         """Check if hashed password matches actual password."""
         return check_password_hash(self.password_hash, password)
 
+    @property
+    def is_admin(self):
+        """Check if user is admin."""
+        return self.role == 'admin'
+    
+    @property
+    def is_lecturer(self):
+        """Check if user is lecturer."""
+        return self.role == 'lecturer'
+    
+    @property
+    def is_student(self):
+        """Check if user is student."""
+        return self.role == 'student'
+
     def to_dict(self):
         """Convert user object to dictionary."""
         return {
