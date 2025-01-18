@@ -28,7 +28,7 @@ def index():
         # Check user role and redirect accordingly
         if current_user.role == 'admin':
             logger.info(f"Admin user {current_user.email} redirected to admin dashboard")
-            return redirect(url_for('admin.new_dashboard'))
+            return redirect(url_for('admin.dashboard'))
         elif current_user.role == 'lecturer':
             logger.info(f"Lecturer {current_user.email} redirected to lecturer dashboard")
             return redirect(url_for('lecturer.dashboard'))
@@ -68,7 +68,7 @@ def dashboard():
                              .limit(5)
                              .all())
             
-            return render_template('dashboard/lecturer.html',
+            return render_template('staff/dashboard.html',
                                 stats=stats,
                                 courses=courses,
                                 recent_lectures=recent_lectures)
@@ -84,26 +84,13 @@ def dashboard():
                                .limit(5)
                                .all())
             
-            return render_template('dashboard/student.html',
+            return render_template('student/dashboard.html',
                                 stats=stats,
                                 courses=enrolled_courses,
                                 recent_attendance=recent_attendance)
         
         elif current_user.role == 'admin':
-            # Get all departments
-            departments = Department.query.all()
-            
-            # Get system stats
-            system_stats = {
-                'cpu_percent': psutil.cpu_percent(),
-                'memory_percent': psutil.virtual_memory().percent,
-                'disk_percent': psutil.disk_usage('/').percent
-            }
-            
-            return render_template('dashboard/admin.html',
-                                stats=stats,
-                                departments=departments,
-                                system_stats=system_stats)
+            return redirect(url_for('admin.dashboard'))
         
         else:
             logger.warning(f"User {current_user.email} has invalid role: {current_user.role}")
