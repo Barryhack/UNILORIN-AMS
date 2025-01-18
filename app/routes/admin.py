@@ -23,7 +23,7 @@ from app.utils import admin_required, roles_required
 from app.extensions import db
 from app.hardware.controller import init_hardware, get_hardware_controller
 import logging
-import csv
+import traceback
 
 admin_bp = Blueprint('admin', __name__)
 logger = logging.getLogger(__name__)
@@ -392,20 +392,33 @@ def register_user_api():
 def manage_users():
     """Manage users view."""
     try:
+        # Get users with eager loading of relationships
         users = User.query.options(
-            db.joinedload(User.department)
+            db.joinedload(User.department),
+            db.joinedload(User.enrolled_courses),
+            db.joinedload(User.taught_courses)
         ).all()
+        
+        # Get departments for the form
         departments = Department.query.all()
+        
         return render_template('admin/manage_users.html',
                              users=users,
                              departments=departments)
     except SQLAlchemyError as e:
-        current_app.logger.error(f"Database error in manage_users: {str(e)}")
+        logger.error(f"Database error in manage_users: {str(e)}\n{traceback.format_exc()}")
         flash("Error loading users. Please try again later.", "error")
         return render_template('admin/manage_users.html',
                              users=[],
                              departments=[],
                              error="Database error occurred.")
+    except Exception as e:
+        logger.error(f"Unexpected error in manage_users: {str(e)}\n{traceback.format_exc()}")
+        flash("An unexpected error occurred.", "error")
+        return render_template('admin/manage_users.html',
+                             users=[],
+                             departments=[],
+                             error="An unexpected error occurred.")
 
 @admin_bp.route('/activity-logs')
 @login_required
@@ -455,35 +468,38 @@ def login_logs():
 def manage_courses():
     """Manage courses view."""
     try:
-        # Get courses with eager loading
+        # Get courses with eager loading of relationships
         courses = Course.query.options(
             db.joinedload(Course.department),
             db.joinedload(Course.lecturer),
-            db.joinedload(Course.enrolled_students)
+            db.joinedload(Course.enrolled_students),
+            db.joinedload(Course.lectures)
         ).all()
         
-        # Get departments and lecturers
+        # Get departments and lecturers for the form
         departments = Department.query.all()
         lecturers = User.query.filter(User.role.in_(['lecturer', 'admin'])).all()
         
-        return render_template('admin/manage_courses.html', 
+        return render_template('admin/manage_courses.html',
                              courses=courses,
                              departments=departments,
                              lecturers=lecturers)
     except SQLAlchemyError as e:
-        current_app.logger.error(f"Database error in manage_courses: {str(e)}")
+        logger.error(f"Database error in manage_courses: {str(e)}\n{traceback.format_exc()}")
+        flash("Error loading courses. Please try again later.", "error")
         return render_template('admin/manage_courses.html',
                              courses=[],
                              departments=[],
                              lecturers=[],
-                             error="Database error occurred. Please try again later.")
+                             error="Database error occurred.")
     except Exception as e:
-        current_app.logger.error(f"Unexpected error in manage_courses: {str(e)}")
+        logger.error(f"Unexpected error in manage_courses: {str(e)}\n{traceback.format_exc()}")
+        flash("An unexpected error occurred.", "error")
         return render_template('admin/manage_courses.html',
                              courses=[],
                              departments=[],
                              lecturers=[],
-                             error="An unexpected error occurred. Please try again later.")
+                             error="An unexpected error occurred.")
 
 @admin_bp.route('/manage-departments')
 @login_required
@@ -491,17 +507,26 @@ def manage_courses():
 def manage_departments():
     """Manage departments view."""
     try:
+        # Get departments with eager loading of relationships
         departments = Department.query.options(
-            db.joinedload(Department.department_users)
+            db.joinedload(Department.department_users),
+            db.joinedload(Department.courses)
         ).all()
-        return render_template('admin/manage_departments.html', 
+        
+        return render_template('admin/manage_departments.html',
                              departments=departments)
     except SQLAlchemyError as e:
-        current_app.logger.error(f"Database error in manage_departments: {str(e)}")
+        logger.error(f"Database error in manage_departments: {str(e)}\n{traceback.format_exc()}")
         flash("Error loading departments. Please try again later.", "error")
         return render_template('admin/manage_departments.html',
                              departments=[],
                              error="Database error occurred.")
+    except Exception as e:
+        logger.error(f"Unexpected error in manage_departments: {str(e)}\n{traceback.format_exc()}")
+        flash("An unexpected error occurred.", "error")
+        return render_template('admin/manage_departments.html',
+                             departments=[],
+                             error="An unexpected error occurred.")
 
 @admin_bp.route('/reports')
 @login_required

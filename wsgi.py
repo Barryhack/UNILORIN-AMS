@@ -7,135 +7,128 @@ import sys
 import os
 from sqlalchemy import text
 import traceback
+import time
+from sqlalchemy.exc import SQLAlchemyError
+from app.models.department import Department
+from app.models.user import User
+from app.models.course import Course
 
-# Force development mode
-os.environ['FLASK_ENV'] = 'development'
-os.environ['FLASK_DEBUG'] = '1'
+# Set environment based on ENV variable
+flask_env = os.environ.get('FLASK_ENV', 'production')
+os.environ['FLASK_DEBUG'] = '1' if flask_env == 'development' else '0'
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format='%(asctime)s [%(levelname)s] %(name)s: %(message)s',
     handlers=[
         logging.StreamHandler(sys.stdout)
     ]
 )
+
 logger = logging.getLogger(__name__)
 
-# Create the application with development config
+# Create the Flask application
 app = create_app(Config)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.jinja_env.auto_reload = True
+
+@app.before_request
+def before_request():
+    """Ensure database connection is active."""
+    try:
+        db.session.execute(text('SELECT 1'))
+        db.session.commit()
+    except Exception as e:
+        logger.error(f"Database connection error: {str(e)}\n{traceback.format_exc()}")
+        db.session.rollback()
+        try:
+            db.session.remove()
+            db.engine.dispose()
+        except:
+            pass
+        raise
 
 @app.route('/health')
 def health_check():
     """Health check endpoint for monitoring."""
     try:
-        # Test database connection
-        with app.app_context():
-            # Log the database URL (without credentials)
-            db_url = app.config.get('SQLALCHEMY_DATABASE_URI', '')
-            if db_url:
-                # Mask credentials in URL
-                masked_url = db_url.replace('//', '//<credentials>@') if '@' in db_url else db_url
-                logger.info(f"Attempting database connection to: {masked_url}")
-            
-            # Test connection
-            db.session.execute(text('SELECT 1'))
-            db.session.commit()
-            
-            # Verify users table
-            result = db.session.execute(
-                text("SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'login_id'")
-            ).fetchone()
-            if not result:
-                raise Exception("users table is missing login_id column")
-            
-            logger.info("Health check passed successfully")
-            return {'status': 'healthy', 'database': 'connected'}, 200
+        # Check database connection
+        db.session.execute(text('SELECT 1'))
+        db.session.commit()
+        
+        # Check if essential models exist
+        dept_count = Department.query.count()
+        user_count = User.query.count()
+        course_count = Course.query.count()
+        
+        return {
+            'status': 'healthy',
+            'database': 'connected',
+            'models': {
+                'departments': dept_count,
+                'users': user_count,
+                'courses': course_count
+            }
+        }, 200
     except Exception as e:
-        error_msg = str(e)
-        logger.error(f"Health check failed: {error_msg}")
-        logger.error(traceback.format_exc())
+        logger.error(f"Health check failed: {str(e)}\n{traceback.format_exc()}")
         return {
             'status': 'unhealthy',
-            'error': error_msg,
-            'database': 'disconnected'
-        }, 503
+            'error': str(e)
+        }, 500
 
-def init_database():
-    """Initialize the database with retries."""
-    max_retries = 3
+def init_database(max_retries=5, retry_delay=5):
+    """Initialize database with retry mechanism."""
     retry_count = 0
-    
     while retry_count < max_retries:
         try:
-            logger.info(f"Database initialization attempt {retry_count + 1}/{max_retries}")
-            
-            from app.models import User, Department
-            
-            # Create database tables
+            logger.info("Attempting to initialize database...")
             db.create_all()
-            logger.info("Database tables created successfully")
             
-            # Create default department if it doesn't exist
-            dept = Department.query.filter_by(code='CSC').first()
-            if not dept:
-                dept = Department(name='Computer Science', code='CSC')
-                db.session.add(dept)
-                db.session.commit()
-                logger.info("Created default department")
-            else:
-                logger.info("Default department already exists")
+            # Create default departments if they don't exist
+            from app.models.department import create_default_departments
+            create_default_departments()
             
             # Create default admin user if it doesn't exist
-            admin = User.query.filter_by(login_id='ADMIN001').first()
-            if not admin:
-                admin = User(
-                    login_id='ADMIN001',
-                    email='admin@example.com',
-                    first_name='Admin',
-                    last_name='User',
-                    role='admin'
-                )
-                admin.password = 'admin123'
-                admin.department_id = dept.id
-                db.session.add(admin)
-                db.session.commit()
-                logger.info("Created default admin user")
-            else:
-                logger.info("Default admin user already exists")
+            from app.models.user import create_default_admin
+            create_default_admin()
             
+            logger.info("Database initialization successful!")
             return True
-            
-        except Exception as e:
+        except SQLAlchemyError as e:
             retry_count += 1
-            logger.error(f"Database initialization attempt {retry_count} failed: {str(e)}")
-            logger.error(traceback.format_exc())
-            if retry_count == max_retries:
-                logger.error("Maximum retries reached. Database initialization failed.")
+            logger.error(f"Database initialization attempt {retry_count} failed: {str(e)}\n{traceback.format_exc()}")
+            if retry_count < max_retries:
+                logger.info(f"Retrying in {retry_delay} seconds...")
+                time.sleep(retry_delay)
+            else:
+                logger.error("Max retries reached. Database initialization failed.")
                 raise
-            db.session.rollback()
+        except Exception as e:
+            logger.error(f"Unexpected error during database initialization: {str(e)}\n{traceback.format_exc()}")
+            raise
 
 # Initialize database in app context
 with app.app_context():
     try:
         init_database()
     except Exception as e:
-        logger.error(f"Failed to initialize database: {str(e)}")
-        logger.error(traceback.format_exc())
-        # Don't raise the error here - let the app continue to start
-        # The health check endpoint will report the database status
+        logger.error(f"Failed to initialize database: {str(e)}\n{traceback.format_exc()}")
+        sys.exit(1)
 
 @app.errorhandler(500)
 def internal_error(error):
-    logger.error(f"Internal Server Error: {str(error)}")
-    logger.error(traceback.format_exc())
-    return {"error": "Internal Server Error", "message": str(error)}, 500
+    """Handle internal server errors."""
+    logger.error(f"Internal Server Error: {str(error)}\n{traceback.format_exc()}")
+    db.session.rollback()
+    return "Internal Server Error", 500
 
 @app.errorhandler(404)
 def not_found_error(error):
-    return {"error": "Not Found", "message": str(error)}, 404
+    """Handle not found errors."""
+    return "Not Found", 404
 
 if __name__ == "__main__":
-    app.run(debug=True, use_reloader=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)

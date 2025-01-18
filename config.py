@@ -7,7 +7,7 @@ def get_database_url():
     uri = os.environ.get('DATABASE_URL')
     if uri and uri.startswith('postgres://'):
         uri = uri.replace('postgres://', 'postgresql://', 1)
-    return uri or 'postgresql://postgres:postgres@localhost:5432/attendance'
+    return uri or 'postgresql://postgres:postgres@localhost:5432/attendance_system'
 
 class Config:
     # Basic Flask config
@@ -26,6 +26,10 @@ class Config:
     # Database
     SQLALCHEMY_DATABASE_URI = get_database_url()
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_POOL_SIZE = 10
+    SQLALCHEMY_MAX_OVERFLOW = 20
+    SQLALCHEMY_POOL_TIMEOUT = 60
+    SQLALCHEMY_POOL_RECYCLE = 1800
     
     # Session config
     PERMANENT_SESSION_LIFETIME = timedelta(minutes=60)
@@ -48,29 +52,8 @@ class Config:
     }
     
     # Development specific
-    DEBUG = False
-    TESTING = False
-    
-    # Server name for URL generation
-    SERVER_NAME = os.environ.get('SERVER_NAME', 'localhost:5000')
-    PREFERRED_URL_SCHEME = os.environ.get('PREFERRED_URL_SCHEME', 'http')
-    
-    # Logging
-    LOG_LEVEL = 'INFO'
-    LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    LOG_FILE = 'logs/app.log'
-    
-    # Login settings
-    LOGIN_DISABLED = False
-    LOGIN_VIEW = 'auth.login'
-    LOGIN_MESSAGE = 'Please log in to access this page.'
-    LOGIN_MESSAGE_CATEGORY = 'info'
-    
-    # Rate limiting
-    RATELIMIT_DEFAULT = "1000 per day;200 per hour;10 per second"
-    RATELIMIT_STORAGE_URL = "memory://"
-    RATELIMIT_HEADERS_ENABLED = True
-    RATELIMIT_STRATEGY = "fixed-window"
+    DEBUG = True
+    PROPAGATE_EXCEPTIONS = True
 
 class DevelopmentConfig(Config):
     DEBUG = True
@@ -94,18 +77,20 @@ class ProductionConfig(Config):
         'Cross-Origin-Opener-Policy': 'same-origin',
         'Cross-Origin-Resource-Policy': 'same-origin'
     }
-    LOG_LEVEL = 'ERROR'
+    LOG_LEVEL = 'INFO'
     PROPAGATE_EXCEPTIONS = True
     RATELIMIT_ENABLED = True
     RATELIMIT_STORAGE_URL = os.environ.get('REDIS_URL', 'memory://')
     RATELIMIT_STRATEGY = 'fixed-window'
     RATELIMIT_DEFAULT = "100 per hour"
-    SERVER_NAME = os.environ.get('SERVER_NAME', 'unilorin-ams-vf9i.onrender.com')
+    SERVER_NAME = os.environ.get('SERVER_NAME')
     PREFERRED_URL_SCHEME = 'https'
-    SQLALCHEMY_POOL_SIZE = 20
-    SQLALCHEMY_MAX_OVERFLOW = 5
-    SQLALCHEMY_POOL_TIMEOUT = 30
+    SQLALCHEMY_POOL_SIZE = 10
+    SQLALCHEMY_MAX_OVERFLOW = 20
+    SQLALCHEMY_POOL_TIMEOUT = 60
     SQLALCHEMY_POOL_RECYCLE = 1800
+    MAX_CONTENT_LENGTH = 16 * 1024 * 1024
+    UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploads')
 
 class TestingConfig(Config):
     TESTING = True
